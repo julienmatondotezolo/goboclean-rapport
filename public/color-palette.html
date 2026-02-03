@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoboClean Rapport - Color Palette</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #a3e635;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #334155;
+            border-bottom: 3px solid #84cc16;
+            padding-bottom: 10px;
+        }
+        
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .color-card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .color-swatch {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .color-info {
+            padding: 15px;
+            background: #f8fafc;
+        }
+        
+        .color-name {
+            font-weight: 700;
+            font-size: 16px;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        
+        .color-value {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #64748b;
+            margin: 4px 0;
+        }
+        
+        .gradient-demo {
+            height: 200px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        
+        .component-demo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .button-demo {
+            padding: 14px 32px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .button-primary {
+            background: linear-gradient(to right, #84cc16, #65a30d);
+            color: #1e293b;
+            box-shadow: 0 8px 16px rgba(132, 204, 22, 0.3);
+        }
+        
+        .button-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 24px rgba(132, 204, 22, 0.4);
+        }
+        
+        .input-demo {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            background: #f8fafc;
+            transition: all 0.3s;
+            width: 300px;
+        }
+        
+        .input-demo:focus {
+            outline: none;
+            border-color: #84cc16;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.1);
+        }
+        
+        .checkbox-demo {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .logo-demo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: linear-gradient(to bottom right, #065f46, #134e4a);
+            border-radius: 12px;
+        }
+        
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(6, 78, 59, 0.4);
+            border: 2px solid rgba(4, 120, 87, 0.5);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+        
+        .logo-text h2 {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .logo-text p {
+            color: #a3e635;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>GoboClean Rapport</h1>
+            <p>Color Palette & Design System</p>
+        </div>
+        
+        <!-- Primary Colors -->
+        <div class="section">
+            <h2 class="section-title">Primary Colors - Lime Green</h2>
+            <div class="color-grid">
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #84cc16;">
+                        <span style="color: #1e293b; font-weight: 700;">Aa</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">Lime 500</div>
+                        <div class="color-value">#84cc16</div>
+                        <div class="color-value">bg-lime-500</div>
+                        <div class="color-value">HSL(84, 81%, 56%)</div>
+                    </div>
+                </div>
+                
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #65a30d;">
+                        <span style="color: white; font-weight: 700;">Aa</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">Lime 600</div>
+                        <div class="color-value">#65a30d</div>
+                        <div class="color-value">bg-lime-600</div>
+                        <div class="color-value">HSL(84, 85%, 35%)</div>
+                    </div>
+                </div>
+                
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #a3e635;">
+                        <span style="color: #1e293b; font-weight: 700;">Aa</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">Lime 400</div>
+                        <div class="color-value">#a3e635</div>
+                        <div class="color-value">text-lime-400</div>
+                        <div class="color-value">HSL(84, 81%, 56%)</div>
+                    </div>
+                </div>
+                
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #bef264;">
+                        <span style="color: #1e293b; font-weight: 700;">Aa</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">Lime 300</div>
+                        <div class="color-value">#bef264</div>
+                        <div class="color-value">text-lime-300</div>
+                        <div class="color-value">HSL(84, 100%, 65%)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Secondary Colors -->
+        <div class="section">
+            <h2 class="section-title">Secondary Colors - Emerald/Teal</h2>
+            <div class="color-grid">
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #065f46;">
+                        <span style="color: white; font-weight: 700;">Aa</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">Emerald 800</div>
+                        <div class="color-value">#065f46</div>
+                        <div class="color-value">bg-emerald-800</div>
+                        <div class="color-value">HSL(160, 84%, 39%)</div>
+                    </div>
+                </div>
+                
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #064e3b;">
+                        <span style="color: white; font-weight: 700;">Aa</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">Emerald 900</div>
+                        <div class="color-value">#064e3b</div>
+                        <div class="color-value">bg-emerald-900</div>
+                        <div class="color-value">HSL(160, 84%, 32%)</div>
+                    </div>
+                </div>
+                
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #134e4a;">
+                        <span style="color: white; font-weight: 700;">Aa</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">Teal 900</div>
+                        <div class="color-value">#134e4a</div>
+                        <div class="color-value">bg-teal-900</div>
+                        <div class="color-value">HSL(178, 60%, 19%)</div>
+                    </div>
+                </div>
+                
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #047857;">
+                        <span style="color: white; font-weight: 700;">Aa</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">Emerald 700</div>
+                        <div class="color-value">#047857</div>
+                        <div class="color-value">text-emerald-700</div>
+                        <div class="color-value">HSL(160, 84%, 39%)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Neutral Colors -->
+        <div class="section">
+            <h2 class="section-title">Neutral Colors - Slate</h2>
+            <div class="color-grid">
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #0f172a;">
+                        <span style="color: white; font-weight: 700;">Aa</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">Slate 900</div>
+                        <div class="color-value">#0f172a</div>
+                        <div class="color-value">bg-slate-900</div>
+                    </div>
+                </div>
+                
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #1e293b;">
+                        <span style="color: white; font-weight: 700;">Aa</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">Slate 800</div>
+                        <div class="color-value">#1e293b</div>
+                        <div class="color-value">bg-slate-800</div>
+                    </div>
+                </div>
+                
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #334155;">
+                        <span style="color: white; font-weight: 700;">Aa</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">Slate 700</div>
+                        <div class="color-value">#334155</div>
+                        <div class="color-value">text-slate-700</div>
+                    </div>
+                </div>
+                
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #cbd5e1;">
+                        <span style="color: #1e293b; font-weight: 700;">Aa</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">Slate 300</div>
+                        <div class="color-value">#cbd5e1</div>
+                        <div class="color-value">border-slate-300</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gradients -->
+        <div class="section">
+            <h2 class="section-title">Gradient Examples</h2>
+            
+            <div class="gradient-demo" style="background: linear-gradient(to bottom right, #065f46, #134e4a);">
+                Header Gradient
+            </div>
+            
+            <div class="gradient-demo" style="background: linear-gradient(to right, #84cc16, #65a30d);">
+                Button Gradient
+            </div>
+            
+            <div class="gradient-demo" style="background: linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a);">
+                Background Gradient
+            </div>
+        </div>
+        
+        <!-- Component Examples -->
+        <div class="section">
+            <h2 class="section-title">Component Examples</h2>
+            
+            <div style="margin-bottom: 30px;">
+                <h3 style="margin-bottom: 15px; color: #334155;">Logo</h3>
+                <div class="logo-demo">
+                    <div class="logo-icon">🏠</div>
+                    <div class="logo-text">
+                        <h2>GoboClean Rapport</h2>
+                        <p>Field Services & Reports</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3 style="margin-bottom: 15px; color: #334155;">Buttons</h3>
+                <div class="component-demo">
+                    <button class="button-demo button-primary">Login to Jobs →</button>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3 style="margin-bottom: 15px; color: #334155;">Input Fields</h3>
+                <div class="component-demo">
+                    <input type="email" class="input-demo" placeholder="foreman@roofing.com">
+                    <input type="password" class="input-demo" placeholder="Enter password">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="text-align: center; padding: 40px 0; color: #94a3b8;">
+            <p>GoboClean Rapport Design System</p>
+            <p style="margin-top: 10px; font-size: 14px;">Version 2.4.0 (Build 88)</p>
+        </div>
+    </div>
+</body>
+</html>

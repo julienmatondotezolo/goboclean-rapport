@@ -71,5 +71,57 @@
   },
   "LanguageSwitcher": {
     "label": "Taal"
+  },
+  "Login": {
+    "title": "Inloggen",
+    "subtitle": "Veld Services & Rapporten",
+    "email": "Werk E-mail",
+    "emailPlaceholder": "voorman@roofing.com",
+    "password": "Wachtwoord",
+    "passwordPlaceholder": "Voer wachtwoord in",
+    "forgotPassword": "Vergeten?",
+    "keepLoggedIn": "Ingelogd blijven",
+    "loginButton": "Inloggen voor Jobs",
+    "loggingIn": "Inloggen...",
+    "offlineSync": "Offline Sync Klaar",
+    "contactSupport": "Contact Ondersteuning",
+    "version": "Versie",
+    "invalidEmail": "Ongeldig e-mailadres",
+    "passwordMinLength": "Wachtwoord moet minimaal 6 tekens bevatten",
+    "loginSuccess": "Inloggen geslaagd",
+    "welcome": "Welkom",
+    "loginError": "Inlogfout",
+    "invalidCredentials": "Ongeldig e-mailadres of wachtwoord"
+  },
+  "Reports": {
+    "title": "Nieuw Rapport",
+    "subtitle": "Documenteer dakreiniging",
+    "createSuccess": "Rapport succesvol aangemaakt",
+    "createSuccessDescription": "Het rapport is opgeslagen en de PDF wordt per e-mail verzonden.",
+    "error": "Fout",
+    "errorDescription": "Er is een fout opgetreden bij het aanmaken van het rapport",
+    "authRequired": "U moet ingelogd zijn om een rapport aan te maken"
+  },
+  "Home": {
+    "title": "GoboClean Rapport",
+    "subtitle": "Progressieve web-app voor dakreiniging documentatie",
+    "loading": "Laden...",
+    "configError": "Ontbrekende configuratie",
+    "connectionError": "Verbindingsfout",
+    "goToLogin": "Ga naar inloggen",
+    "features": {
+      "multiStepForm": {
+        "title": "Meerstaps Formulier",
+        "description": "Gestructureerde verzameling van klantinformatie en dakconditie"
+      },
+      "pdfGeneration": {
+        "title": "PDF Generatie",
+        "description": "Professionele rapporten automatisch verzonden per e-mail"
+      },
+      "offlineMode": {
+        "title": "Offline Modus",
+        "description": "Automatische synchronisatie wanneer verbinding terugkeert"
+      }
+    }
   }
 }

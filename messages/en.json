@@ -71,5 +71,57 @@
   },
   "LanguageSwitcher": {
     "label": "Language"
+  },
+  "Login": {
+    "title": "Login",
+    "subtitle": "Field Services & Reports",
+    "email": "Work Email",
+    "emailPlaceholder": "foreman@roofing.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter password",
+    "forgotPassword": "Forgot?",
+    "keepLoggedIn": "Keep me logged in",
+    "loginButton": "Login to Jobs",
+    "loggingIn": "Logging in...",
+    "offlineSync": "Offline Sync Ready",
+    "contactSupport": "Contact Support",
+    "version": "Version",
+    "invalidEmail": "Invalid email",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "loginSuccess": "Login successful",
+    "welcome": "Welcome",
+    "loginError": "Login error",
+    "invalidCredentials": "Invalid email or password"
+  },
+  "Reports": {
+    "title": "New Report",
+    "subtitle": "Document roof cleaning",
+    "createSuccess": "Report created successfully",
+    "createSuccessDescription": "The report has been saved and the PDF will be sent by email.",
+    "error": "Error",
+    "errorDescription": "An error occurred while creating the report",
+    "authRequired": "You must be logged in to create a report"
+  },
+  "Home": {
+    "title": "GoboClean Rapport",
+    "subtitle": "Progressive web app for roof cleaning documentation",
+    "loading": "Loading...",
+    "configError": "Missing configuration",
+    "connectionError": "Connection error",
+    "goToLogin": "Go to login",
+    "features": {
+      "multiStepForm": {
+        "title": "Multi-step Form",
+        "description": "Structured collection of client information and roof condition"
+      },
+      "pdfGeneration": {
+        "title": "PDF Generation",
+        "description": "Professional reports automatically sent by email"
+      },
+      "offlineMode": {
+        "title": "Offline Mode",
+        "description": "Automatic synchronization when connection returns"
+      }
+    }
   }
 }

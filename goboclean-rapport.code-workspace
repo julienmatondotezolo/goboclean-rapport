@@ -1,0 +1,43 @@
+{
+	"folders": [
+		{
+			"name": "🎨 Frontend (Next.js PWA)",
+			"path": "."
+		},
+		{
+			"name": "🔧 Backend (NestJS)",
+			"path": "../goboclean-rapport-backend"
+		}
+	],
+	"settings": {
+		"typescript.tsdk": "node_modules/typescript/lib",
+		"typescript.enablePromptUseWorkspaceTsdk": true,
+		"editor.formatOnSave": true,
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.codeActionsOnSave": {
+			"source.fixAll.eslint": "explicit"
+		},
+		"files.exclude": {
+			"**/node_modules": true,
+			"**/.next": true,
+			"**/dist": true,
+			"**/.cache": true
+		},
+		"search.exclude": {
+			"**/node_modules": true,
+			"**/dist": true,
+			"**/.next": true,
+			"**/yarn.lock": true,
+			"**/package-lock.json": true
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"dbaeumer.vscode-eslint",
+			"esbenp.prettier-vscode",
+			"bradlc.vscode-tailwindcss",
+			"prisma.prisma",
+			"ms-vscode.vscode-typescript-next"
+		]
+	}
+}

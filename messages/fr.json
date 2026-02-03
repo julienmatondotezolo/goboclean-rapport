@@ -71,5 +71,57 @@
   },
   "LanguageSwitcher": {
     "label": "Langue"
+  },
+  "Login": {
+    "title": "Connexion",
+    "subtitle": "Services sur Terrain & Rapports",
+    "email": "Email professionnel",
+    "emailPlaceholder": "foreman@roofing.com",
+    "password": "Mot de passe",
+    "passwordPlaceholder": "Entrez le mot de passe",
+    "forgotPassword": "Oublié?",
+    "keepLoggedIn": "Rester connecté",
+    "loginButton": "Se connecter",
+    "loggingIn": "Connexion en cours...",
+    "offlineSync": "Synchronisation hors ligne prête",
+    "contactSupport": "Contacter le support",
+    "version": "Version",
+    "invalidEmail": "Email invalide",
+    "passwordMinLength": "Le mot de passe doit contenir au moins 6 caractères",
+    "loginSuccess": "Connexion réussie",
+    "welcome": "Bienvenue",
+    "loginError": "Erreur de connexion",
+    "invalidCredentials": "Email ou mot de passe incorrect"
+  },
+  "Reports": {
+    "title": "Nouveau Rapport",
+    "subtitle": "Documentez le nettoyage de toiture",
+    "createSuccess": "Rapport créé avec succès",
+    "createSuccessDescription": "Le rapport a été enregistré et le PDF sera envoyé par email.",
+    "error": "Erreur",
+    "errorDescription": "Une erreur est survenue lors de la création du rapport",
+    "authRequired": "Vous devez être connecté pour créer un rapport"
+  },
+  "Home": {
+    "title": "GobloClean Rapport",
+    "subtitle": "Application mobile progressive pour la documentation du nettoyage de toiture",
+    "loading": "Chargement en cours...",
+    "configError": "Configuration manquante",
+    "connectionError": "Erreur de connexion",
+    "goToLogin": "Aller à la connexion",
+    "features": {
+      "multiStepForm": {
+        "title": "Formulaire Multi-étapes",
+        "description": "Collecte structurée des informations client et de l'état de la toiture"
+      },
+      "pdfGeneration": {
+        "title": "Génération PDF",
+        "description": "Rapports professionnels envoyés automatiquement par email"
+      },
+      "offlineMode": {
+        "title": "Mode Hors-ligne",
+        "description": "Synchronisation automatique quand la connexion revient"
+      }
+    }
   }
 }

@@ -1,36 +1,220 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# RoofReport PWA - GoBo Clean
 
-## Getting Started
+Application mobile progressive (PWA) pour la documentation du nettoyage de toiture.
 
-First, run the development server:
+## 🚀 Fonctionnalités
+
+- ✅ **Formulaire multi-étapes** avec validation
+- ✅ **Capture et compression d'images** (max 1200px, optimisé pour mobile)
+- ✅ **Module de signature** (ouvrier + client)
+- ✅ **Mode hors-ligne** avec IndexedDB et synchronisation automatique
+- ✅ **Géolocalisation** pour les adresses clients
+- ✅ **PWA installable** sur l'écran d'accueil
+- ✅ **Dashboard admin** avec statistiques
+- ✅ **Génération PDF** et envoi par email
+- ✅ **Authentification** avec Row Level Security (RLS)
+- ✅ **Internationalisation** (FR, EN, NL)
+
+## 📋 Prérequis
+
+- Node.js 18+
+- Yarn
+- Compte Supabase
+- Compte SMTP (Resend/SendGrid)
+
+## 🛠️ Installation
+
+### Frontend (Next.js PWA)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd goboclean-rapport
+yarn install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Créez un fichier `.env.local`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-project-url.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### Backend (NestJS)
 
-## Learn More
+```bash
+cd goboclean-rapport-backend
+npm install
+```
 
-To learn more about Next.js, take a look at the following resources:
+Créez un fichier `.env`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+SUPABASE_URL=your-project-url.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_ANON_KEY=your-anon-key
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=587
+SMTP_USER=resend
+SMTP_PASSWORD=your-api-key
+SMTP_FROM=noreply@goboclean.be
 
-## Deploy on Vercel
+PORT=3001
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🗄️ Configuration Supabase
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+### 1. Créer un projet Supabase
+
+### 2. Appliquer les migrations
+
+```bash
+# Copiez le contenu de supabase/migrations/001_initial_schema.sql
+# et exécutez-le dans l'éditeur SQL de Supabase
+
+# Puis exécutez supabase/migrations/002_storage_policies.sql
+```
+
+### 3. Créer un utilisateur admin
+
+```sql
+-- Dans l'éditeur SQL de Supabase
+INSERT INTO auth.users (email, encrypted_password, email_confirmed_at, raw_user_meta_data)
+VALUES (
+  'admin@goboclean.be',
+  crypt('admin123', gen_salt('bf')),
+  NOW(),
+  '{"first_name": "Admin", "last_name": "GoBo", "role": "admin"}'::jsonb
+);
+```
+
+## 🚀 Lancement
+
+### Développement
+
+```bash
+# Frontend
+cd goboclean-rapport
+yarn dev
+
+# Backend
+cd goboclean-rapport-backend
+npm run start:dev
+```
+
+### Production
+
+```bash
+# Frontend
+cd goboclean-rapport
+yarn build
+yarn start
+
+# Backend
+cd goboclean-rapport-backend
+npm run build
+npm run start:prod
+```
+
+## 📱 Installation PWA
+
+1. Ouvrez l'application dans Chrome/Safari sur mobile
+2. Cliquez sur "Ajouter à l'écran d'accueil"
+3. L'icône apparaît sur votre écran d'accueil
+
+## 🏗️ Architecture
+
+### Frontend
+- **Next.js 16** avec App Router
+- **Tailwind CSS** + **Shadcn UI**
+- **React Hook Form** + **Zod** pour la validation
+- **Dexie.js** pour IndexedDB
+- **Supabase Client** pour l'authentification et le stockage
+
+### Backend
+- **NestJS** pour l'API REST
+- **@react-pdf/renderer** pour la génération de PDF
+- **Nodemailer** pour l'envoi d'emails
+- **Supabase Admin SDK** pour les opérations serveur
+
+### Base de données
+- **PostgreSQL** (via Supabase)
+- **Row Level Security (RLS)** pour la sécurité
+- **Storage Buckets** pour les photos et PDFs
+
+## 📦 Structure du projet
+
+```
+goboclean-rapport/
+├── src/
+│   ├── app/                    # Pages Next.js
+│   │   └── [locale]/
+│   │       ├── (pages)/        # Pages publiques
+│   │       │   ├── login/
+│   │       │   ├── reports/
+│   │       │   └── admin/
+│   ├── components/             # Composants React
+│   │   ├── ui/                 # Composants Shadcn
+│   │   ├── report-form/        # Formulaire de rapport
+│   │   ├── photo-uploader.tsx
+│   │   ├── signature-pad.tsx
+│   │   └── sync-status.tsx
+│   ├── lib/                    # Utilitaires
+│   │   ├── supabase/
+│   │   ├── db/                 # IndexedDB
+│   │   ├── auth.ts
+│   │   ├── image-compression.ts
+│   │   └── geolocation.ts
+│   └── types/                  # Types TypeScript
+├── supabase/
+│   └── migrations/             # Migrations SQL
+└── public/
+    ├── manifest.json
+    └── icons/
+
+goboclean-rapport-backend/
+├── src/
+│   ├── reports/                # Module de rapports
+│   ├── pdf/                    # Génération PDF
+│   ├── email/                  # Service email
+│   └── supabase/               # Client Supabase
+└── dist/
+```
+
+## 🔒 Sécurité
+
+- **RLS (Row Level Security)** : Les ouvriers ne voient que leurs propres rapports
+- **JWT Authentication** via Supabase
+- **Storage Policies** : Contrôle d'accès aux fichiers
+- **Service Role** : Le backend utilise une clé service pour les opérations privilégiées
+
+## 📊 Workflow
+
+1. **Ouvrier** se connecte sur iPad
+2. **Crée un rapport** en 5 étapes
+3. **Prend des photos** (compressées automatiquement)
+4. **Collecte les signatures** (ouvrier + client)
+5. **Finalise** le rapport
+6. **Backend** génère le PDF
+7. **Email** envoyé automatiquement au client
+
+## 🧪 Tests
+
+```bash
+# Frontend
+cd goboclean-rapport
+yarn test
+
+# Backend
+cd goboclean-rapport-backend
+npm run test
+```
+
+## 📝 Licence
+
+MIT - GoBo Clean © 2026
+
+## 👥 Support
+
+Pour toute question : contact@goboclean.be

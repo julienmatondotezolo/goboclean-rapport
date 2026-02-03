@@ -9,8 +9,8 @@ import Providers from "./providers";
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "next-ts-starter template",
-  description: "Next.js typescript template with tailwind darkmode and localization",
+  title: "GobloClean Rapport - RoofReport PWA",
+  description: "Application mobile progressive pour la documentation du nettoyage de toiture",
 };
 
 export default async function RootLayout({

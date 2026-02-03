@@ -1,0 +1,39 @@
+{
+  "name": "GoboClean Rapport - Field Services & Reports",
+  "short_name": "GoboClean Rapport",
+  "description": "Application de rapports de nettoyage de toiture",
+  "start_url": "/fr",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#84cc16",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Nouveau Rapport",
+      "short_name": "Nouveau",
+      "description": "Créer un nouveau rapport",
+      "url": "/fr/reports/new",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
