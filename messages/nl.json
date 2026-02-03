@@ -1,0 +1,75 @@
+{
+  "Index": {
+    "welcome": "Welkom",
+    "subtitle": "Modern Ontwerpsysteem",
+    "badge": "Moderne Componenten",
+    "hero": {
+      "title": "Mooie UI-componenten",
+      "description": "Ontdek onze moderne knopvarianten, thema-schakelaar en taalwisselaar componenten gebouwd met de nieuwste ontwerptrends."
+    },
+    "colorPalette": {
+      "title": "Kleurenpalet",
+      "description": "Levendige kleuren voor moderne interfaces",
+      "primary": "Primair",
+      "emerald": "Smaragd",
+      "orange": "Oranje",
+      "yellow": "Geel",
+      "red": "Rood",
+      "secondary": "Secundair"
+    },
+    "buttons": {
+      "title": "Knopvarianten",
+      "description": "Verschillende knopstijlen voor verschillende gebruikssituaties",
+      "large": "Groot",
+      "medium": "Gemiddeld",
+      "small": "Klein",
+      "tiny": "Minuscuul",
+      "largeButton": "Grote Knop",
+      "mediumButton": "Gemiddelde Knop",
+      "smallButton": "Kleine Knop",
+      "tinyButton": "Minuscule Knop"
+    },
+    "tags": {
+      "title": "Tags",
+      "description": "Kleurrijke statusindicatoren en labels",
+      "hotDesk": "Hot Desk",
+      "wifi": "Wi-fi",
+      "pending": "In Behandeling",
+      "confirmed": "Bevestigd",
+      "alert": "Waarschuwing",
+      "active": "Actief",
+      "closed": "Gesloten",
+      "waiting": "Wachtend",
+      "statusBadges": "Statusbadges",
+      "replied": "Beantwoord",
+      "open": "Open"
+    },
+    "themeToggle": {
+      "title": "Thema Schakelaar",
+      "description": "Schakel tussen lichte en donkere modi met een vloeiende geanimeerde schakelaar",
+      "features": "Functies: Hover-effecten, rotatieanimatie, verloopachtergronden en vloeiende overgangen"
+    },
+    "languageSwitcher": {
+      "title": "Taalwisselaar",
+      "description": "Moderne dropdown met vlagpictogrammen en vloeiende animaties",
+      "features": "Functies: Wereldbolpictogram, vlagemoji's, actieve indicatoren, laadstatussen en achtergrondvervaging"
+    },
+    "features": {
+      "animations": {
+        "title": "Moderne Animaties",
+        "description": "Vloeiende overgangen en hover-effecten voor aangename interacties"
+      },
+      "cleanCode": {
+        "title": "Schone Code",
+        "description": "Goed gestructureerde, onderhoudbare componenten met TypeScript"
+      },
+      "responsive": {
+        "title": "Responsief Ontwerp",
+        "description": "Werkt perfect op alle schermformaten en apparaten"
+      }
+    }
+  },
+  "LanguageSwitcher": {
+    "label": "Taal"
+  }
+}

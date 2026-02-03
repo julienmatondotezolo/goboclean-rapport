@@ -1,0 +1,75 @@
+{
+  "Index": {
+    "welcome": "Bienvenue",
+    "subtitle": "Système de Design Moderne",
+    "badge": "Composants Modernes",
+    "hero": {
+      "title": "Beaux Composants UI",
+      "description": "Explorez nos variantes de boutons modernes, bascule de thème et composants de changement de langue construits avec les dernières tendances de design."
+    },
+    "colorPalette": {
+      "title": "Palette de Couleurs",
+      "description": "Couleurs vibrantes pour interfaces modernes",
+      "primary": "Primaire",
+      "emerald": "Émeraude",
+      "orange": "Orange",
+      "yellow": "Jaune",
+      "red": "Rouge",
+      "secondary": "Secondaire"
+    },
+    "buttons": {
+      "title": "Variantes de Boutons",
+      "description": "Différents styles de boutons pour divers cas d'usage",
+      "large": "Grand",
+      "medium": "Moyen",
+      "small": "Petit",
+      "tiny": "Minuscule",
+      "largeButton": "Grand Bouton",
+      "mediumButton": "Bouton Moyen",
+      "smallButton": "Petit Bouton",
+      "tinyButton": "Bouton Minuscule"
+    },
+    "tags": {
+      "title": "Étiquettes",
+      "description": "Indicateurs d'état et étiquettes colorés",
+      "hotDesk": "Bureau Partagé",
+      "wifi": "Wi-fi",
+      "pending": "En Attente",
+      "confirmed": "Confirmé",
+      "alert": "Alerte",
+      "active": "Actif",
+      "closed": "Fermé",
+      "waiting": "En Attente",
+      "statusBadges": "Badges de Statut",
+      "replied": "Répondu",
+      "open": "Ouvert"
+    },
+    "themeToggle": {
+      "title": "Bascule de Thème",
+      "description": "Basculez entre les modes clair et sombre avec une animation fluide",
+      "features": "Fonctionnalités : Effets de survol, animation de rotation, arrière-plans dégradés et transitions fluides"
+    },
+    "languageSwitcher": {
+      "title": "Sélecteur de Langue",
+      "description": "Menu déroulant moderne avec icônes de drapeaux et animations fluides",
+      "features": "Fonctionnalités : Icône globe, émojis de drapeaux, indicateurs actifs, états de chargement et flou d'arrière-plan"
+    },
+    "features": {
+      "animations": {
+        "title": "Animations Modernes",
+        "description": "Transitions fluides et effets de survol pour des interactions agréables"
+      },
+      "cleanCode": {
+        "title": "Code Propre",
+        "description": "Composants bien structurés et maintenables avec TypeScript"
+      },
+      "responsive": {
+        "title": "Design Responsive",
+        "description": "Fonctionne parfaitement sur toutes les tailles d'écran et appareils"
+      }
+    }
+  },
+  "LanguageSwitcher": {
+    "label": "Langue"
+  }
+}

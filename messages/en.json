@@ -1,0 +1,75 @@
+{
+  "Index": {
+    "welcome": "Welcome",
+    "subtitle": "Modern Design System",
+    "badge": "Modern Components",
+    "hero": {
+      "title": "Beautiful UI Components",
+      "description": "Explore our modern button variants, theme toggle, and language switcher components built with the latest design trends."
+    },
+    "colorPalette": {
+      "title": "Color Palette",
+      "description": "Vibrant colors for modern interfaces",
+      "primary": "Primary",
+      "emerald": "Emerald",
+      "orange": "Orange",
+      "yellow": "Yellow",
+      "red": "Red",
+      "secondary": "Secondary"
+    },
+    "buttons": {
+      "title": "Button Variants",
+      "description": "Different button styles for various use cases",
+      "large": "Large",
+      "medium": "Medium",
+      "small": "Small",
+      "tiny": "Tiny",
+      "largeButton": "Large Button",
+      "mediumButton": "Medium Button",
+      "smallButton": "Small Button",
+      "tinyButton": "Tiny Button"
+    },
+    "tags": {
+      "title": "Tags",
+      "description": "Colorful status indicators and labels",
+      "hotDesk": "Hot Desk",
+      "wifi": "Wi-fi",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "alert": "Alert",
+      "active": "Active",
+      "closed": "Closed",
+      "waiting": "Waiting",
+      "statusBadges": "Status Badges",
+      "replied": "Replied",
+      "open": "Open"
+    },
+    "themeToggle": {
+      "title": "Theme Toggle",
+      "description": "Switch between light and dark modes with a smooth animated toggle",
+      "features": "Features: Hover effects, rotation animation, gradient backgrounds, and smooth transitions"
+    },
+    "languageSwitcher": {
+      "title": "Language Switcher",
+      "description": "Modern dropdown with flag icons and smooth animations",
+      "features": "Features: Globe icon, flag emojis, active indicators, loading states, and backdrop blur"
+    },
+    "features": {
+      "animations": {
+        "title": "Modern Animations",
+        "description": "Smooth transitions and hover effects for delightful interactions"
+      },
+      "cleanCode": {
+        "title": "Clean Code",
+        "description": "Well-structured, maintainable components with TypeScript"
+      },
+      "responsive": {
+        "title": "Responsive Design",
+        "description": "Works perfectly on all screen sizes and devices"
+      }
+    }
+  },
+  "LanguageSwitcher": {
+    "label": "Language"
+  }
+}
