@@ -48,7 +48,7 @@ export default function HomePage() {
         if (profile?.role === 'admin') {
           router.push('/admin/dashboard');
         } else {
-          router.push('/reports');
+          router.push('/dashboard');
         }
       } catch (error) {
         console.error('Error checking authentication:', error);

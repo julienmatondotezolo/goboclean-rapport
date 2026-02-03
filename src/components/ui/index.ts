@@ -37,3 +37,8 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
 } from './select';
+
+// Dashboard components
+export { MissionCard } from './mission-card';
+export { StatCard } from './stat-card';
+export { BottomNav, defaultNavItems } from './bottom-nav';

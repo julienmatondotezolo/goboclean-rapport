@@ -123,5 +123,28 @@
         "description": "Automatische synchronisatie wanneer verbinding terugkeert"
       }
     }
+  },
+  "Dashboard": {
+    "welcome": "Welkom",
+    "today": "Vandaag",
+    "highPrioritySites": "Prioritaire Sites",
+    "hours": "UREN",
+    "tasks": "TAKEN",
+    "weekToDate": "Deze week",
+    "completed": "Voltooid",
+    "assignedMissions": "Toegewezen Missies",
+    "viewAll": "Bekijk Alles",
+    "startJob": "START KLUS",
+    "details": "Details",
+    "starts": "Begint",
+    "tomorrow": "Morgen",
+    "emergency": "NOODGEVAL",
+    "scheduled": "GEPLAND",
+    "navigation": {
+      "home": "HOME",
+      "schedule": "PLANNING",
+      "reports": "RAPPORTEN",
+      "profile": "PROFIEL"
+    }
   }
 }

@@ -123,5 +123,28 @@
         "description": "Synchronisation automatique quand la connexion revient"
       }
     }
+  },
+  "Dashboard": {
+    "welcome": "Bienvenue",
+    "today": "Aujourd'hui",
+    "highPrioritySites": "Sites Prioritaires",
+    "hours": "HEURES",
+    "tasks": "TÂCHES",
+    "weekToDate": "Cette semaine",
+    "completed": "Terminé",
+    "assignedMissions": "Missions Assignées",
+    "viewAll": "Voir Tout",
+    "startJob": "COMMENCER",
+    "details": "Détails",
+    "starts": "Commence",
+    "tomorrow": "Demain",
+    "emergency": "URGENT",
+    "scheduled": "PLANIFIÉ",
+    "navigation": {
+      "home": "ACCUEIL",
+      "schedule": "PLANNING",
+      "reports": "RAPPORTS",
+      "profile": "PROFIL"
+    }
   }
 }

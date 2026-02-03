@@ -123,5 +123,28 @@
         "description": "Automatic synchronization when connection returns"
       }
     }
+  },
+  "Dashboard": {
+    "welcome": "Welcome",
+    "today": "Today",
+    "highPrioritySites": "High-Priority Sites",
+    "hours": "HOURS",
+    "tasks": "TASKS",
+    "weekToDate": "Week to date",
+    "completed": "Completed",
+    "assignedMissions": "Assigned Missions",
+    "viewAll": "View All",
+    "startJob": "START JOB",
+    "details": "Details",
+    "starts": "Starts",
+    "tomorrow": "Tomorrow",
+    "emergency": "EMERGENCY",
+    "scheduled": "SCHEDULED",
+    "navigation": {
+      "home": "HOME",
+      "schedule": "SCHEDULE",
+      "reports": "REPORTS",
+      "profile": "PROFILE"
+    }
   }
 }
