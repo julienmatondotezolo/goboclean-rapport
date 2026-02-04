@@ -217,7 +217,10 @@
     "contactPerson": "Contact Person",
     "createReport": "Create Report",
     "startMission": "Start Mission",
-    "confirmMission": "Confirm Mission"
+    "confirmMission": "Confirm Mission",
+    "completeMission": "Complete Mission",
+    "beforePictures": "Before Pictures",
+    "viewFullScreen": "View Full Screen"
   },
   "BeforePictures": {
     "title": "Before Pictures",

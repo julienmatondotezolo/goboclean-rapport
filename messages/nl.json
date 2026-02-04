@@ -217,7 +217,10 @@
     "contactPerson": "Contactpersoon",
     "createReport": "Rapport Aanmaken",
     "startMission": "Missie Starten",
-    "confirmMission": "Missie Bevestigen"
+    "confirmMission": "Missie Bevestigen",
+    "completeMission": "Missie Voltooien",
+    "beforePictures": "Foto's Vooraf",
+    "viewFullScreen": "Volledig Scherm"
   },
   "BeforePictures": {
     "title": "Foto's Vooraf",

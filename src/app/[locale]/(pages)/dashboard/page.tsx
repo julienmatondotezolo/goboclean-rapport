@@ -17,6 +17,8 @@ interface Mission {
   type: 'emergency' | 'scheduled';
   startTime?: string;
   teamMembers?: number;
+  status?: 'noodgeval' | 'gepland';
+  beforePictures?: string[];
 }
 
 export default function DashboardPage() {
@@ -40,6 +42,13 @@ export default function DashboardPage() {
       location: 'Manufacturing Plant - Zone A',
       type: 'scheduled',
       startTime: '14:30',
+      status: 'gepland',
+      beforePictures: [
+        'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=400&q=80',
+        'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=400&q=80',
+        'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400&q=80',
+        'https://images.unsplash.com/photo-1581093588401-fbb62a02f120?w=400&q=80',
+      ],
     },
     {
       id: '3',
@@ -82,6 +91,7 @@ export default function DashboardPage() {
               location: report.client_address || 'Logistics Hub - Sector B4',
               type: 'emergency',
               teamMembers: 2,
+              status: 'noodgeval',
             });
           }
         }
@@ -115,6 +125,7 @@ export default function DashboardPage() {
           location: 'Logistics Hub - Sector B4',
           type: 'emergency' as const,
           teamMembers: 2,
+          status: 'noodgeval' as const,
         },
         ...dummyMissions,
       ];
@@ -135,7 +146,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h1 className="text-[20px] font-bold leading-none mb-1">GoBoclean Rapport</h1>
-              <p className="text-[#a3e635] text-[10px] font-bold tracking-[0.1em] uppercase">
+              <p className="text-[#a3e635] text-[10px] font-bold tracking-widest uppercase">
                 Made with love
               </p>
             </div>
@@ -210,6 +221,7 @@ export default function DashboardPage() {
               location={mission.location}
               startTime={mission.startTime}
               teamMembers={mission.teamMembers}
+              status={mission.status}
               onStartJob={() => router.push(`/mission/${mission.id}`)}
               onViewDetails={() => router.push(`/mission/${mission.id}`)}
             />

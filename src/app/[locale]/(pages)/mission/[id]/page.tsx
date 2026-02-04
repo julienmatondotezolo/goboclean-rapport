@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { MapPin, Clock, FileText, Phone, CheckCircle2 } from 'lucide-react';
+import { MapPin, Clock, FileText, Phone, CheckCircle2, X } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 // Mock mission data - In a real app, this would come from a database
 const getMissionById = (id: string) => {
@@ -14,6 +16,7 @@ const getMissionById = (id: string) => {
       title: 'Chemical Spill Cleanup',
       jobType: 'Roofing',
       time: '08:30 AM',
+      status: 'noodgeval',
       location: {
         name: 'Logistics Hub - Sector B4',
         address: '42 Industrial Way, Docking Area 7, NJ 07001',
@@ -32,24 +35,54 @@ const getMissionById = (id: string) => {
     },
     '2': {
       id: '2',
-      title: 'Roof Inspection',
-      jobType: 'Roofing',
-      time: '10:00 AM',
+      title: 'Floor Degreasing',
+      jobType: 'Industrial Cleaning',
+      time: '14:30',
+      status: 'gepland',
       location: {
-        name: 'Downtown Office Complex',
+        name: 'Manufacturing Plant - Zone A',
         address: '124 Oak Street, Suite 400, NY 10001',
       },
       description:
-        'Complete roof inspection for commercial building. Check for leaks, structural integrity, and maintenance needs. Document all findings with photos.',
+        'Complete floor degreasing for manufacturing facility. Remove oil stains, grease buildup, and ensure proper surface preparation.',
       tasks: [
-        { id: 1, text: 'Inspect roof membrane', completed: false },
-        { id: 2, text: 'Check drainage systems', completed: false },
-        { id: 3, text: 'Document damage areas', completed: false },
+        { id: 1, text: 'Pre-inspection of floor area', completed: true },
+        { id: 2, text: 'Apply degreasing solution', completed: false },
+        { id: 3, text: 'Pressure wash and rinse', completed: false },
       ],
       contact: {
         name: 'Sarah Mitchell',
         role: 'FACILITY MANAGER',
         avatar: '👩‍💼',
+      },
+      beforePictures: [
+        'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80',
+        'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&q=80',
+        'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80',
+        'https://images.unsplash.com/photo-1581093588401-fbb62a02f120?w=800&q=80',
+      ],
+    },
+    '3': {
+      id: '3',
+      title: 'Ventilation Service',
+      jobType: 'Maintenance',
+      time: 'Tomorrow',
+      status: 'gepland',
+      location: {
+        name: 'Storage Facility 3',
+        address: '456 Industrial Blvd, Warehouse District, NJ 07002',
+      },
+      description:
+        'Scheduled ventilation system service and filter replacement for storage facility.',
+      tasks: [
+        { id: 1, text: 'Inspect ventilation ducts', completed: false },
+        { id: 2, text: 'Replace air filters', completed: false },
+        { id: 3, text: 'Test airflow', completed: false },
+      ],
+      contact: {
+        name: 'Mike Johnson',
+        role: 'OPERATIONS MANAGER',
+        avatar: '👨‍💼',
       },
     },
   };
@@ -63,9 +96,19 @@ export default function MissionDetailPage() {
   const t = useTranslations('Mission');
   const id = params.id as string;
   const mission = getMissionById(id);
+  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+
+  const isScheduledMission = mission.status === 'gepland';
+  const hasBeforePictures = mission.beforePictures && mission.beforePictures.length > 0;
 
   const handleConfirmMission = () => {
-    router.push(`/${params.locale}/mission/${id}/before-pictures`);
+    if (isScheduledMission) {
+      // For scheduled missions, go to after-pictures
+      router.push(`/${params.locale}/mission/${id}/after-pictures`);
+    } else {
+      // For emergency missions, go to before-pictures
+      router.push(`/${params.locale}/mission/${id}/before-pictures`);
+    }
   };
 
   return (
@@ -170,6 +213,37 @@ export default function MissionDetailPage() {
           </div>
         </div>
 
+        {/* Before Pictures Section - Only show for scheduled missions */}
+        {isScheduledMission && hasBeforePictures && (
+          <div className="bg-[#f8fafc] rounded-2xl p-5">
+            <div className="text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+              {t('beforePictures')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {mission.beforePictures.map((photo: string, index: number) => (
+                <div
+                  key={index}
+                  onClick={() => setFullScreenImage(photo)}
+                  className="relative rounded-xl overflow-hidden border-2 border-gray-200 bg-white cursor-pointer hover:border-[#a3e635] transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ aspectRatio: '3/2' }}
+                >
+                  <Image
+                    src={photo}
+                    alt={`Before photo ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                  />
+                  {/* Photo number badge */}
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded">
+                    {index + 1}/4
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Contact Person */}
         <div className="bg-[#f8fafc] rounded-2xl p-5">
           <div className="text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
@@ -197,10 +271,36 @@ export default function MissionDetailPage() {
         <div className="pt-4">
           <Button onClick={handleConfirmMission} className="w-full">
             <FileText className="w-5 h-5" />
-            <span className="text-[15px] font-bold uppercase tracking-wide">{t('startMission')}</span>
+            <span className="text-[15px] font-bold uppercase tracking-wide">
+              {isScheduledMission ? t('completeMission') : t('startMission')}
+            </span>
           </Button>
         </div>
       </div>
+
+      {/* Full Screen Image Modal */}
+      {fullScreenImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          onClick={() => setFullScreenImage(null)}
+        >
+          <button
+            onClick={() => setFullScreenImage(null)}
+            className="absolute top-4 right-4 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/20 transition-all z-10"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+          <div className="relative w-full h-full max-w-4xl max-h-[90vh] p-4">
+            <Image
+              src={fullScreenImage}
+              alt="Full screen view"
+              fill
+              className="object-contain"
+              sizes="100vw"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

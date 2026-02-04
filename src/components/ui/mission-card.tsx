@@ -8,6 +8,7 @@ interface MissionCardProps {
   location: string;
   startTime?: string;
   teamMembers?: number;
+  status?: 'noodgeval' | 'gepland';
   onStartJob?: () => void;
   onViewDetails?: () => void;
   className?: string;
@@ -19,6 +20,7 @@ export function MissionCard({
   location,
   startTime,
   teamMembers,
+  status,
   onStartJob,
   onViewDetails,
   className,
