@@ -36,6 +36,13 @@
     
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
+    
+    /* Brand Colors from color-palette.html */
+    --brand-green: #84cc16; /* Lime 500 */
+    --brand-green-dark: #65a30d; /* Lime 600 */
+    --brand-green-light: #a3e635; /* Lime 400 */
+    --brand-emerald: #064e3b; /* Emerald 900 */
+    --brand-emerald-light: #065f46; /* Emerald 800 */
   }
   
   .dark {
@@ -66,6 +73,13 @@
     /* Accent: Bright Lime for dark mode */
     --accent: 84 100% 65%;
     --accent-foreground: 222.2 47.4% 11.2%;
+    
+    /* Brand Colors from color-palette.html */
+    --brand-green: #84cc16; /* Lime 500 */
+    --brand-green-dark: #65a30d; /* Lime 600 */
+    --brand-green-light: #a3e635; /* Lime 400 */
+    --brand-emerald: #064e3b; /* Emerald 900 */
+    --brand-emerald-light: #065f46; /* Emerald 800 */
   }
   
   * {
