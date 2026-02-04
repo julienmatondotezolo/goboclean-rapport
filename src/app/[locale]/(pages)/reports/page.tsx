@@ -91,7 +91,7 @@ export default function ReportsPage() {
             <span>{t('today')}</span> <ChevronDown className="w-3.5 h-3.5" />
           </button>
           <button className="flex items-center justify-between rounded-full border border-[#9ed34b] text-[#1e3a34] font-bold h-10 px-4 text-[13px] bg-[#f9fff0] hover:bg-[#f4ffdf] transition-all flex-1">
-            <span>{t('allWorkers')}</span> <ChevronDown className="w-3.5 h-3.5" />
+            <span>{t('workers')}</span> <ChevronDown className="w-3.5 h-3.5" />
           </button>
           <button className="flex items-center justify-between rounded-full border border-[#9ed34b] text-[#1e3a34] font-bold h-10 px-4 text-[13px] bg-[#f9fff0] hover:bg-[#f4ffdf] transition-all flex-1">
             <span>{t('status')}</span> <ChevronDown className="w-3.5 h-3.5" />
@@ -103,7 +103,7 @@ export default function ReportsPage() {
       <div className="px-6 mt-2">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[20px] font-bold text-[#064e3b]">{t('recentReports')}</h2>
-          <button className="text-[#84cc16] font-bold text-[16px] hover:underline">{t('viewAll')}</button>
+          <button className="text-(--brand-green) font-bold text-[14px] hover:underline">{t('viewAll')}</button>
         </div>
 
         <div className="space-y-4">
