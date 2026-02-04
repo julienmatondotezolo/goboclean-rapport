@@ -116,12 +116,27 @@ export default function BeforePicturesPage() {
 
             {[...Array(REQUIRED_PHOTOS)].map((_, index) => {
               const hasPhoto = photos[index];
+              const getLabel = (idx: number) => {
+                switch(idx) {
+                  case 0: return t('frontSlope');
+                  case 1: return t('valleyDetail');
+                  case 2: return t('ridge');
+                  case 3: return t('chimney');
+                  default: return '';
+                }
+              };
               
               return (
-                <div
-                  key={index}
-                  className="relative aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 bg-gray-50"
-                >
+                <div key={index} className="space-y-2">
+                  {/* Label above box */}
+                  <div className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">
+                    {getLabel(index)}
+                  </div>
+                  
+                  <div
+                    className="relative rounded-xl overflow-hidden border-2 border-dashed border-gray-200 bg-gray-50"
+                    style={{ aspectRatio: '3/2' }}
+                  >
                   {hasPhoto ? (
                     <>
                       <Image
@@ -132,14 +147,14 @@ export default function BeforePicturesPage() {
                         sizes="(max-width: 768px) 50vw, 33vw"
                       />
                       {/* Green checkmark on top right */}
-                      <div className="absolute top-2 right-2 w-7 h-7 bg-[#a3e635] rounded-full flex items-center justify-center shadow-lg">
-                        <CheckCircle className="w-5 h-5 text-[#064e3b]" />
+                      <div className="absolute top-1.5 right-1.5 w-6 h-6 bg-[#a3e635] rounded-full flex items-center justify-center shadow-lg">
+                        <CheckCircle className="w-4 h-4 text-[#064e3b]" />
                       </div>
                       {/* Delete and Retake buttons at bottom */}
-                      <div className="absolute bottom-0 left-0 right-0 flex gap-1 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                      <div className="absolute bottom-0 left-0 right-0 flex gap-1 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
                         <button
                           onClick={() => handleRemovePhoto(index)}
-                          className="flex-1 bg-red-500 text-white text-[10px] font-bold uppercase py-2 px-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center gap-1"
+                          className="flex-1 bg-red-500 text-white text-[9px] font-bold uppercase py-1.5 px-1 rounded-md hover:bg-red-600 transition-colors flex items-center justify-center gap-1"
                         >
                           <X className="w-3 h-3" />
                           {t('delete')}
@@ -149,31 +164,28 @@ export default function BeforePicturesPage() {
                             handleRemovePhoto(index);
                             setTimeout(() => document.getElementById('camera-input')?.click(), 100);
                           }}
-                          className="flex-1 bg-white text-gray-900 text-[10px] font-bold uppercase py-2 px-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
+                          className="flex-1 bg-white text-gray-900 text-[9px] font-bold uppercase py-1.5 px-1 rounded-md hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
                         >
                           <Camera className="w-3 h-3" />
                           {t('retake')}
                         </button>
-                      </div>
-                      {/* Photo label */}
-                      <div className="absolute top-2 left-2 bg-black/60 text-white text-[11px] font-bold px-2 py-1 rounded-lg">
-                        {index === 0 ? t('frontSlope') : index === 1 ? t('valleyDetail') : index === 2 ? t('ridge') : t('chimney')}
                       </div>
                     </>
                   ) : (
                     <button
                       onClick={() => document.getElementById('camera-input')?.click()}
                       disabled={isUploading}
-                      className="w-full h-full flex flex-col items-center justify-center gap-3 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                      className="w-full h-full flex flex-col items-center justify-center gap-2 hover:bg-gray-100 transition-colors disabled:opacity-50"
                     >
-                      <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center">
-                        <Camera className="w-8 h-8 text-gray-400" />
+                      <div className="w-12 h-12 bg-gray-200 rounded-xl flex items-center justify-center">
+                        <Camera className="w-6 h-6 text-gray-400" />
                       </div>
-                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide text-center px-2">
-                        {index === 0 ? t('addFrontSlope') : index === 1 ? t('addValleyDetail') : index === 2 ? t('addRidge') : t('addChimney')}
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide text-center px-2 leading-tight">
+                        {t('addPhoto')}
                       </p>
                     </button>
                   )}
+                  </div>
                 </div>
               );
             })}
@@ -212,49 +224,82 @@ export default function BeforePicturesPage() {
 
       {/* Step 2: Confirmation */}
       {currentStep === STEPS.CONFIRMATION && (
-        <div className="px-6 py-6 space-y-6 flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="px-6 py-6 space-y-6">
           {/* Success Icon */}
-          <div className="w-24 h-24 bg-gradient-to-br from-[#a3e635] to-[#84cc16] rounded-full flex items-center justify-center shadow-2xl animate-in zoom-in duration-500">
-            <CheckCircle className="w-14 h-14 text-[#064e3b]" />
+          <div className="flex justify-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-[#a3e635] to-[#84cc16] rounded-full flex items-center justify-center shadow-2xl animate-in zoom-in duration-500">
+              <CheckCircle className="w-12 h-12 text-[#064e3b]" />
+            </div>
           </div>
 
           {/* Message */}
-          <div className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-            <h2 className="text-[24px] font-bold text-gray-900">{t('step2Title')}</h2>
-            <p className="text-[15px] text-gray-600 leading-relaxed max-w-md">
+          <div className="text-center space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+            <h2 className="text-[20px] font-bold text-gray-900">{t('step2Title')}</h2>
+            <p className="text-[14px] text-gray-600 leading-relaxed">
               {t('step2Description')}
             </p>
           </div>
 
+          {/* Photo Summary */}
+          <div className="bg-[#f8fafc] rounded-2xl p-4 space-y-3 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[12px] font-bold text-gray-900 uppercase tracking-wide">
+                {t('photoSummary')}
+              </h3>
+              <span className="text-[11px] font-bold text-[#064e3b]">
+                {photos.length} {t('photos')}
+              </span>
+            </div>
+            
+            {/* Photo Grid Summary - Smaller */}
+            <div className="grid grid-cols-4 gap-2">
+              {photos.map((photo, index) => (
+                <div
+                  key={index}
+                  className="relative rounded-lg overflow-hidden border-2 border-[#a3e635]/30 bg-white aspect-square"
+                >
+                  <Image
+                    src={photo}
+                    alt={`${t('photo')} ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 25vw, 20vw"
+                  />
+                  {/* Green checkmark */}
+                  <div className="absolute top-1 right-1 w-5 h-5 bg-[#a3e635] rounded-full flex items-center justify-center shadow-lg">
+                    <CheckCircle className="w-3 h-3 text-[#064e3b]" />
+                  </div>
+                  {/* Photo number badge */}
+                  <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">
+                    {index + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Motivation Message */}
-          <div className="bg-gradient-to-br from-[#064e3b] to-[#065f46] rounded-2xl p-6 text-center shadow-xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-400">
-            <p className="text-[16px] font-bold text-white leading-relaxed">
+          <div className="bg-gradient-to-br from-[#064e3b] to-[#065f46] rounded-2xl p-5 text-center shadow-xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500">
+            <p className="text-[14px] font-bold text-white leading-relaxed">
               {t('motivationMessage')}
             </p>
           </div>
 
-          {/* Photo Count Badge */}
-          <div className="bg-[#f8fafc] rounded-2xl px-6 py-3 animate-in fade-in duration-700 delay-600">
-            <p className="text-[13px] text-gray-600">
-              <span className="font-bold text-[#064e3b]">{photos.length}</span> {t('photosAdded')}
-            </p>
-          </div>
-
           {/* Confirm Button */}
-          <div className="w-full pt-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-700">
+          <div className="pt-4 space-y-3 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-700">
             <Button onClick={handleConfirmMission} className="w-full">
               <CheckCircle className="w-5 h-5" />
-              <span className="text-[15px] font-bold uppercase tracking-wide">{t('confirmButton')}</span>
+              <span className="text-[15px] font-bold uppercase tracking-wide">{t('confirmAndStartButton')}</span>
             </Button>
-          </div>
 
-          {/* Back Link */}
-          <button
-            onClick={() => setCurrentStep(STEPS.PHOTOS)}
-            className="text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors animate-in fade-in duration-700 delay-900"
-          >
-            {t('backToPhotos')}
-          </button>
+            {/* Back Link */}
+            <button
+              onClick={() => setCurrentStep(STEPS.PHOTOS)}
+              className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors"
+            >
+              {t('backToPhotos')}
+            </button>
+          </div>
         </div>
       )}
     </div>

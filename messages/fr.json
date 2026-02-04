@@ -222,12 +222,14 @@
     "step": "Étape",
     "of": "sur",
     "step1Title": "Prendre des Photos Avant",
-    "step1Description": "Capturez 4 photos de différentes zones avant de commencer la mission. Celles-ci documenteront l'état initial.",
+    "step1Description": "Capturez des photos de différentes zones avant de commencer la mission.",
     "photosRequired": "photos requises",
     "remainingPhotos": "{count} photo(s) supplémentaire(s) nécessaire(s)",
     "photo": "Photo",
+    "photos": "photos",
     "delete": "Supprimer",
     "retake": "Reprendre",
+    "addPhoto": "Ajouter Photo",
     "frontSlope": "Pente Avant",
     "valleyDetail": "Détail Vallée",
     "ridge": "Faîte",
@@ -241,9 +243,11 @@
     "nextStep": "Étape Suivante",
     "step2Title": "Prêt à Commencer !",
     "step2Description": "Vos photos avant ont été enregistrées. Vous pouvez maintenant commencer la mission en toute confiance.",
+    "photoSummary": "Résumé des Photos",
     "motivationMessage": "💪 Allons-y ! Montrez votre expertise et livrez un excellent travail !",
     "photosAdded": "photos ajoutées",
     "confirmButton": "Démarrer la Mission",
+    "confirmAndStartButton": "Confirmer les Photos et Démarrer",
     "backToPhotos": "← Retour aux Photos"
   }
 }

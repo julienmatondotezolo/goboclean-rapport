@@ -222,12 +222,14 @@
     "step": "Stap",
     "of": "van",
     "step1Title": "Maak Foto's Vooraf",
-    "step1Description": "Maak 4 foto's van verschillende gebieden voordat u de missie start. Deze zullen de begintoestand documenteren.",
+    "step1Description": "Maak foto's van de verschillende gebieden voordat u de missie start.",
     "photosRequired": "foto's vereist",
     "remainingPhotos": "{count} foto('s) meer nodig",
     "photo": "Foto",
+    "photos": "foto's",
     "delete": "Verwijderen",
     "retake": "Opnieuw",
+    "addPhoto": "Foto Toevoegen",
     "frontSlope": "Voorhelling",
     "valleyDetail": "Vallei Detail",
     "ridge": "Nok",
@@ -241,9 +243,11 @@
     "nextStep": "Volgende Stap",
     "step2Title": "Klaar om te Beginnen!",
     "step2Description": "Uw foto's vooraf zijn opgeslagen. U kunt nu met vertrouwen de missie beginnen.",
+    "photoSummary": "Foto Overzicht",
     "motivationMessage": "💪 Laten we dit doen! Toon uw expertise en lever uitstekend werk!",
     "photosAdded": "foto's toegevoegd",
     "confirmButton": "Missie Starten",
+    "confirmAndStartButton": "Bevestig Foto's & Start Missie",
     "backToPhotos": "← Terug naar Foto's"
   }
 }

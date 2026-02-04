@@ -222,12 +222,14 @@
     "step": "Step",
     "of": "of",
     "step1Title": "Take Before Pictures",
-    "step1Description": "Capture 4 photos of different areas before starting the mission. These will document the initial condition.",
+    "step1Description": "Take photos of different areas before starting the mission.",
     "photosRequired": "photos required",
     "remainingPhotos": "{count} more photo(s) needed",
     "photo": "Photo",
+    "photos": "photos",
     "delete": "Delete",
     "retake": "Retake",
+    "addPhoto": "Add Photo",
     "frontSlope": "Front Slope",
     "valleyDetail": "Valley Detail",
     "ridge": "Ridge",
@@ -241,9 +243,11 @@
     "nextStep": "Next Step",
     "step2Title": "Ready to Start!",
     "step2Description": "Your before pictures have been saved. You can now begin the mission with confidence.",
+    "photoSummary": "Photo Summary",
     "motivationMessage": "💪 Let's do this! Show your expertise and deliver excellent work!",
     "photosAdded": "photos added",
     "confirmButton": "Start Mission",
+    "confirmAndStartButton": "Confirm Pictures & Start Mission",
     "backToPhotos": "← Back to Photos"
   }
 }
