@@ -5,6 +5,6 @@ import { Database } from '@/types/supabase';
 export const createServerClient = async () => {
   const cookieStore = await cookies();
   return createServerComponentClient<Database>({
-    cookies: () => cookieStore,
+    cookies: async () => cookieStore,
   });
 };
