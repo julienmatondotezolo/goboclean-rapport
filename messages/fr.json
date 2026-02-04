@@ -302,6 +302,8 @@
     "step1Description": "Détails de contact et localisation du service.",
     "step2Title": "Détails de la Mission",
     "step2Description": "Spécifications techniques et caractéristiques du site.",
+    "step3Title": "Assigner un Ouvrier",
+    "step3Description": "Sélectionnez l'ouvrier qui sera assigné à cette mission.",
     "firstName": "Prénom",
     "firstNamePlaceholder": "ex., Jean",
     "lastName": "Nom",
@@ -349,6 +351,13 @@
     "creating": "Création...",
     "requiredField": "Ce champ est requis",
     "invalidEmail": "Adresse email invalide",
-    "invalidPhone": "Numéro de téléphone invalide"
+    "invalidPhone": "Numéro de téléphone invalide",
+    "selectWorker": "Sélectionner un Ouvrier",
+    "selectWorkers": "Sélectionner les Ouvriers",
+    "selectWorkersHelp": "Sélectionnez un ou plusieurs ouvriers à assigner à cette mission",
+    "selected": "sélectionné(s)",
+    "workerRequired": "Au moins un ouvrier doit être sélectionné",
+    "missionSummary": "Résumé de la Mission",
+    "clientName": "Nom du Client"
   }
 }

@@ -302,6 +302,8 @@
     "step1Description": "Algemene contactgegevens en locatie voor de dienst.",
     "step2Title": "Missiedetails",
     "step2Description": "Technische specificaties en site kenmerken.",
+    "step3Title": "Werknemer Toewijzen",
+    "step3Description": "Selecteer de werknemer die aan deze missie wordt toegewezen.",
     "firstName": "Voornaam",
     "firstNamePlaceholder": "bijv., Jan",
     "lastName": "Achternaam",
@@ -349,6 +351,13 @@
     "creating": "Aanmaken...",
     "requiredField": "Dit veld is verplicht",
     "invalidEmail": "Ongeldig e-mailadres",
-    "invalidPhone": "Ongeldig telefoonnummer"
+    "invalidPhone": "Ongeldig telefoonnummer",
+    "selectWorker": "Selecteer Werknemer",
+    "selectWorkers": "Selecteer Werknemers",
+    "selectWorkersHelp": "Selecteer één of meer werknemers om aan deze missie toe te wijzen",
+    "selected": "geselecteerd",
+    "workerRequired": "Ten minste één werknemer moet worden geselecteerd",
+    "missionSummary": "Missie Overzicht",
+    "clientName": "Naam Klant"
   }
 }

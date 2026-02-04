@@ -302,6 +302,8 @@
     "step1Description": "General contact details and location for the service.",
     "step2Title": "Mission Details",
     "step2Description": "Technical specifications and site features.",
+    "step3Title": "Assign Worker",
+    "step3Description": "Select the worker who will be assigned to this mission.",
     "firstName": "First Name",
     "firstNamePlaceholder": "e.g., Jean",
     "lastName": "Last Name",
@@ -349,6 +351,13 @@
     "creating": "Creating...",
     "requiredField": "This field is required",
     "invalidEmail": "Invalid email address",
-    "invalidPhone": "Invalid phone number"
+    "invalidPhone": "Invalid phone number",
+    "selectWorker": "Select Worker",
+    "selectWorkers": "Select Workers",
+    "selectWorkersHelp": "Select one or more workers to assign to this mission",
+    "selected": "selected",
+    "workerRequired": "At least one worker must be selected",
+    "missionSummary": "Mission Summary",
+    "clientName": "Client Name"
   }
 }

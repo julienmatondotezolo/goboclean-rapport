@@ -42,7 +42,16 @@ interface MissionDetails {
   };
 }
 
-const TOTAL_STEPS = 2;
+const TOTAL_STEPS = 3;
+
+// Mock workers data - In a real app, this would come from a database
+const WORKERS = [
+  { id: '1', name: 'Jan Janssen', role: 'Senior Technician' },
+  { id: '2', name: 'Marie Dubois', role: 'Lead Roofer' },
+  { id: '3', name: 'Hans Schmidt', role: 'Technician' },
+  { id: '4', name: 'Sophie Martin', role: 'Junior Technician' },
+  { id: '5', name: 'Lucas van Dijk', role: 'Roofer' },
+];
 
 export default function MissionCreatePage() {
   const router = useRouter();
@@ -50,6 +59,7 @@ export default function MissionCreatePage() {
   const t = useTranslations('MissionCreate');
   const [currentStep, setCurrentStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedWorkers, setSelectedWorkers] = useState<string[]>([]);
   
   const progressValue = (currentStep / TOTAL_STEPS) * 100;
 
@@ -139,6 +149,10 @@ export default function MissionCreatePage() {
       if (validateStep1()) {
         setCurrentStep(2);
       }
+    } else if (currentStep === 2) {
+      if (validateStep2()) {
+        setCurrentStep(3);
+      }
     }
   };
 
@@ -164,9 +178,21 @@ export default function MissionCreatePage() {
     }
   };
 
+  const toggleWorkerSelection = (workerId: string) => {
+    setSelectedWorkers((prev) => {
+      if (prev.includes(workerId)) {
+        return prev.filter((id) => id !== workerId);
+      } else {
+        return [...prev, workerId];
+      }
+    });
+    setErrors({});
+  };
+
   const handleCreateMission = async () => {
-    // Validate step 2 before creating
-    if (!validateStep2()) {
+    // Validate worker selection
+    if (selectedWorkers.length === 0) {
+      setErrors({ worker: t('workerRequired') });
       return;
     }
 
@@ -176,7 +202,8 @@ export default function MissionCreatePage() {
     await new Promise((resolve) => setTimeout(resolve, 2000));
     
     // In a real app, save to database here
-    console.log('Mission created:', { clientInfo, missionDetails });
+    const selectedWorkersData = WORKERS.filter(w => selectedWorkers.includes(w.id));
+    console.log('Mission created:', { clientInfo, missionDetails, workers: selectedWorkersData });
     
     // Redirect to missions list or dashboard
     router.push(`/${params.locale}/schedule`);
@@ -528,11 +555,119 @@ export default function MissionCreatePage() {
               {t('previous')}
             </button>
 
+            {/* Next Step Button */}
+            <div className="pt-2">
+              <Button onClick={handleNextStep} className="w-full">
+                <span className="text-[15px] font-bold uppercase tracking-wide">{t('nextStep')}</span>
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 3 && (
+          <div className="space-y-6">
+            {/* Step Title */}
+            <div>
+              <h2 className="text-[24px] font-bold text-[#064e3b] mb-2">{t('step3Title')}</h2>
+              <p className="text-[14px] text-gray-600">{t('step3Description')}</p>
+            </div>
+
+            {/* Worker Selection */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+                {t('selectWorkers')} *
+              </label>
+              <p className="text-[11px] text-gray-500 mb-3">
+                {t('selectWorkersHelp')} ({selectedWorkers.length} {t('selected')})
+              </p>
+              
+              {/* Workers List as Cards */}
+              <div className="space-y-3">
+                {WORKERS.map((worker) => {
+                  const isSelected = selectedWorkers.includes(worker.id);
+                  return (
+                    <button
+                      key={worker.id}
+                      type="button"
+                      onClick={() => toggleWorkerSelection(worker.id)}
+                      className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+                        isSelected
+                          ? 'border-[#a3e635] bg-[#a3e635]/10'
+                          : 'border-gray-200 bg-[#f8fafc] hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        {/* Avatar */}
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${
+                          isSelected
+                            ? 'bg-[#a3e635] text-[#064e3b]'
+                            : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          {worker.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        
+                        {/* Worker Info */}
+                        <div className="flex-1">
+                          <h3 className="text-[15px] font-bold text-gray-900">{worker.name}</h3>
+                          <p className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
+                            {worker.role}
+                          </p>
+                        </div>
+
+                        {/* Checkmark */}
+                        {isSelected && (
+                          <CheckCircle2 className="w-6 h-6 text-[#a3e635]" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              
+              {errors.worker && (
+                <p className="text-red-500 text-xs mt-2">{errors.worker}</p>
+              )}
+            </div>
+
+            {/* Mission Summary */}
+            <div className="bg-[#f8fafc] rounded-2xl p-5">
+              <h3 className="text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+                {t('missionSummary')}
+              </h3>
+              <div className="space-y-2 text-[13px]">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('clientName')}:</span>
+                  <span className="font-bold text-gray-900">{clientInfo.firstName} {clientInfo.lastName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('missionType')}:</span>
+                  <span className="font-bold text-gray-900">{t('roof')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('surfaceArea')}:</span>
+                  <span className="font-bold text-gray-900">{missionDetails.surfaceArea} m²</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('facadeNumber')}:</span>
+                  <span className="font-bold text-gray-900">{missionDetails.facadeNumber}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Back Link */}
+            <button
+              onClick={handlePrevious}
+              className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors mb-4"
+            >
+              {t('previous')}
+            </button>
+
             {/* Create Mission Button */}
             <div className="pt-2">
               <Button
                 onClick={handleCreateMission}
-                disabled={isCreating}
+                disabled={isCreating || selectedWorkers.length === 0}
                 className="w-full"
               >
                 <CheckCircle2 className="w-5 h-5" />
