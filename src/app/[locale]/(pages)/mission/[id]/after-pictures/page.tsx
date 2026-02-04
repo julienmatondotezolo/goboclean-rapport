@@ -30,6 +30,8 @@ export default function AfterPicturesPage() {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number | null>(null);
   const [workerSignature, setWorkerSignature] = useState<string | null>(null);
   const [clientSignature, setClientSignature] = useState<string | null>(null);
+  const [isWorkerCanvasEmpty, setIsWorkerCanvasEmpty] = useState(true);
+  const [isClientCanvasEmpty, setIsClientCanvasEmpty] = useState(true);
 
   const workerCanvasRef = useRef<HTMLCanvasElement>(null);
   const clientCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -109,6 +111,15 @@ export default function AfterPicturesPage() {
   const remainingPhotos = Math.max(0, REQUIRED_PHOTOS - photoCount);
   const canComplete = workerSignature !== null && clientSignature !== null;
 
+  // Helper function to check if canvas is empty
+  const isCanvasBlank = (canvas: HTMLCanvasElement): boolean => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return true;
+    
+    const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    return !pixelData.data.some(channel => channel !== 0);
+  };
+
   // Initialize canvas on mount
   useEffect(() => {
     if (currentStep === STEPS.SIGNATURE) {
@@ -161,10 +172,6 @@ export default function AfterPicturesPage() {
     const canvas = type === 'worker' ? workerCanvasRef.current : clientCanvasRef.current;
     if (!canvas) return;
 
-    if ('touches' in e) {
-      e.preventDefault();
-    }
-
     isDrawingRef.current = true;
     const coords = getCoordinates(e, canvas);
     lastPosRef.current = coords;
@@ -179,10 +186,6 @@ export default function AfterPicturesPage() {
     const canvas = type === 'worker' ? workerCanvasRef.current : clientCanvasRef.current;
     if (!canvas) return;
 
-    if ('touches' in e) {
-      e.preventDefault();
-    }
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -194,6 +197,13 @@ export default function AfterPicturesPage() {
     ctx.stroke();
 
     lastPosRef.current = coords;
+
+    // Mark canvas as not empty when drawing
+    if (type === 'worker') {
+      setIsWorkerCanvasEmpty(false);
+    } else {
+      setIsClientCanvasEmpty(false);
+    }
   };
 
   const stopDrawing = () => {
@@ -208,6 +218,13 @@ export default function AfterPicturesPage() {
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Reset canvas empty state
+    if (type === 'worker') {
+      setIsWorkerCanvasEmpty(true);
+    } else {
+      setIsClientCanvasEmpty(true);
+    }
   };
 
   const saveSignature = (type: 'worker' | 'client') => {
@@ -582,7 +599,8 @@ export default function AfterPicturesPage() {
                 </button>
                 <button
                   onClick={() => saveSignature('worker')}
-                  className="flex-1 bg-[#064e3b] text-white text-[11px] font-bold uppercase py-3 px-4 rounded-xl hover:bg-[#065f46] transition-colors"
+                  disabled={isWorkerCanvasEmpty}
+                  className="flex-1 bg-[#064e3b] text-white text-[11px] font-bold uppercase py-3 px-4 rounded-xl hover:bg-[#065f46] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {t('save')}
                 </button>
@@ -655,7 +673,8 @@ export default function AfterPicturesPage() {
                 </button>
                 <button
                   onClick={() => saveSignature('client')}
-                  className="flex-1 bg-[#064e3b] text-white text-[11px] font-bold uppercase py-3 px-4 rounded-xl hover:bg-[#065f46] transition-colors"
+                  disabled={isClientCanvasEmpty}
+                  className="flex-1 bg-[#064e3b] text-white text-[11px] font-bold uppercase py-3 px-4 rounded-xl hover:bg-[#065f46] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {t('save')}
                 </button>
