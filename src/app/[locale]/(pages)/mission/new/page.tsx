@@ -17,11 +17,11 @@ interface ClientInfo {
   email: string;
   address: string;
   appointmentTime: string;
-  description: string;
 }
 
 interface MissionDetails {
   missionType: 'roof' | 'industrial';
+  additionalInformation: string;
   subTypes: {
     cleaning: boolean;
     coating: boolean;
@@ -60,16 +60,16 @@ export default function MissionCreatePage() {
     email: '',
     address: '',
     appointmentTime: '',
-    description: '',
   });
 
   const [missionDetails, setMissionDetails] = useState<MissionDetails>({
     missionType: 'roof',
+    additionalInformation: '',
     subTypes: {
       cleaning: false,
       coating: false,
     },
-    surfaceArea: '0.00',
+    surfaceArea: '',
     facadeNumber: '1',
     features: {
       frontParking: false,
@@ -109,6 +109,26 @@ export default function MissionCreatePage() {
     if (!clientInfo.address.trim()) {
       newErrors.address = t('requiredField');
     }
+    if (!clientInfo.appointmentTime.trim()) {
+      newErrors.appointmentTime = t('requiredField');
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const newErrors: Record<string, string> = {};
+
+    // At least one subtype must be selected
+    if (!missionDetails.subTypes.cleaning && !missionDetails.subTypes.coating) {
+      newErrors.subTypes = t('requiredField');
+    }
+
+    // Surface area must be greater than 0
+    if (!missionDetails.surfaceArea || parseFloat(missionDetails.surfaceArea) <= 0) {
+      newErrors.surfaceArea = t('surfaceAreaRequired');
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -145,6 +165,11 @@ export default function MissionCreatePage() {
   };
 
   const handleCreateMission = async () => {
+    // Validate step 2 before creating
+    if (!validateStep2()) {
+      return;
+    }
+
     setIsCreating(true);
     
     // Simulate API call
@@ -284,7 +309,7 @@ export default function MissionCreatePage() {
             {/* Appointment Time */}
             <div>
               <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
-                {t('appointmentTime')}
+                {t('appointmentTime')} *
               </label>
               <div className="relative">
                 <Calendar className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
@@ -292,22 +317,12 @@ export default function MissionCreatePage() {
                   type="datetime-local"
                   value={clientInfo.appointmentTime}
                   onChange={(e) => setClientInfo({ ...clientInfo, appointmentTime: e.target.value })}
-                  className="pl-14 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                  className={`pl-14 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer ${errors.appointmentTime ? 'border-red-500' : ''}`}
                 />
               </div>
-            </div>
-
-            {/* Mission Description */}
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
-                {t('missionDescription')}
-              </label>
-              <textarea
-                value={clientInfo.description}
-                onChange={(e) => setClientInfo({ ...clientInfo, description: e.target.value })}
-                placeholder={t('descriptionPlaceholder')}
-                className="w-full bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-xl px-6 py-4 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-[#84cc16] focus:ring-2 focus:ring-[#84cc16]/20 transition-all text-base min-h-[120px] resize-none"
-              />
+              {errors.appointmentTime && (
+                <p className="text-red-500 text-xs mt-1">{errors.appointmentTime}</p>
+              )}
             </div>
 
             {/* Next Button */}
@@ -361,7 +376,7 @@ export default function MissionCreatePage() {
             {/* Mission Sub-type */}
             <div>
               <label className="block text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
-                {t('missionSubtype')}
+                {t('missionSubtype')} *
               </label>
               <div className="space-y-3">
                 <label className="flex items-center gap-3 p-4 rounded-xl bg-[#f8fafc] cursor-pointer hover:bg-gray-100 transition-all">
@@ -389,6 +404,9 @@ export default function MissionCreatePage() {
                   <span className="text-[14px] font-medium text-gray-900">{t('coating')}</span>
                 </label>
               </div>
+              {errors.subTypes && (
+                <p className="text-red-500 text-xs mt-2">{errors.subTypes}</p>
+              )}
             </div>
 
             {/* Site Measurements */}
@@ -399,27 +417,31 @@ export default function MissionCreatePage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-[12px] font-medium text-gray-700 mb-2">
-                    {t('surfaceArea')}
+                    {t('surfaceArea')} *
                   </label>
                   <div className="relative">
                     <Input
                       type="number"
                       step="0.01"
-                      min="0"
+                      min="0.01"
                       value={missionDetails.surfaceArea}
                       onChange={(e) =>
                         setMissionDetails({ ...missionDetails, surfaceArea: e.target.value })
                       }
-                      className="pr-12"
+                      placeholder="0.00"
+                      className={`pr-12 ${errors.surfaceArea ? 'border-red-500' : ''}`}
                     />
                     <span className="absolute right-5 top-1/2 transform -translate-y-1/2 text-sm font-medium text-gray-500">
                       m²
                     </span>
                   </div>
+                  {errors.surfaceArea && (
+                    <p className="text-red-500 text-xs mt-1">{errors.surfaceArea}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
-                    {t('facadeNumber')}
+                    {t('facadeNumber')} *
                   </label>
                   <p className="text-[11px] text-gray-500 mb-3">{t('facadeHelp')}</p>
                   <div className="grid grid-cols-4 gap-3">
@@ -482,6 +504,20 @@ export default function MissionCreatePage() {
                   </label>
                 ))}
               </div>
+            </div>
+
+            {/* Additional Information */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+                {t('additionalInformation')}
+              </label>
+              <textarea
+                value={missionDetails.additionalInformation}
+                onChange={(e) => setMissionDetails({ ...missionDetails, additionalInformation: e.target.value })}
+                placeholder={t('additionalInformationPlaceholder')}
+                className="w-full bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-xl px-6 py-4 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-[#84cc16] focus:ring-2 focus:ring-[#84cc16]/20 transition-all text-base min-h-[120px] resize-none"
+              />
+              <p className="text-[11px] text-gray-500 mt-1">{t('optionalField')}</p>
             </div>
 
             {/* Back Link */}
