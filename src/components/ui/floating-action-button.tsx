@@ -31,7 +31,7 @@ export function FloatingActionButton({
     <button 
       onClick={handleClick}
       className={cn(
-        'fixed bottom-24 right-6 w-14 h-14 bg-[#a3e635] text-[#064e3b] rounded-full flex items-center justify-center shadow-xl hover:bg-lime-300 transition-all active:scale-90 z-40',
+        'fixed bottom-24 right-6 w-14 h-14 bg-brand-green-light text-brand-emerald rounded-full flex items-center justify-center shadow-xl hover:bg-lime-300 transition-all active:scale-90 z-40',
         className
       )}
       aria-label="Add new mission"

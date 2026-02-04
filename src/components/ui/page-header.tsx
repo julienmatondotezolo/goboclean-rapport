@@ -27,7 +27,7 @@ export function PageHeader({ title, onBack }: PageHeaderProps) {
       >
         <ArrowLeft className="w-6 h-6 text-slate-700" />
       </button>
-      <h1 className="text-[18px] font-bold text-[#064e3b]">{title}</h1>
+      <h1 className="text-[18px] font-bold text-brand-emerald">{title}</h1>
       <div className="w-10" /> {/* Spacer for centering */}
     </header>
   );

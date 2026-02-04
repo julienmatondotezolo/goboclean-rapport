@@ -8,8 +8,8 @@ interface LogoGoBoCleanProps {
 export function LogoGoBoClean({ className }: LogoGoBoCleanProps) {
   return (
     <div className={cn("relative", className)}>
-      <Hexagon className="h-12 w-12 text-(--brand-green-light) group-hover:rotate-90 transition-transform duration-500" strokeWidth={2.5} />
-      <span className="absolute inset-0 flex items-center justify-center font-bold text-(--brand-green-light) text-lg">G</span>
+      <Hexagon className="h-12 w-12 text-brand-green-light group-hover:rotate-90 transition-transform duration-500" strokeWidth={2.5} />
+      <span className="absolute inset-0 flex items-center justify-center font-bold text-brand-green-light text-lg">G</span>
     </div>
   );
 }
@@ -56,7 +56,7 @@ export function Logo({
           <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">
             {title}
           </h1>
-          <p className="text-[#98d62e] text-[10px] font-bold tracking-[0.25em] uppercase opacity-90">
+          <p className="text-brand-lime text-[10px] font-bold tracking-[0.25em] uppercase opacity-90">
             {subtitle}
           </p>
         </>

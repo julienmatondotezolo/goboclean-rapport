@@ -80,7 +80,7 @@ export default function ReportsPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 z-10" />
           <Input 
             placeholder={t('searchPlaceholder')}
-            className="pl-12 h-14 bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-2xl text-[16px] transition-all focus:outline-none focus:border-[#84cc16] focus:bg-white focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
+            className="pl-12 h-14 bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-2xl text-[16px] transition-all focus:outline-none focus:border-brand-green focus:bg-white focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -102,7 +102,7 @@ export default function ReportsPage() {
       {/* Recent Reports Section */}
       <div className="px-6 mt-2">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-[20px] font-bold text-[#064e3b]">{t('recentReports')}</h2>
+          <h2 className="text-[20px] font-bold text-brand-emerald">{t('recentReports')}</h2>
           <button className="text-(--brand-green) font-bold text-[14px] hover:underline">{t('viewAll')}</button>
         </div>
 
@@ -113,8 +113,8 @@ export default function ReportsPage() {
               className="group flex items-center gap-4 py-2 bg-white active:scale-[0.98] transition-all border-b border-slate-50 last:border-0"
               onClick={() => router.push(`/reports/${report.id}`)}
             >
-              <div className="w-14 h-14 rounded-2xl bg-[#84cc16]/10 flex items-center justify-center shrink-0">
-                <FileText className="w-7 h-7 text-[#064e3b]" />
+              <div className="w-14 h-14 rounded-2xl bg-brand-green/10 flex items-center justify-center shrink-0">
+                <FileText className="w-7 h-7 text-brand-emerald" />
               </div>
               
               <div className="flex-1 min-w-0">

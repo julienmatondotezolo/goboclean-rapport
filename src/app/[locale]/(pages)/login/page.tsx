@@ -172,7 +172,7 @@ export default function LoginPage() {
             <p className="text-xs font-bold text-slate-400 tracking-tight">
               {t('version')} 2.4.0 (Build 88)
             </p>
-            <button className="text-[15px] text-[#1a2e1a] hover:text-black font-black underline underline-offset-8 decoration-4 decoration-[#98d62e]/30 hover:decoration-[#98d62e] transition-all">
+            <button className="text-[15px] text-brand-emerald-darker hover:text-black font-black underline underline-offset-8 decoration-4 decoration-brand-lime/30 hover:decoration-brand-lime transition-all">
               {t('contactSupport')}
             </button>
           </div>

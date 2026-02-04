@@ -1,6 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
 @import "tailwindcss";
 
+@theme {
+  /* Brand Colors - Tailwind v4 theme configuration */
+  --color-brand-green: #84cc16;
+  --color-brand-green-dark: #65a30d;
+  --color-brand-green-light: #a3e635;
+  --color-brand-green-lighter: #bdf05d;
+  --color-brand-green-shadow: #93d635;
+  --color-brand-emerald: #064e3b;
+  --color-brand-emerald-light: #065f46;
+  --color-brand-emerald-dark: #1e4620;
+  --color-brand-emerald-darker: #1a2e1a;
+  --color-brand-lime: #98d62e;
+  --color-brand-lime-soft: #b4e655;
+  --color-brand-lime-softer: #c5f075;
+}
+
 @layer base {
   :root {
     /* Border radius */
@@ -37,13 +53,6 @@
     
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    
-    /* Brand Colors from color-palette.html */
-    --brand-green: #84cc16; /* Lime 500 */
-    --brand-green-dark: #65a30d; /* Lime 600 */
-    --brand-green-light: #a3e635; /* Lime 400 */
-    --brand-emerald: #064e3b; /* Emerald 900 */
-    --brand-emerald-light: #065f46; /* Emerald 800 */
   }
   
   .dark {

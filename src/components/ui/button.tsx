@@ -10,17 +10,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[#84cc16] bg-brand-green-light text-[#1e4620] shadow-[0_10px_20px_rgba(0,0,0,0.1),0_4px_0_#93d635] hover:bg-[#bdf05d] hover:translate-y-[1px] hover:shadow-[0_8px_15px_rgba(0,0,0,0.1),0_3px_0_#93d635] active:translate-y-[4px] active:shadow-none",
+          "bg-brand-green-light text-brand-emerald-dark shadow-[0_10px_20px_rgba(0,0,0,0.1),0_4px_0_rgb(147_214_53)] hover:bg-brand-green-lighter hover:translate-y-[1px] hover:shadow-[0_8px_15px_rgba(0,0,0,0.1),0_3px_0_rgb(147_214_53)] active:translate-y-[4px] active:shadow-none",
         destructive:
           "bg-gradient-to-br from-destructive to-destructive/90 text-destructive-foreground shadow-lg shadow-destructive/50 hover:shadow-xl hover:shadow-destructive/60 hover:scale-105 active:scale-100",
         outline:
-          "border-2 border-[#b4e655]/30 bg-transparent text-[#1e4620] hover:bg-[#b4e655]/10 hover:border-[#b4e655]/50 hover:scale-105 active:scale-100",
+          "border-2 border-brand-lime-soft/30 bg-transparent text-brand-emerald-dark hover:bg-brand-lime-soft/10 hover:border-brand-lime-soft/50 hover:scale-105 active:scale-100",
         secondary:
-          "bg-[#1e4620] text-white shadow-md hover:bg-[#2a5d2d] hover:shadow-lg hover:scale-105 active:scale-100",
-        ghost: "hover:bg-[#b4e655]/10 hover:text-[#1e4620] hover:scale-105 active:scale-100",
-        link: "text-[#1e4620] underline-offset-4 hover:underline normal-case tracking-normal",
+          "bg-brand-emerald-dark text-white shadow-md hover:bg-[#2a5d2d] hover:shadow-lg hover:scale-105 active:scale-100",
+        ghost: "hover:bg-brand-lime-soft/10 hover:text-brand-emerald-dark hover:scale-105 active:scale-100",
+        link: "text-brand-emerald-dark underline-offset-4 hover:underline normal-case tracking-normal",
         gradient:
-          "bg-gradient-to-r from-[#b4e655] via-[#c5f075] to-[#b4e655] text-[#1e4620] shadow-lg hover:shadow-xl hover:scale-105 active:scale-100",
+          "bg-gradient-to-r from-brand-lime-soft via-brand-lime-softer to-brand-lime-soft text-brand-emerald-dark shadow-lg hover:shadow-xl hover:scale-105 active:scale-100",
       },
       size: {
         default: "h-[4.5rem] px-12 py-4 text-xl",

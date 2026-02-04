@@ -49,7 +49,7 @@ export function BottomNav({ items, className }: BottomNavProps) {
               className={cn(
                 'flex flex-col items-center gap-1.5 transition-all active:scale-90',
                 isActive
-                  ? 'text-[#064e3b]'
+                  ? 'text-brand-emerald'
                   : 'text-slate-400'
               )}
               aria-label={item.label}
@@ -57,7 +57,7 @@ export function BottomNav({ items, className }: BottomNavProps) {
               <Icon className={cn('w-6 h-6', isActive && 'stroke-[2.5px]')} />
               <span className={cn(
                 'text-[10px] font-bold tracking-wider uppercase',
-                isActive ? 'text-[#064e3b]' : 'text-slate-400'
+                isActive ? 'text-brand-emerald' : 'text-slate-400'
               )}>
                 {item.label}
               </span>
