@@ -2,216 +2,161 @@
 
 import { useState } from 'react';
 import { useRouter } from '@/i18n/routing';
-import { ReportForm, ReportFormData } from '@/components/report-form';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { ArrowLeft, FileText } from 'lucide-react';
-import { compressImage } from '@/lib/image-compression';
+import { useTranslations } from 'next-intl';
+import { 
+  Search, 
+  ChevronRight, 
+  FileText, 
+  CheckCircle2, 
+  Clock,
+  ChevronDown
+} from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/page-header';
+
+interface Report {
+  id: string;
+  clientName: string;
+  address: string;
+  workerName: string;
+  updatedTime: string;
+  status: 'synced' | 'pending';
+}
+
+const DUMMY_REPORTS: Report[] = [
+  {
+    id: '1',
+    clientName: 'Sarah Jenkins',
+    address: '452 O...',
+    workerName: 'David Miller',
+    updatedTime: '14 mins ago',
+    status: 'synced',
+  },
+  {
+    id: '2',
+    clientName: 'Robert Chen',
+    address: '1288...',
+    workerName: 'Mike Johnson',
+    updatedTime: '1 hour ago',
+    status: 'pending',
+  },
+  {
+    id: '3',
+    clientName: 'Alice Cooper',
+    address: '90...',
+    workerName: 'Sarah Lee',
+    updatedTime: '3 hours ago',
+    status: 'synced',
+  },
+  {
+    id: '4',
+    clientName: 'George Williams',
+    address: '33...',
+    workerName: 'Mike Johnson',
+    updatedTime: '5 hours ago',
+    status: 'synced',
+  },
+];
 
 export default function ReportsPage() {
   const router = useRouter();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const supabase = createClientComponentClient();
+  const t = useTranslations('Reports');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSubmit = async (data: ReportFormData) => {
-    setIsSubmitting(true);
-    
-    try {
-      // Get current user
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: 'Erreur',
-          description: 'Vous devez être connecté pour créer un rapport',
-          variant: 'destructive',
-        });
-        router.push('/login');
-        return;
-      }
-
-      // Create report in database
-      const { data: report, error: reportError } = await supabase
-        .from('reports')
-        .insert({
-          worker_id: session.user.id,
-          status: 'completed',
-          sync_status: 'synced',
-          client_first_name: data.client_first_name,
-          client_last_name: data.client_last_name,
-          client_address: data.client_address,
-          client_phone: data.client_phone,
-          client_latitude: data.client_latitude,
-          client_longitude: data.client_longitude,
-          roof_type: data.roof_type,
-          roof_surface: data.roof_surface,
-          moss_level: data.moss_level,
-          comments: data.comments,
-          completed_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (reportError) throw reportError;
-
-      // Upload before photos
-      for (let i = 0; i < data.before_photos.length; i++) {
-        const file = data.before_photos[i];
-        const compressedFile = await compressImage(file);
-        const fileName = `${report.id}/before_${i}_${Date.now()}.jpg`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('roof-photos')
-          .upload(fileName, compressedFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('roof-photos')
-          .getPublicUrl(fileName);
-
-        await supabase.from('photos').insert({
-          report_id: report.id,
-          type: 'before',
-          url: publicUrl,
-          storage_path: fileName,
-          order: i,
-        });
-      }
-
-      // Upload after photos
-      for (let i = 0; i < data.after_photos.length; i++) {
-        const file = data.after_photos[i];
-        const compressedFile = await compressImage(file);
-        const fileName = `${report.id}/after_${i}_${Date.now()}.jpg`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('roof-photos')
-          .upload(fileName, compressedFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('roof-photos')
-          .getPublicUrl(fileName);
-
-        await supabase.from('photos').insert({
-          report_id: report.id,
-          type: 'after',
-          url: publicUrl,
-          storage_path: fileName,
-          order: i,
-        });
-      }
-
-      // Upload signatures if present
-      if (data.worker_signature) {
-        const workerSignatureBlob = await fetch(data.worker_signature).then(r => r.blob());
-        const workerFileName = `${report.id}/worker_signature_${Date.now()}.png`;
-        
-        const { error: signatureError } = await supabase.storage
-          .from('signatures')
-          .upload(workerFileName, workerSignatureBlob);
-
-        if (signatureError) throw signatureError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('signatures')
-          .getPublicUrl(workerFileName);
-
-        await supabase
-          .from('reports')
-          .update({
-            worker_signature_url: publicUrl,
-            worker_signature_date: data.worker_signature_date,
-          })
-          .eq('id', report.id);
-      }
-
-      if (data.client_signature) {
-        const clientSignatureBlob = await fetch(data.client_signature).then(r => r.blob());
-        const clientFileName = `${report.id}/client_signature_${Date.now()}.png`;
-        
-        const { error: signatureError } = await supabase.storage
-          .from('signatures')
-          .upload(clientFileName, clientSignatureBlob);
-
-        if (signatureError) throw signatureError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('signatures')
-          .getPublicUrl(clientFileName);
-
-        await supabase
-          .from('reports')
-          .update({
-            client_signature_url: publicUrl,
-            client_signature_date: data.client_signature_date,
-          })
-          .eq('id', report.id);
-      }
-
-      toast({
-        title: 'Rapport créé avec succès',
-        description: 'Le rapport a été enregistré et le PDF sera envoyé par email.',
-      });
-
-      // Trigger PDF generation and email sending via backend
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      try {
-        await fetch(`${apiUrl}/reports/${report.id}/finalize`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-      } catch (apiError) {
-        console.error('Error triggering PDF generation:', apiError);
-        // Don't fail the whole operation if backend is down
-      }
-
-      router.push('/');
-    } catch (error: any) {
-      console.error('Error creating report:', error);
-      toast({
-        title: 'Erreur',
-        description: error.message || 'Une erreur est survenue lors de la création du rapport',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const filteredReports = DUMMY_REPORTS.filter(report => 
+    report.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    report.workerName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => router.push('/')}
-              disabled={isSubmitting}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                <FileText className="h-8 w-8 text-blue-600" />
-                Nouveau Rapport
-              </h1>
-              <p className="text-gray-600">Documentez le nettoyage de toiture</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-white pb-24 font-sans">
+      {/* Header */}
+      <PageHeader title={t('allReports')} />
+
+      {/* Search and Filters */}
+      <div className="px-6 py-5 space-y-4">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 z-10" />
+          <Input 
+            placeholder={t('searchPlaceholder')}
+            className="pl-12 h-14 bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-2xl text-[16px] transition-all focus:outline-none focus:border-[#84cc16] focus:bg-white focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
 
-        {/* Report Form */}
-        <ReportForm onSubmit={handleSubmit} isLoading={isSubmitting} />
+        <div className="flex justify-between gap-2">
+          <button className="flex items-center justify-between rounded-full bg-[#9ed34b] text-white font-bold h-10 px-4 text-[13px] hover:opacity-90 transition-all shadow-sm flex-1">
+            <span>{t('today')}</span> <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+          <button className="flex items-center justify-between rounded-full border border-[#9ed34b] text-[#1e3a34] font-bold h-10 px-4 text-[13px] bg-[#f9fff0] hover:bg-[#f4ffdf] transition-all flex-1">
+            <span>{t('allWorkers')}</span> <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+          <button className="flex items-center justify-between rounded-full border border-[#9ed34b] text-[#1e3a34] font-bold h-10 px-4 text-[13px] bg-[#f9fff0] hover:bg-[#f4ffdf] transition-all flex-1">
+            <span>{t('status')}</span> <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Recent Reports Section */}
+      <div className="px-6 mt-2">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-[20px] font-bold text-[#064e3b]">{t('recentReports')}</h2>
+          <button className="text-[#84cc16] font-bold text-[16px] hover:underline">{t('viewAll')}</button>
+        </div>
+
+        <div className="space-y-4">
+          {filteredReports.map((report) => (
+            <div 
+              key={report.id}
+              className="group flex items-center gap-4 py-2 bg-white active:scale-[0.98] transition-all border-b border-slate-50 last:border-0"
+              onClick={() => router.push(`/reports/${report.id}`)}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-[#84cc16]/10 flex items-center justify-center shrink-0">
+                <FileText className="w-7 h-7 text-[#064e3b]" />
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-slate-800 truncate text-[17px]">
+                  {report.clientName} - {report.address}
+                </h3>
+                <p className="text-slate-500 text-[14px] font-medium">
+                  {t('worker')}: {report.workerName}
+                </p>
+                <p className="text-slate-400 text-[13px] mt-0.5">
+                  {t('updated')} {report.updatedTime}
+                </p>
+              </div>
+
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                <div className={cn(
+                  "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider",
+                  report.status === 'synced' 
+                    ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
+                    : "bg-orange-50 text-orange-600 border border-orange-100"
+                )}>
+                  {report.status === 'synced' ? (
+                    <>
+                      <CheckCircle2 className="w-3 h-3 fill-emerald-600 text-white" />
+                      <span>{t('synced')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="w-3 h-3" />
+                      <span>{t('pending')}</span>
+                    </>
+                  )}
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-300 group-active:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
+
+
+
