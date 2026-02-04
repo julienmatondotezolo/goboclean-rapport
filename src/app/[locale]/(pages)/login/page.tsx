@@ -93,10 +93,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder={t('emailPlaceholder')}
                 {...register('email')}
-                className={cn(
-                  "bg-[#f8fafc] border-2 border-[#e2e8f0] h-16 rounded-xl px-6 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-[#84cc16] focus:ring-2 focus:ring-[#84cc16]/20 transition-all text-base",
-                  errors.email ? 'border-red-500' : ''
-                )}
+                className={cn(errors.email ? 'border-red-500' : '')}
                 disabled={isLoading}
               />
               {errors.email && (
@@ -126,7 +123,7 @@ export default function LoginPage() {
                   placeholder={t('passwordPlaceholder')}
                   {...register('password')}
                   className={cn(
-                    "bg-[#f8fafc] border-2 border-[#e2e8f0] h-16 rounded-xl px-6 pr-14 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-[#84cc16] focus:ring-2 focus:ring-[#84cc16]/20 transition-all text-base",
+                    "pr-14",
                     errors.password ? 'border-red-500' : ''
                   )}
                   disabled={isLoading}
