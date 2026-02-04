@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon Preview - Rapport by GoBoclean</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .status {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 4px;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            border-left-color: #10b981;
+        }
+        
+        .status-title {
+            font-weight: bold;
+            color: #92400e;
+            margin-bottom: 0.5rem;
+        }
+        
+        .status.success .status-title {
+            color: #065f46;
+        }
+        
+        .section {
+            margin-bottom: 3rem;
+        }
+        
+        .section-title {
+            color: #2d3748;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .icon-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f7fafc;
+        }
+        
+        .icon-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #84cc16;
+        }
+        
+        .icon-wrapper {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+        }
+        
+        .icon-card img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .icon-card.error img {
+            display: none;
+        }
+        
+        .icon-card.error .icon-wrapper {
+            background: #fee2e2;
+            color: #991b1b;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .icon-card.loaded .icon-wrapper {
+            background: #d1fae5;
+        }
+        
+        .icon-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .icon-size {
+            color: #718096;
+            font-size: 0.75rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+        
+        .badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .badge.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .favicon-preview {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .instructions {
+            background: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 1rem;
+            margin-top: 2rem;
+            border-radius: 4px;
+        }
+        
+        .instructions h3 {
+            color: #2c5282;
+            margin-bottom: 0.5rem;
+        }
+        
+        .instructions ol {
+            margin-left: 1.5rem;
+            color: #2d3748;
+        }
+        
+        .instructions li {
+            margin-bottom: 0.5rem;
+        }
+        
+        code {
+            background: #f7fafc;
+            padding: 0.125rem 0.375rem;
+            border-radius: 3px;
+            font-size: 0.875rem;
+            color: #c53030;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Rapport by GoBoclean - PWA Icons</h1>
+        <p class="subtitle">Icon & Favicon Preview</p>
+        
+        <div id="statusBox" class="status">
+            <div class="status-title">⏳ Checking icons...</div>
+            <div id="statusText">Loading icon status...</div>
+        </div>
+        
+        <!-- App Icons Section -->
+        <div class="section">
+            <h2 class="section-title">App Icons</h2>
+            <p style="color: #718096; margin-bottom: 1rem;">These icons are used when users install the PWA on their devices.</p>
+            
+            <div class="icon-grid">
+                <div class="icon-card" data-path="/icons/icon-72x72.png">
+                    <div class="icon-wrapper">
+                        <img src="/icons/icon-72x72.png" alt="72x72 icon" />
+                        <span class="error-text">Missing</span>
+                    </div>
+                    <div class="icon-name">icon-72x72.png</div>
+                    <div class="icon-size">72 × 72 pixels</div>
+                    <span class="badge">Checking...</span>
+                </div>
+                
+                <div class="icon-card" data-path="/icons/icon-96x96.png">
+                    <div class="icon-wrapper">
+                        <img src="/icons/icon-96x96.png" alt="96x96 icon" />
+                        <span class="error-text">Missing</span>
+                    </div>
+                    <div class="icon-name">icon-96x96.png</div>
+                    <div class="icon-size">96 × 96 pixels</div>
+                    <span class="badge">Checking...</span>
+                </div>
+                
+                <div class="icon-card" data-path="/icons/icon-128x128.png">
+                    <div class="icon-wrapper">
+                        <img src="/icons/icon-128x128.png" alt="128x128 icon" />
+                        <span class="error-text">Missing</span>
+                    </div>
+                    <div class="icon-name">icon-128x128.png</div>
+                    <div class="icon-size">128 × 128 pixels</div>
+                    <span class="badge">Checking...</span>
+                </div>
+                
+                <div class="icon-card" data-path="/icons/icon-144x144.png">
+                    <div class="icon-wrapper">
+                        <img src="/icons/icon-144x144.png" alt="144x144 icon" />
+                        <span class="error-text">Missing</span>
+                    </div>
+                    <div class="icon-name">icon-144x144.png</div>
+                    <div class="icon-size">144 × 144 pixels</div>
+                    <span class="badge">Checking...</span>
+                </div>
+                
+                <div class="icon-card" data-path="/icons/icon-152x152.png">
+                    <div class="icon-wrapper">
+                        <img src="/icons/icon-152x152.png" alt="152x152 icon" />
+                        <span class="error-text">Missing</span>
+                    </div>
+                    <div class="icon-name">icon-152x152.png</div>
+                    <div class="icon-size">152 × 152 pixels</div>
+                    <span class="badge">Checking...</span>
+                </div>
+                
+                <div class="icon-card" data-path="/icons/icon-192x192.png">
+                    <div class="icon-wrapper">
+                        <img src="/icons/icon-192x192.png" alt="192x192 icon" />
+                        <span class="error-text">Missing</span>
+                    </div>
+                    <div class="icon-name">icon-192x192.png</div>
+                    <div class="icon-size">192 × 192 pixels</div>
+                    <span class="badge">Checking...</span>
+                </div>
+                
+                <div class="icon-card" data-path="/icons/icon-384x384.png">
+                    <div class="icon-wrapper">
+                        <img src="/icons/icon-384x384.png" alt="384x384 icon" />
+                        <span class="error-text">Missing</span>
+                    </div>
+                    <div class="icon-name">icon-384x384.png</div>
+                    <div class="icon-size">384 × 384 pixels</div>
+                    <span class="badge">Checking...</span>
+                </div>
+                
+                <div class="icon-card" data-path="/icons/icon-512x512.png">
+                    <div class="icon-wrapper">
+                        <img src="/icons/icon-512x512.png" alt="512x512 icon" />
+                        <span class="error-text">Missing</span>
+                    </div>
+                    <div class="icon-name">icon-512x512.png</div>
+                    <div class="icon-size">512 × 512 pixels</div>
+                    <span class="badge">Checking...</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Favicon Section -->
+        <div class="section">
+            <h2 class="section-title">Favicons</h2>
+            <p style="color: #718096; margin-bottom: 1rem;">These icons appear in browser tabs and bookmarks.</p>
+            
+            <div class="favicon-preview">
+                <div class="icon-card" data-path="/favicon/favicon-16x16.png">
+                    <div class="icon-wrapper">
+                        <img src="/favicon/favicon-16x16.png" alt="16x16 favicon" />
+                        <span class="error-text">Missing</span>
+                    </div>
+                    <div class="icon-name">favicon-16x16.png</div>
+                    <div class="icon-size">16 × 16 pixels</div>
+                    <span class="badge">Checking...</span>
+                </div>
+                
+                <div class="icon-card" data-path="/favicon/favicon-32x32.png">
+                    <div class="icon-wrapper">
+                        <img src="/favicon/favicon-32x32.png" alt="32x32 favicon" />
+                        <span class="error-text">Missing</span>
+                    </div>
+                    <div class="icon-name">favicon-32x32.png</div>
+                    <div class="icon-size">32 × 32 pixels</div>
+                    <span class="badge">Checking...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Next Steps</h3>
+            <ol>
+                <li>Create your icons (see <code>ICON_SIZES_GUIDE.md</code>)</li>
+                <li>Place app icons in <code>/public/icons/</code> folder</li>
+                <li>Place favicons in <code>/public/favicon/</code> folder</li>
+                <li>Refresh this page to verify all icons load correctly</li>
+                <li>Build and test: <code>npm run build && npm run start</code></li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        // Check if icons are loaded
+        let loaded = 0;
+        let total = 0;
+        
+        document.querySelectorAll('.icon-card').forEach(card => {
+            total++;
+            const img = card.querySelector('img');
+            const badge = card.querySelector('.badge');
+            const path = card.dataset.path;
+            
+            img.onload = function() {
+                if (this.naturalWidth > 0) {
+                    loaded++;
+                    card.classList.add('loaded');
+                    card.classList.remove('error');
+                    badge.textContent = '✓ Loaded';
+                    badge.className = 'badge success';
+                    updateStatus();
+                }
+            };
+            
+            img.onerror = function() {
+                card.classList.add('error');
+                card.classList.remove('loaded');
+                badge.textContent = '✗ Missing';
+                badge.className = 'badge error';
+                updateStatus();
+            };
+            
+            // Trigger load check
+            img.src = img.src;
+        });
+        
+        function updateStatus() {
+            const statusBox = document.getElementById('statusBox');
+            const statusText = document.getElementById('statusText');
+            
+            if (loaded === total) {
+                statusBox.className = 'status success';
+                statusBox.querySelector('.status-title').textContent = '✅ All icons loaded!';
+                statusText.textContent = 'All ' + total + ' icons are present and ready. Your PWA is good to go!';
+            } else {
+                const missing = total - loaded;
+                statusBox.className = 'status';
+                statusBox.querySelector('.status-title').textContent = '⚠️ Icons missing';
+                statusText.textContent = loaded + ' of ' + total + ' icons loaded. ' + missing + ' icon(s) still need to be added.';
+            }
+        }
+        
+        // Initial status update after a short delay
+        setTimeout(updateStatus, 1000);
+    </script>
+</body>
+</html>

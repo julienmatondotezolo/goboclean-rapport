@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Clock, ClipboardCheck, Bell, Loader2, Signal, Wifi, Battery, Eraser } from 'lucide-react';
+import { Clock, ClipboardCheck, Bell, Loader2, Battery } from 'lucide-react';
 import { MissionCard } from '@/components/ui/mission-card';
 import { StatCard } from '@/components/ui/stat-card';
 import { useRouter } from '@/i18n/routing';
+import { LogoGoBoClean } from '@/components/ui/logo';
+import { cn } from '@/lib/utils';
 
 interface Mission {
   id: string;
@@ -123,24 +125,18 @@ export default function DashboardPage() {
       <div className="relative bg-[#064e3b] text-white pt-2 pb-24 rounded-b-[40px] shadow-lg overflow-hidden z-0">
         {/* Mobile Status Bar */}
         <div className="px-8 flex items-center justify-between mb-8">
-          <span className="text-[14px] font-bold">9:41</span>
-          <div className="flex items-center gap-1.5">
-            <Signal className="w-4 h-4" />
-            <Wifi className="w-4 h-4" />
-            <Battery className="w-5 h-5 rotate-90" />
-          </div>
         </div>
 
         {/* Logo & Notifications */}
         <div className="px-8 flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-[#a3e635] rounded-xl flex items-center justify-center shadow-lg shadow-lime-400/20">
-              <Eraser className="w-7 h-7 text-[#064e3b]" strokeWidth={2.5} />
+          <div className="flex items-center gap-1">
+            <div className="w-12 h-12">
+              <LogoGoBoClean className="scale-75" />
             </div>
             <div>
-              <h1 className="text-[20px] font-bold leading-none mb-1">IndustrialPro</h1>
+              <h1 className="text-[20px] font-bold leading-none mb-1">GoBoclean Rapport</h1>
               <p className="text-[#a3e635] text-[10px] font-bold tracking-[0.1em] uppercase">
-                FIELD OPERATIONS
+                Made with love
               </p>
             </div>
           </div>
