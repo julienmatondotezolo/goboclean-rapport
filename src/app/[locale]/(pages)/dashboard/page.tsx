@@ -6,6 +6,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Clock, ClipboardCheck, Bell, Loader2, Signal, Wifi, Battery, Eraser } from 'lucide-react';
 import { MissionCard } from '@/components/ui/mission-card';
 import { StatCard } from '@/components/ui/stat-card';
+import { useRouter } from '@/i18n/routing';
 
 interface Mission {
   id: string;
@@ -18,6 +19,7 @@ interface Mission {
 
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
+  const router = useRouter();
   const [userName, setUserName] = useState('Marc');
   const [isLoading, setIsLoading] = useState(true);
   const [dbMission, setDbMission] = useState<Mission | null>(null);
@@ -212,8 +214,8 @@ export default function DashboardPage() {
               location={mission.location}
               startTime={mission.startTime}
               teamMembers={mission.teamMembers}
-              onStartJob={() => console.log('Start job:', mission.id)}
-              onViewDetails={() => console.log('View details:', mission.id)}
+              onStartJob={() => router.push(`/mission/${mission.id}`)}
+              onViewDetails={() => router.push(`/mission/${mission.id}`)}
             />
           ))}
         </div>

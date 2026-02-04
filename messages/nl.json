@@ -206,5 +206,14 @@
     "fri": "VR",
     "sat": "ZA",
     "sun": "ZO"
+  },
+  "Mission": {
+    "jobType": "Type Werk",
+    "rendezvous": "Afspraak",
+    "address": "Adres",
+    "missionDescription": "Missieomschrijving",
+    "contactPerson": "Contactpersoon",
+    "createReport": "Rapport Aanmaken",
+    "startMission": "Missie Starten"
   }
 }

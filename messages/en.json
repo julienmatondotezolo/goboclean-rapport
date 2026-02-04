@@ -206,5 +206,14 @@
     "fri": "FRI",
     "sat": "SAT",
     "sun": "SUN"
+  },
+  "Mission": {
+    "jobType": "Job Type",
+    "rendezvous": "Rendez-Vous",
+    "address": "Address",
+    "missionDescription": "Mission Description",
+    "contactPerson": "Contact Person",
+    "createReport": "Create Report",
+    "startMission": "Start Mission"
   }
 }

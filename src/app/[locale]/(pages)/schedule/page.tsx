@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, Plus, Home, Wrench, X, Briefcase } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+import { useRouter } from '@/i18n/routing';
 
 type ViewMode = 'day' | 'week' | 'month';
 
@@ -25,6 +26,7 @@ interface PendingMission {
 
 export default function SchedulePage() {
   const t = useTranslations('Schedule');
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [currentDate, setCurrentDate] = useState(new Date(2023, 9, 5)); // Oct 5, 2023
 
@@ -193,8 +195,17 @@ export default function SchedulePage() {
                   </div>
                   
                   {/* Mission Card */}
-                  <div className="flex-1 bg-[#a3e635] rounded-2xl p-4 relative group hover:shadow-lg transition-all">
-                    <button className="absolute top-3 right-3 w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div 
+                    className="flex-1 bg-[#a3e635] rounded-2xl p-4 relative group hover:shadow-lg transition-all cursor-pointer"
+                    onClick={() => router.push(`/mission/${mission.id}`)}
+                  >
+                    <button 
+                      className="absolute top-3 right-3 w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Handle delete action
+                      }}
+                    >
                       <X className="w-3.5 h-3.5 text-white" />
                     </button>
                     <h4 className="font-bold text-[15px] text-gray-900 mb-1">{mission.title}</h4>
@@ -228,6 +239,7 @@ export default function SchedulePage() {
               <div
                 key={mission.id}
                 className="bg-[#fef9c3] rounded-2xl p-4 flex items-center justify-between hover:shadow-md transition-all cursor-pointer"
+                onClick={() => router.push(`/mission/${mission.id}`)}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-[#fbbf24] rounded-xl flex items-center justify-center flex-shrink-0">
@@ -276,8 +288,17 @@ export default function SchedulePage() {
                   <div className="text-[13px] font-semibold text-gray-500 w-16 pt-4 flex-shrink-0">
                     {mission.time}
                   </div>
-                  <div className="flex-1 bg-[#a3e635] rounded-2xl p-4 relative group hover:shadow-lg transition-all">
-                    <button className="absolute top-3 right-3 w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div 
+                    className="flex-1 bg-[#a3e635] rounded-2xl p-4 relative group hover:shadow-lg transition-all cursor-pointer"
+                    onClick={() => router.push(`/mission/${mission.id}`)}
+                  >
+                    <button 
+                      className="absolute top-3 right-3 w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Handle delete action
+                      }}
+                    >
                       <X className="w-3.5 h-3.5 text-white" />
                     </button>
                     <h4 className="font-bold text-[15px] text-gray-900 mb-1">{mission.title}</h4>
@@ -308,6 +329,7 @@ export default function SchedulePage() {
               <div
                 key={mission.id}
                 className="bg-[#fef9c3] rounded-2xl p-4 flex items-center justify-between hover:shadow-md transition-all cursor-pointer"
+                onClick={() => router.push(`/mission/${mission.id}`)}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-[#fbbf24] rounded-xl flex items-center justify-center flex-shrink-0">
@@ -404,6 +426,7 @@ export default function SchedulePage() {
                 <div
                   key={mission.id}
                   className="bg-[#f0fdf4] border border-[#a3e635]/20 rounded-2xl p-4 flex items-center justify-between hover:shadow-md transition-all cursor-pointer hover:border-[#a3e635]/40"
+                  onClick={() => router.push(`/mission/${mission.id}`)}
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-[#a3e635] rounded-xl flex items-center justify-center flex-shrink-0">

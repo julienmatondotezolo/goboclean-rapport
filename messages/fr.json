@@ -206,5 +206,14 @@
     "fri": "VEN",
     "sat": "SAM",
     "sun": "DIM"
+  },
+  "Mission": {
+    "jobType": "Type de Travail",
+    "rendezvous": "Rendez-Vous",
+    "address": "Adresse",
+    "missionDescription": "Description de la Mission",
+    "contactPerson": "Personne de Contact",
+    "createReport": "Créer un Rapport",
+    "startMission": "Démarrer Mission"
   }
 }
