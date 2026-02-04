@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { MapPin, Phone, Mail, User, Calendar, FileText, Home, CheckCircle2 } from 'lucide-react';
+import { MapPin, Phone, Mail, Calendar, FileText, Home, CheckCircle2, ArrowRight } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
 
 interface ClientInfo {
   firstName: string;
@@ -41,12 +42,16 @@ interface MissionDetails {
   };
 }
 
+const TOTAL_STEPS = 2;
+
 export default function MissionCreatePage() {
   const router = useRouter();
   const params = useParams();
   const t = useTranslations('MissionCreate');
   const [currentStep, setCurrentStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
+  
+  const progressValue = (currentStep / TOTAL_STEPS) * 100;
 
   const [clientInfo, setClientInfo] = useState<ClientInfo>({
     firstName: '',
@@ -156,40 +161,16 @@ export default function MissionCreatePage() {
     <div className="min-h-screen bg-white pb-32 font-sans">
       <PageHeader title={t('title')} />
 
-      {/* Progress Steps */}
-      <div className="px-6 py-4 border-b border-gray-100">
-        <div className="flex items-center justify-between max-w-md mx-auto">
-          <div className="flex flex-col items-center flex-1">
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
-                currentStep >= 1
-                  ? 'bg-[#a3e635] text-[#1e4620]'
-                  : 'bg-gray-200 text-gray-500'
-              }`}
-            >
-              {currentStep > 1 ? <CheckCircle2 className="w-5 h-5" /> : '1'}
-            </div>
-            <span className="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-wide">
-              {t('step')} 1
+      {/* Progress Bar */}
+      <div className="px-6 pt-4 pb-2">
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+              {t('step')} {currentStep} {t('of')} {TOTAL_STEPS}
             </span>
+            <span className="text-[11px] font-bold text-[#064e3b]">{Math.round(progressValue)}%</span>
           </div>
-          
-          <div className={`h-1 flex-1 mx-2 rounded ${currentStep >= 2 ? 'bg-[#a3e635]' : 'bg-gray-200'}`} />
-          
-          <div className="flex flex-col items-center flex-1">
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
-                currentStep >= 2
-                  ? 'bg-[#a3e635] text-[#1e4620]'
-                  : 'bg-gray-200 text-gray-500'
-              }`}
-            >
-              2
-            </div>
-            <span className="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-wide">
-              {t('step')} 2
-            </span>
-          </div>
+          <Progress value={progressValue} className="h-2 bg-gray-100" />
         </div>
       </div>
 
@@ -306,12 +287,12 @@ export default function MissionCreatePage() {
                 {t('appointmentTime')}
               </label>
               <div className="relative">
-                <Calendar className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Calendar className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
                 <Input
                   type="datetime-local"
                   value={clientInfo.appointmentTime}
                   onChange={(e) => setClientInfo({ ...clientInfo, appointmentTime: e.target.value })}
-                  className="pl-14"
+                  className="pl-14 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                 />
               </div>
             </div>
@@ -333,6 +314,7 @@ export default function MissionCreatePage() {
             <div className="pt-4">
               <Button onClick={handleNextStep} className="w-full">
                 <span className="text-[15px] font-bold uppercase tracking-wide">{t('nextStep')}</span>
+                <ArrowRight className="w-5 h-5" />
               </Button>
             </div>
           </div>
@@ -436,18 +418,28 @@ export default function MissionCreatePage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[12px] font-medium text-gray-700 mb-2">
+                  <label className="block text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
                     {t('facadeNumber')}
                   </label>
-                  <p className="text-[11px] text-gray-500 mb-2">{t('facadeHelp')}</p>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={missionDetails.facadeNumber}
-                    onChange={(e) =>
-                      setMissionDetails({ ...missionDetails, facadeNumber: e.target.value })
-                    }
-                  />
+                  <p className="text-[11px] text-gray-500 mb-3">{t('facadeHelp')}</p>
+                  <div className="grid grid-cols-4 gap-3">
+                    {['1', '2', '3', '4'].map((number) => (
+                      <button
+                        key={number}
+                        type="button"
+                        onClick={() =>
+                          setMissionDetails({ ...missionDetails, facadeNumber: number })
+                        }
+                        className={`h-14 rounded-xl font-bold text-lg transition-all ${
+                          missionDetails.facadeNumber === number
+                            ? 'bg-[#a3e635] text-[#064e3b] border-2 border-[#a3e635]'
+                            : 'bg-[#f8fafc] text-gray-700 border-2 border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        {number}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -492,20 +484,22 @@ export default function MissionCreatePage() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
-              <Button
-                onClick={handlePrevious}
-                variant="outline"
-                className="flex-1"
-              >
-                <span className="text-[15px] font-bold uppercase tracking-wide">{t('previous')}</span>
-              </Button>
+            {/* Back Link */}
+            <button
+              onClick={handlePrevious}
+              className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors mb-4"
+            >
+              {t('previous')}
+            </button>
+
+            {/* Create Mission Button */}
+            <div className="pt-2">
               <Button
                 onClick={handleCreateMission}
                 disabled={isCreating}
-                className="flex-1"
+                className="w-full"
               >
+                <CheckCircle2 className="w-5 h-5" />
                 <span className="text-[15px] font-bold uppercase tracking-wide">
                   {isCreating ? t('creating') : t('createMission')}
                 </span>

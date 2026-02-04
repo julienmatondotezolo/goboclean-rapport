@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Camera, Upload, X, ArrowRight, CheckCircle } from 'lucide-react';
+import { Camera, X, ArrowRight, CheckCircle } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
