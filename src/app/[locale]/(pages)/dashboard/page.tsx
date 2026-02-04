@@ -3,11 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Clock, ClipboardCheck, Bell, Plus, Loader2, Signal, Wifi, Battery, Eraser } from 'lucide-react';
+import { Clock, ClipboardCheck, Bell, Loader2, Signal, Wifi, Battery, Eraser } from 'lucide-react';
 import { MissionCard } from '@/components/ui/mission-card';
 import { StatCard } from '@/components/ui/stat-card';
-import { BottomNav, defaultNavItems } from '@/components/ui/bottom-nav';
-import { cn } from '@/lib/utils';
 
 interface Mission {
   id: string;
@@ -220,14 +218,6 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
-
-      {/* Floating Action Button */}
-      <button className="fixed bottom-24 right-6 w-14 h-14 bg-[#a3e635] text-[#064e3b] rounded-full flex items-center justify-center shadow-xl hover:bg-lime-300 transition-all active:scale-90 z-40">
-        <Plus className="w-8 h-8" strokeWidth={3} />
-      </button>
-
-      {/* Bottom Navigation */}
-      <BottomNav items={defaultNavItems} />
     </div>
   );
 }
