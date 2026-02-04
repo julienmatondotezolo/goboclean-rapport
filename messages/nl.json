@@ -214,6 +214,27 @@
     "missionDescription": "Missieomschrijving",
     "contactPerson": "Contactpersoon",
     "createReport": "Rapport Aanmaken",
-    "startMission": "Missie Starten"
+    "startMission": "Missie Starten",
+    "confirmMission": "Missie Bevestigen"
+  },
+  "BeforePictures": {
+    "title": "Foto's Vooraf",
+    "step": "Stap",
+    "of": "van",
+    "step1Title": "Maak Foto's Vooraf",
+    "step1Description": "Maak foto's van de locatie voordat u de missie start. Deze zullen de begintoestand documenteren.",
+    "takePhoto": "Foto Maken",
+    "useCamera": "Gebruik apparaatcamera",
+    "chooseFromGallery": "Kies uit Galerij",
+    "selectExisting": "Selecteer bestaande foto's",
+    "photosTaken": "Gemaakte Foto's",
+    "photo": "Foto",
+    "nextStep": "Volgende Stap",
+    "step2Title": "Klaar om te Beginnen!",
+    "step2Description": "Uw foto's vooraf zijn opgeslagen. U kunt nu met vertrouwen de missie beginnen.",
+    "motivationMessage": "💪 Laten we dit doen! Toon uw expertise en lever uitstekend werk!",
+    "photosAdded": "foto's toegevoegd",
+    "confirmButton": "Missie Starten",
+    "backToPhotos": "← Terug naar Foto's"
   }
 }

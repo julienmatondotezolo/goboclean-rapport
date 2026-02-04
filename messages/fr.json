@@ -214,6 +214,27 @@
     "missionDescription": "Description de la Mission",
     "contactPerson": "Personne de Contact",
     "createReport": "Créer un Rapport",
-    "startMission": "Démarrer Mission"
+    "startMission": "Démarrer Mission",
+    "confirmMission": "Confirmer Mission"
+  },
+  "BeforePictures": {
+    "title": "Photos Avant",
+    "step": "Étape",
+    "of": "sur",
+    "step1Title": "Prendre des Photos Avant",
+    "step1Description": "Capturez des photos du site avant de commencer la mission. Celles-ci documenteront l'état initial.",
+    "takePhoto": "Prendre une Photo",
+    "useCamera": "Utiliser l'appareil photo",
+    "chooseFromGallery": "Choisir de la Galerie",
+    "selectExisting": "Sélectionner des photos existantes",
+    "photosTaken": "Photos Prises",
+    "photo": "Photo",
+    "nextStep": "Étape Suivante",
+    "step2Title": "Prêt à Commencer !",
+    "step2Description": "Vos photos avant ont été enregistrées. Vous pouvez maintenant commencer la mission en toute confiance.",
+    "motivationMessage": "💪 Allons-y ! Montrez votre expertise et livrez un excellent travail !",
+    "photosAdded": "photos ajoutées",
+    "confirmButton": "Démarrer la Mission",
+    "backToPhotos": "← Retour aux Photos"
   }
 }

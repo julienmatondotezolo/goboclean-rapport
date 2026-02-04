@@ -214,6 +214,27 @@
     "missionDescription": "Mission Description",
     "contactPerson": "Contact Person",
     "createReport": "Create Report",
-    "startMission": "Start Mission"
+    "startMission": "Start Mission",
+    "confirmMission": "Confirm Mission"
+  },
+  "BeforePictures": {
+    "title": "Before Pictures",
+    "step": "Step",
+    "of": "of",
+    "step1Title": "Take Before Pictures",
+    "step1Description": "Capture photos of the site before starting the mission. These will document the initial condition.",
+    "takePhoto": "Take Photo",
+    "useCamera": "Use device camera",
+    "chooseFromGallery": "Choose from Gallery",
+    "selectExisting": "Select existing photos",
+    "photosTaken": "Photos Taken",
+    "photo": "Photo",
+    "nextStep": "Next Step",
+    "step2Title": "Ready to Start!",
+    "step2Description": "Your before pictures have been saved. You can now begin the mission with confidence.",
+    "motivationMessage": "💪 Let's do this! Show your expertise and deliver excellent work!",
+    "photosAdded": "photos added",
+    "confirmButton": "Start Mission",
+    "backToPhotos": "← Back to Photos"
   }
 }

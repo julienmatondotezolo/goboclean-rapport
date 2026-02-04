@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { MapPin, Clock, FileText, Phone, CheckCircle2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
@@ -59,9 +59,14 @@ const getMissionById = (id: string) => {
 
 export default function MissionDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const t = useTranslations('Mission');
   const id = params.id as string;
   const mission = getMissionById(id);
+
+  const handleConfirmMission = () => {
+    router.push(`/${params.locale}/mission/${id}/before-pictures`);
+  };
 
   return (
     <div className="min-h-screen bg-white pb-32 font-sans">
@@ -106,7 +111,7 @@ export default function MissionDetailPage() {
           </div>
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-4 flex-1">
-              <div className="w-10 h-10 bg-[#064e3b] rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+              <div className="w-10 h-10 bg-[#064e3b] rounded-xl flex items-center justify-center shrink-0 mt-1">
                 <MapPin className="w-5 h-5 text-[#a3e635]" />
               </div>
               <div className="flex-1">
@@ -114,7 +119,7 @@ export default function MissionDetailPage() {
                 <p className="text-[13px] text-gray-600 leading-relaxed">{mission.location.address}</p>
               </div>
             </div>
-            <button className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm hover:shadow-md transition-all ml-3">
+            <button className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm hover:shadow-md transition-all ml-3">
               <svg
                 className="w-5 h-5 text-[#064e3b]"
                 fill="none"
@@ -147,7 +152,7 @@ export default function MissionDetailPage() {
                 className="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-100"
               >
                 <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
                     task.completed ? 'bg-[#a3e635]' : 'bg-gray-100'
                   }`}
                 >
@@ -172,7 +177,7 @@ export default function MissionDetailPage() {
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-[#a3e635] to-[#84cc16] rounded-2xl flex items-center justify-center text-2xl">
+              <div className="w-14 h-14 bg-linear-to-br from-[#a3e635] to-[#84cc16] rounded-2xl flex items-center justify-center text-2xl">
                 {mission.contact.avatar}
               </div>
               <div>
@@ -188,11 +193,11 @@ export default function MissionDetailPage() {
           </div>
         </div>
 
-        {/* Start Mission Button */}
+        {/* Confirm Mission Button */}
         <div className="pt-4">
-          <Button className="w-full">
+          <Button onClick={handleConfirmMission} className="w-full">
             <FileText className="w-5 h-5" />
-            <span className="text-[15px] font-bold uppercase tracking-wide">{t('startMission')}</span>
+            <span className="text-[15px] font-bold uppercase tracking-wide">{t('confirmMission')}</span>
           </Button>
         </div>
       </div>
