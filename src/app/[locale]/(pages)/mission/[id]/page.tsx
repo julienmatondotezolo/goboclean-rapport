@@ -197,7 +197,7 @@ export default function MissionDetailPage() {
         <div className="pt-4">
           <Button onClick={handleConfirmMission} className="w-full">
             <FileText className="w-5 h-5" />
-            <span className="text-[15px] font-bold uppercase tracking-wide">{t('confirmMission')}</span>
+            <span className="text-[15px] font-bold uppercase tracking-wide">{t('startMission')}</span>
           </Button>
         </div>
       </div>
