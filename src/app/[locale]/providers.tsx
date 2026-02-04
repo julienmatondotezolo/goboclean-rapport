@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { ThemeProvider } from "next-themes";
 import React, { JSX, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { LanguageInitializer } from "@/components/language-initializer";
 
 // Manually import messages for each locale
 import enMessages from "../../../messages/en.json";
@@ -39,6 +40,7 @@ export default function Providers({ children, locale }: Props): JSX.Element {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <NextIntlClientProvider locale={locale} messages={messages} timeZone={timeZone}>
+          <LanguageInitializer />
           {children}
         </NextIntlClientProvider>
       </ThemeProvider>

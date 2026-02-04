@@ -172,6 +172,8 @@
     "pushNotifications": "Push Notifications",
     "language": "Language",
     "currentLanguage": "English (US)",
+    "selectLanguage": "Select your preferred language. Changes will be saved and applied across all your devices.",
+    "languageInfo": "Your language preference is saved locally on this device and will persist even when offline.",
     "logout": "Logout",
     "loggingOut": "Logging out...",
     "logoutSuccess": "Logged out successfully",

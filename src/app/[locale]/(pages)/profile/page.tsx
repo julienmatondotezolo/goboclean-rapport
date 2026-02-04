@@ -5,6 +5,7 @@ import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/components/ui/use-toast';
 import { PageHeader } from '@/components/ui/page-header';
+import { LanguageSelectorModal } from '@/components/language-selector-modal';
 import { 
   Key, 
   Bell, 
@@ -21,6 +22,7 @@ export default function ProfilePage() {
   const t = useTranslations('Profile');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [pushNotifications, setPushNotifications] = useState(true);
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
 
   // Mock user data
   const fullName = 'Marcus Thorne';
@@ -127,7 +129,7 @@ export default function ProfilePage() {
           {/* Language */}
           <button 
             className="w-full flex items-center gap-4 px-4 py-3.5 bg-[#f1f3f1] rounded-[20px] hover:bg-[#e8ebe8] transition-colors active:scale-[0.98]"
-            onClick={() => router.push('/profile/language')}
+            onClick={() => setIsLanguageModalOpen(true)}
           >
             <div className="w-12 h-12 bg-white rounded-[16px] flex items-center justify-center shrink-0 shadow-sm">
               <Globe className="w-6 h-6 text-slate-900" strokeWidth={2.5} />
@@ -162,6 +164,12 @@ export default function ProfilePage() {
           </span>
         </button>
       </div>
+
+      {/* Language Selector Modal */}
+      <LanguageSelectorModal
+        isOpen={isLanguageModalOpen}
+        onClose={() => setIsLanguageModalOpen(false)}
+      />
     </div>
   );
 }

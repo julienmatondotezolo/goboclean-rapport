@@ -172,6 +172,8 @@
     "pushNotifications": "Notifications Push",
     "language": "Langue",
     "currentLanguage": "Français (FR)",
+    "selectLanguage": "Sélectionnez votre langue préférée. Les modifications seront enregistrées et appliquées sur tous vos appareils.",
+    "languageInfo": "Votre préférence de langue est enregistrée localement sur cet appareil et persistera même hors ligne.",
     "logout": "Déconnexion",
     "loggingOut": "Déconnexion en cours...",
     "logoutSuccess": "Déconnexion réussie",

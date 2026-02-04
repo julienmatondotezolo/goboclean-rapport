@@ -172,6 +172,8 @@
     "pushNotifications": "Push Meldingen",
     "language": "Taal",
     "currentLanguage": "Nederlands (NL)",
+    "selectLanguage": "Selecteer uw voorkeurstaal. Wijzigingen worden opgeslagen en toegepast op al uw apparaten.",
+    "languageInfo": "Uw taalvoorkeur wordt lokaal op dit apparaat opgeslagen en blijft behouden, zelfs offline.",
     "logout": "Uitloggen",
     "loggingOut": "Uitloggen...",
     "logoutSuccess": "Succesvol uitgelogd",
