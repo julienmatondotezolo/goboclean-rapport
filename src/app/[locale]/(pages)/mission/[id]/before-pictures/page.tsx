@@ -15,6 +15,7 @@ const STEPS = {
 };
 
 const TOTAL_STEPS = 2;
+const REQUIRED_PHOTOS = 4;
 
 export default function BeforePicturesPage() {
   const params = useParams();
@@ -51,7 +52,7 @@ export default function BeforePicturesPage() {
   };
 
   const handleNextStep = () => {
-    if (currentStep === STEPS.PHOTOS && photos.length > 0) {
+    if (currentStep === STEPS.PHOTOS && photos.length >= REQUIRED_PHOTOS) {
       setCurrentStep(STEPS.CONFIRMATION);
     }
   };
@@ -61,7 +62,8 @@ export default function BeforePicturesPage() {
     router.push(`/${params.locale}/mission/${id}`);
   };
 
-  const canProceed = photos.length > 0;
+  const canProceed = photos.length >= REQUIRED_PHOTOS;
+  const remainingPhotos = Math.max(0, REQUIRED_PHOTOS - photos.length);
 
   return (
     <div className="min-h-screen bg-white pb-32 font-sans">
@@ -88,96 +90,109 @@ export default function BeforePicturesPage() {
           <div className="bg-[#f8fafc] rounded-2xl p-5">
             <h2 className="text-[15px] font-bold text-gray-900 mb-2">{t('step1Title')}</h2>
             <p className="text-[13px] text-gray-600 leading-relaxed">{t('step1Description')}</p>
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <p className="text-[13px] font-bold text-[#064e3b]">
+                {photos.length} / {REQUIRED_PHOTOS} {t('photosRequired')}
+              </p>
+              {remainingPhotos > 0 && (
+                <p className="text-[12px] text-gray-500 mt-1">
+                  {t('remainingPhotos', { count: remainingPhotos })}
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Photo Upload Buttons */}
-          <div className="space-y-3">
+          {/* Photo Grid - Always show 4 slots */}
+          <div className="grid grid-cols-2 gap-3">
             <input
               type="file"
               id="camera-input"
               accept="image/*"
-              multiple
               capture="environment"
               onChange={handleFileSelect}
               className="hidden"
               disabled={isUploading}
             />
-            <input
-              type="file"
-              id="gallery-input"
-              accept="image/*"
-              multiple
-              onChange={handleFileSelect}
-              className="hidden"
-              disabled={isUploading}
-            />
 
-            {/* Camera Button */}
-            <button
-              onClick={() => document.getElementById('camera-input')?.click()}
-              disabled={isUploading}
-              className="w-full bg-[#064e3b] rounded-2xl p-6 flex items-center gap-4 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <div className="w-14 h-14 bg-[#a3e635] rounded-2xl flex items-center justify-center flex-shrink-0">
-                <Camera className="w-7 h-7 text-[#064e3b]" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="text-[15px] font-bold text-white mb-1">{t('takePhoto')}</h3>
-                <p className="text-[12px] text-gray-300">{t('useCamera')}</p>
-              </div>
-              <ArrowRight className="w-6 h-6 text-[#a3e635] flex-shrink-0" />
-            </button>
-
-            {/* Gallery Button */}
-            <button
-              onClick={() => document.getElementById('gallery-input')?.click()}
-              disabled={isUploading}
-              className="w-full bg-[#f8fafc] rounded-2xl p-6 flex items-center gap-4 border-2 border-gray-100 hover:border-[#a3e635]/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center flex-shrink-0 border-2 border-gray-100">
-                <Upload className="w-7 h-7 text-[#064e3b]" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="text-[15px] font-bold text-gray-900 mb-1">{t('chooseFromGallery')}</h3>
-                <p className="text-[12px] text-gray-500">{t('selectExisting')}</p>
-              </div>
-              <ArrowRight className="w-6 h-6 text-gray-400 flex-shrink-0" />
-            </button>
+            {[...Array(REQUIRED_PHOTOS)].map((_, index) => {
+              const hasPhoto = photos[index];
+              
+              return (
+                <div
+                  key={index}
+                  className="relative aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 bg-gray-50"
+                >
+                  {hasPhoto ? (
+                    <>
+                      <Image
+                        src={hasPhoto}
+                        alt={`${t('photo')} ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 50vw, 33vw"
+                      />
+                      {/* Green checkmark on top right */}
+                      <div className="absolute top-2 right-2 w-7 h-7 bg-[#a3e635] rounded-full flex items-center justify-center shadow-lg">
+                        <CheckCircle className="w-5 h-5 text-[#064e3b]" />
+                      </div>
+                      {/* Delete and Retake buttons at bottom */}
+                      <div className="absolute bottom-0 left-0 right-0 flex gap-1 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                        <button
+                          onClick={() => handleRemovePhoto(index)}
+                          className="flex-1 bg-red-500 text-white text-[10px] font-bold uppercase py-2 px-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center gap-1"
+                        >
+                          <X className="w-3 h-3" />
+                          {t('delete')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleRemovePhoto(index);
+                            setTimeout(() => document.getElementById('camera-input')?.click(), 100);
+                          }}
+                          className="flex-1 bg-white text-gray-900 text-[10px] font-bold uppercase py-2 px-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Camera className="w-3 h-3" />
+                          {t('retake')}
+                        </button>
+                      </div>
+                      {/* Photo label */}
+                      <div className="absolute top-2 left-2 bg-black/60 text-white text-[11px] font-bold px-2 py-1 rounded-lg">
+                        {index === 0 ? t('frontSlope') : index === 1 ? t('valleyDetail') : index === 2 ? t('ridge') : t('chimney')}
+                      </div>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => document.getElementById('camera-input')?.click()}
+                      disabled={isUploading}
+                      className="w-full h-full flex flex-col items-center justify-center gap-3 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                    >
+                      <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center">
+                        <Camera className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide text-center px-2">
+                        {index === 0 ? t('addFrontSlope') : index === 1 ? t('addValleyDetail') : index === 2 ? t('addRidge') : t('addChimney')}
+                      </p>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {/* Photo Grid */}
-          {photos.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[13px] font-bold text-gray-900 uppercase tracking-wide">
-                  {t('photosTaken')} ({photos.length})
-                </h3>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {photos.map((preview, index) => (
-                  <div
-                    key={index}
-                    className="relative aspect-square rounded-2xl overflow-hidden border-2 border-gray-100 bg-gray-50"
-                  >
-                    <Image
-                      src={preview}
-                      alt={`${t('photo')} ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 50vw, 33vw"
-                    />
-                    <button
-                      onClick={() => handleRemovePhoto(index)}
-                      className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[11px] font-bold px-2 py-1 rounded-lg">
-                      {index + 1}
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {/* Status Message */}
+          {!canProceed && photos.length > 0 && (
+            <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl p-4">
+              <p className="text-[13px] font-bold text-orange-800 text-center">
+                {t('needMorePhotos', { count: remainingPhotos })}
+              </p>
+            </div>
+          )}
+
+          {canProceed && (
+            <div className="bg-green-50 border-2 border-[#a3e635] rounded-2xl p-4">
+              <p className="text-[13px] font-bold text-[#064e3b] text-center">
+                ✓ {t('allPhotosComplete')}
+              </p>
             </div>
           )}
 
