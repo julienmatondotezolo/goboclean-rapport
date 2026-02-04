@@ -1,5 +1,18 @@
-import { Home } from 'lucide-react';
+import { Hexagon, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+interface LogoGoBoCleanProps {
+  className?: string;
+}
+
+export function LogoGoBoClean({ className }: LogoGoBoCleanProps) {
+  return (
+    <div className={cn("relative", className)}>
+      <Hexagon className="h-12 w-12 text-(--brand-green-light) group-hover:rotate-90 transition-transform duration-500" strokeWidth={2.5} />
+      <span className="absolute inset-0 flex items-center justify-center font-bold text-(--brand-green-light) text-lg">G</span>
+    </div>
+  );
+}
 
 interface LogoProps {
   className?: string;
@@ -15,7 +28,7 @@ export function Logo({
   iconClassName, 
   showText = true, 
   variant = 'default',
-  title = 'Goboclean rapport',
+  title = 'GoboClean Rapport',
   subtitle = 'Field Services & Reports'
 }: LogoProps) {
   if (variant === 'compact') {
@@ -35,12 +48,12 @@ export function Logo({
     <div className={cn("text-center", className)}>
       <div className="flex justify-center mb-6">
         <div className="w-24 h-24 bg-[#2a3a2a] rounded-3xl flex items-center justify-center border border-white/10 shadow-inner">
-          <Home className={cn("w-12 h-12 text-[#98d62e]", iconClassName)} strokeWidth={2} />
+          <LogoGoBoClean />
         </div>
       </div>
       {showText && (
         <>
-          <h1 className="text-4xl font-bold text-white mb-1 tracking-tight">
+          <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">
             {title}
           </h1>
           <p className="text-[#98d62e] text-[10px] font-bold tracking-[0.25em] uppercase opacity-90">

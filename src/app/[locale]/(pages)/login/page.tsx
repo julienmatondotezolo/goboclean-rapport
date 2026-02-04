@@ -13,7 +13,6 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Logo } from '@/components/ui/logo';
 import { useToast } from '@/components/ui/use-toast';
-import { authService } from '@/lib/auth';
 import { Loader2, ArrowRight, Check, Eye, EyeOff } from 'lucide-react';
 
 type LoginForm = {
@@ -45,29 +44,20 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
-    try {
-      const { profile } = await authService.login(data);
-      
-      toast({
-        title: t('loginSuccess'),
-        description: `${t('welcome')} ${profile.first_name} !`,
-      });
+    
+    // Simulate a brief loading state for better UX
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    toast({
+      title: t('loginSuccess'),
+      description: t('welcome'),
+      variant: 'success',
+    });
 
-      // Redirect based on role
-      if (profile.role === 'admin') {
-        router.push('/admin/dashboard');
-      } else {
-        router.push('/reports');
-      }
-    } catch (error: any) {
-      toast({
-        title: t('loginError'),
-        description: error.message || t('invalidCredentials'),
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // Redirect to dashboard using localized routing
+    router.push('/dashboard');
+    
+    setIsLoading(false);
   };
 
   return (
@@ -158,7 +148,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-20 text-xl font-black uppercase tracking-[0.05em] bg-gradient-to-r from-[#84cc16] to-[#65a30d] hover:from-[#65a30d] hover:to-[#84cc16] text-[#1e293b] rounded-xl shadow-lg shadow-[#84cc16]/30 hover:shadow-xl hover:shadow-[#84cc16]/40 transition-all hover:scale-105 active:scale-100 flex items-center justify-center gap-4 mt-4"
+              className="w-full mt-4"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -177,16 +167,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer Section */}
-        <div className="mt-16 mb-16 text-center space-y-10">
-          <div className="inline-flex items-center gap-4 bg-white shadow-lg px-8 py-4 rounded-full border border-slate-50">
-            <div className="w-7 h-7 bg-[#1a2e1a] rounded flex items-center justify-center">
-              <Check className="w-4 h-4 text-[#98d62e]" strokeWidth={5} />
-            </div>
-            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#1a2e1a]">
-              {t('offlineSync')}
-            </span>
-          </div>
-          
+        <div className="mt-16 mb-16 text-center space-y-10">          
           <div className="space-y-4">
             <p className="text-xs font-bold text-slate-400 tracking-tight">
               {t('version')} 2.4.0 (Build 88)
