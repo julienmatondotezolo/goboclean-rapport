@@ -42,3 +42,4 @@ export {
 export { MissionCard } from './mission-card';
 export { StatCard } from './stat-card';
 export { BottomNav, defaultNavItems } from './bottom-nav';
+export { FloatingActionButton } from './floating-action-button';
