@@ -100,7 +100,18 @@
     "createSuccessDescription": "Le rapport a été enregistré et le PDF sera envoyé par email.",
     "error": "Erreur",
     "errorDescription": "Une erreur est survenue lors de la création du rapport",
-    "authRequired": "Vous devez être connecté pour créer un rapport"
+    "authRequired": "Vous devez être connecté pour créer un rapport",
+    "allReports": "Tous les Rapports",
+    "recentReports": "Rapports Récents",
+    "viewAll": "Voir Tout",
+    "searchPlaceholder": "Rechercher des Clients",
+    "today": "Aujourd'hui",
+    "allWorkers": "Tous les Ouvriers",
+    "status": "Statut",
+    "worker": "Ouvrier",
+    "updated": "Mis à jour",
+    "synced": "SYNCHRONISÉ",
+    "pending": "EN ATTENTE"
   },
   "Home": {
     "title": "GobloClean Rapport",
@@ -146,5 +157,25 @@
       "reports": "RAPPORTS",
       "profile": "PROFIL"
     }
+  },
+  "Navigation": {
+    "home": "ACCUEIL",
+    "schedule": "PLANNING",
+    "reports": "RAPPORTS",
+    "profile": "PROFIL"
+  },
+  "Profile": {
+    "profile": "Profil",
+    "loading": "Chargement",
+    "accountSettings": "Paramètres du Compte",
+    "changePassword": "Changer le Mot de Passe",
+    "pushNotifications": "Notifications Push",
+    "language": "Langue",
+    "currentLanguage": "Français (FR)",
+    "logout": "Déconnexion",
+    "loggingOut": "Déconnexion en cours...",
+    "logoutSuccess": "Déconnexion réussie",
+    "logoutSuccessDescription": "Vous avez été déconnecté de votre compte",
+    "logoutError": "Erreur de déconnexion"
   }
 }

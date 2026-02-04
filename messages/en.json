@@ -100,7 +100,18 @@
     "createSuccessDescription": "The report has been saved and the PDF will be sent by email.",
     "error": "Error",
     "errorDescription": "An error occurred while creating the report",
-    "authRequired": "You must be logged in to create a report"
+    "authRequired": "You must be logged in to create a report",
+    "allReports": "All Reports",
+    "recentReports": "Recent Reports",
+    "viewAll": "View All",
+    "searchPlaceholder": "Search Client Names",
+    "today": "Today",
+    "allWorkers": "All Workers",
+    "status": "Status",
+    "worker": "Worker",
+    "updated": "Updated",
+    "synced": "SYNCED",
+    "pending": "PENDING"
   },
   "Home": {
     "title": "GoboClean Rapport",
@@ -146,5 +157,25 @@
       "reports": "REPORTS",
       "profile": "PROFILE"
     }
+  },
+  "Navigation": {
+    "home": "HOME",
+    "schedule": "SCHEDULE",
+    "reports": "REPORTS",
+    "profile": "PROFILE"
+  },
+  "Profile": {
+    "profile": "Profile",
+    "loading": "Loading",
+    "accountSettings": "Account Settings",
+    "changePassword": "Change Password",
+    "pushNotifications": "Push Notifications",
+    "language": "Language",
+    "currentLanguage": "English (US)",
+    "logout": "Logout",
+    "loggingOut": "Logging out...",
+    "logoutSuccess": "Logged out successfully",
+    "logoutSuccessDescription": "You have been logged out of your account",
+    "logoutError": "Logout error"
   }
 }

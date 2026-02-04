@@ -100,7 +100,18 @@
     "createSuccessDescription": "Het rapport is opgeslagen en de PDF wordt per e-mail verzonden.",
     "error": "Fout",
     "errorDescription": "Er is een fout opgetreden bij het aanmaken van het rapport",
-    "authRequired": "U moet ingelogd zijn om een rapport aan te maken"
+    "authRequired": "U moet ingelogd zijn om een rapport aan te maken",
+    "allReports": "Alle Rapporten",
+    "recentReports": "Recente Rapporten",
+    "viewAll": "Bekijk Alles",
+    "searchPlaceholder": "Zoek Klantnamen",
+    "today": "Vandaag",
+    "allWorkers": "Alle Arbeiders",
+    "status": "Status",
+    "worker": "Arbeider",
+    "updated": "Bijgewerkt",
+    "synced": "GESYNCHRONISEERD",
+    "pending": "IN BEHANDELING"
   },
   "Home": {
     "title": "GoboClean Rapport",
@@ -146,5 +157,25 @@
       "reports": "RAPPORTEN",
       "profile": "PROFIEL"
     }
+  },
+  "Navigation": {
+    "home": "HOME",
+    "schedule": "PLANNING",
+    "reports": "RAPPORTEN",
+    "profile": "PROFIEL"
+  },
+  "Profile": {
+    "profile": "Profiel",
+    "loading": "Laden",
+    "accountSettings": "Accountinstellingen",
+    "changePassword": "Wachtwoord Wijzigen",
+    "pushNotifications": "Push Meldingen",
+    "language": "Taal",
+    "currentLanguage": "Nederlands (NL)",
+    "logout": "Uitloggen",
+    "loggingOut": "Uitloggen...",
+    "logoutSuccess": "Succesvol uitgelogd",
+    "logoutSuccessDescription": "U bent uitgelogd van uw account",
+    "logoutError": "Uitlogfout"
   }
 }
