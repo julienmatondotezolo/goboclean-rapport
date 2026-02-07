@@ -24,16 +24,9 @@ export const authService = {
 
     if (error) throw error;
 
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', data.user.id)
-      .single();
-
-    if (profileError) throw profileError;
-
-    return { user: data.user, profile };
+    // Don't fetch profile here - let the app fetch it after redirect
+    // This avoids RLS issues during the login flow
+    return { user: data.user };
   },
 
   async signup(signupData: SignupData) {

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from '@/i18n/routing';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter as useI18nRouter } from '@/i18n/routing';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Logo } from '@/components/ui/logo';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, ArrowRight, Check, Eye, EyeOff } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 type LoginForm = {
   email: string;
@@ -23,11 +25,42 @@ type LoginForm = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const i18nRouter = useI18nRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const t = useTranslations('Login');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Get redirect URL from query params
+  const redirectUrl = searchParams.get('redirect');
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          // User is already logged in, redirect to dashboard
+          if (redirectUrl && redirectUrl.startsWith('/')) {
+            router.push(redirectUrl);
+          } else {
+            i18nRouter.push('/dashboard');
+          }
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [router, i18nRouter, redirectUrl]);
 
   const loginSchema = z.object({
     email: z.string().email(t('invalidEmail')),
@@ -45,20 +78,50 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     
-    // Simulate a brief loading state for better UX
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    toast({
-      title: t('loginSuccess'),
-      description: t('welcome'),
-      variant: 'success',
-    });
+    try {
+      const supabase = createClient();
+      
+      // Sign in with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
 
-    // Redirect to dashboard using localized routing
-    router.push('/dashboard');
-    
-    setIsLoading(false);
+      if (authError) throw authError;
+      
+      toast({
+        title: t('loginSuccess'),
+        description: t('welcome'),
+        variant: 'success',
+      });
+
+      // Redirect to the original page or dashboard
+      if (redirectUrl && redirectUrl.startsWith('/')) {
+        // Use native router for redirect URLs with locale
+        router.push(redirectUrl);
+      } else {
+        // Use localized routing for dashboard
+        i18nRouter.push('/dashboard');
+      }
+    } catch (error: any) {
+      toast({
+        title: t('loginError') || 'Login failed',
+        description: error.message || t('invalidCredentials') || 'Invalid email or password',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  // Show loading state while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#1a2e1a]" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-[#f8fafc]">

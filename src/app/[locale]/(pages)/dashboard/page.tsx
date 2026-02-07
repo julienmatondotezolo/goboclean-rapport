@@ -9,6 +9,7 @@ import { StatCard } from '@/components/ui/stat-card';
 import { useRouter } from '@/i18n/routing';
 import { LogoGoBoClean } from '@/components/ui/logo';
 import { cn } from '@/lib/utils';
+import { handleSupabaseError } from '@/lib/error-handler';
 
 interface Mission {
   id: string;
@@ -66,24 +67,28 @@ export default function DashboardPage() {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
-          const { data: profile } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from('users')
             .select('first_name, last_name')
             .eq('id', session.user.id)
             .single();
 
-          if (profile) {
+          if (profileError) {
+            handleSupabaseError(profileError, 'Failed to load profile');
+          } else if (profile) {
             setUserName(profile.first_name);
           }
 
-          const { data: reports } = await supabase
+          const { data: reports, error: reportsError } = await supabase
             .from('reports')
             .select('id, client_address, status, created_at')
             .eq('worker_id', session.user.id)
             .order('created_at', { ascending: false })
             .limit(1);
 
-          if (reports && reports.length > 0) {
+          if (reportsError) {
+            handleSupabaseError(reportsError, 'Failed to load reports');
+          } else if (reports && reports.length > 0) {
             const report = reports[0];
             setDbMission({
               id: report.id,
@@ -96,7 +101,7 @@ export default function DashboardPage() {
           }
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
+        handleSupabaseError(error, 'Dashboard');
       } finally {
         setIsLoading(false);
       }

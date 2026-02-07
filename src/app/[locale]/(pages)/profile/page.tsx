@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
-import { useToast } from '@/components/ui/use-toast';
+import { createClient } from '@/lib/supabase/client';
+import { handleError, showSuccess } from '@/lib/error-handler';
 import { PageHeader } from '@/components/ui/page-header';
 import { LanguageSelectorModal } from '@/components/language-selector-modal';
 import { 
@@ -18,36 +19,94 @@ import {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { toast } = useToast();
   const t = useTranslations('Profile');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
+  const [fullName, setFullName] = useState('User');
+  const [role, setRole] = useState('Worker');
 
-  // Mock user data
-  const fullName = 'Marcus Thorne';
-  const role = 'Senior Roofing Specialist';
+  // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          throw sessionError;
+        }
+        
+        if (!session) {
+          console.error('No session found');
+          router.push('/login');
+          return;
+        }
+
+        console.log('Fetching profile for user:', session.user.id);
+        
+        const { data: profile, error } = await supabase
+          .from('users')
+          .select('first_name, last_name, role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error) {
+          console.error('Profile fetch error:', error);
+          console.error('Error code:', error.code);
+          console.error('Error message:', error.message);
+          console.error('Error details:', error.details);
+          throw error;
+        }
+
+        if (profile) {
+          console.log('Profile loaded:', profile);
+          setFullName(`${profile.first_name} ${profile.last_name}`);
+          setRole(profile.role === 'admin' ? 'Administrator' : 'Worker');
+        }
+      } catch (error) {
+        console.error('Fetch user data error:', error);
+        handleError(error, { title: 'Failed to load profile' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [router]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      toast({
-        title: t('logoutSuccess'),
-        description: t('logoutSuccessDescription'),
-      });
+      const supabase = createClient();
+      const { error } = await supabase.auth.signOut();
       
+      if (error) throw error;
+      
+      showSuccess(
+        t('logoutSuccess') || 'Logged out',
+        t('logoutSuccessDescription') || 'You have been logged out successfully'
+      );
+      
+      // Small delay for toast to show
       setTimeout(() => {
         router.push('/login');
       }, 500);
     } catch (error: any) {
-      toast({
-        title: t('logoutError'),
-        description: error.message,
-        variant: 'destructive',
-      });
+      handleError(error, { title: t('logoutError') || 'Logout failed' });
       setIsLoggingOut(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-[#064e3b]" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white pb-32">

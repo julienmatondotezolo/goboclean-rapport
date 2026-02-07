@@ -1,12 +1,104 @@
 import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { routing } from "./i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
 
-export default function middleware(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   // Get the pathname
   const pathname = request.nextUrl.pathname;
+  
+  // Define public routes that don't require authentication
+  const publicRoutes = ['/login', '/signup', '/reset-password', '/set-password', '/auth'];
+  
+  // Check if the current path is a public route
+  const isPublicRoute = publicRoutes.some((route) => 
+    pathname.includes(route)
+  );
+  
+  // Check if it's a static file or API route
+  const isStaticFile = pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot)$/);
+  const isApiRoute = pathname.startsWith('/api');
+  
+  // Check if URL has auth tokens (from invitation/reset links)
+  const hasAuthTokens = request.nextUrl.hash.includes('access_token') || 
+                        request.nextUrl.searchParams.has('token') ||
+                        request.nextUrl.searchParams.has('code');
+  
+  // Skip auth check for public routes, static files, API routes, or URLs with auth tokens
+  if (!isPublicRoute && !isStaticFile && !isApiRoute && !hasAuthTokens) {
+    let response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
+
+    // Create a Supabase client with proper cookie handling
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            request.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+            response = NextResponse.next({
+              request: {
+                headers: request.headers,
+              },
+            });
+            response.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+          },
+          remove(name: string, options: CookieOptions) {
+            request.cookies.set({
+              name,
+              value: '',
+              ...options,
+            });
+            response = NextResponse.next({
+              request: {
+                headers: request.headers,
+              },
+            });
+            response.cookies.set({
+              name,
+              value: '',
+              ...options,
+            });
+          },
+        },
+      }
+    );
+    
+    // Check if user is authenticated
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    
+    // If no session, redirect to login
+    if (!session) {
+      const locale = getLocaleFromPathname(pathname);
+      const loginUrl = new URL(`/${locale}/login`, request.url);
+      
+      // Add the original URL as a redirect parameter
+      loginUrl.searchParams.set('redirect', pathname);
+      
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return response;
+  }
   
   // Check if there's a locale in the pathname
   const pathnameHasLocale = routing.locales.some(
@@ -28,6 +120,14 @@ export default function middleware(request: NextRequest) {
 
   // Use the default next-intl middleware
   return intlMiddleware(request);
+}
+
+// Helper function to extract locale from pathname
+function getLocaleFromPathname(pathname: string): string {
+  const locale = routing.locales.find(
+    (loc) => pathname.startsWith(`/${loc}/`) || pathname === `/${loc}`
+  );
+  return locale || routing.defaultLocale;
 }
 
 export const config = {
