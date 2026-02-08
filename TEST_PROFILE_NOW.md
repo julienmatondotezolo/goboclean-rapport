@@ -25,6 +25,7 @@ Ctrl+Shift+Delete (or Cmd+Shift+Delete on Mac)
 ```
 
 Or use **Incognito Mode**:
+
 ```
 Ctrl+Shift+N (or Cmd+Shift+N on Mac)
 ```
@@ -34,6 +35,7 @@ Ctrl+Shift+N (or Cmd+Shift+N on Mac)
 Go to: http://localhost:3000/fr/login
 
 **Credentials:**
+
 - Email: `emji@yopmail.com`
 - Password: `Emji@yopmail.com123`
 
@@ -44,6 +46,7 @@ Click **"PROFIEL"** in the bottom navigation bar.
 ### Step 5: Success! ✅
 
 You should now see:
+
 - ✅ Your name: "Emji User"
 - ✅ Your role: "Worker"
 - ✅ Your avatar
@@ -56,14 +59,17 @@ You should now see:
 ## 🔍 What Was Fixed
 
 ### The Problem
+
 ```
 Error: permission denied for table users (code: 42501)
 ```
 
 ### The Solution
+
 Updated RLS policies to explicitly target the `authenticated` role instead of `public` role.
 
 ### Migration Applied
+
 ```sql
 ✅ fix_rls_for_authenticated_users
    - Created policies for authenticated users
@@ -90,6 +96,7 @@ Updated RLS policies to explicitly target the `authenticated` role instead of `p
 ## 🎉 Expected Result
 
 ### Dashboard
+
 ```
 Welcome, Emji
 Today: 3 high priority sites
@@ -97,6 +104,7 @@ Today: 3 high priority sites
 ```
 
 ### Profile Page
+
 ```
 Emji User
 Worker

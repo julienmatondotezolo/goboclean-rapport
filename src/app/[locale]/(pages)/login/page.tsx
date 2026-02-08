@@ -88,6 +88,13 @@ export default function LoginPage() {
       });
 
       if (authError) throw authError;
+
+      // Log login activity
+      const { logUserLogin, isFirstLogin } = await import('@/lib/user-activity');
+      await logUserLogin();
+
+      // Check if this is first login
+      const isFirst = await isFirstLogin(authData.user.id);
       
       toast({
         title: t('loginSuccess'),
@@ -95,12 +102,15 @@ export default function LoginPage() {
         variant: 'success',
       });
 
-      // Redirect to the original page or dashboard
-      if (redirectUrl && redirectUrl.startsWith('/')) {
-        // Use native router for redirect URLs with locale
+      // Small delay for toast
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Redirect to onboarding if first login, otherwise to dashboard or original page
+      if (isFirst) {
+        i18nRouter.push('/onboarding');
+      } else if (redirectUrl && redirectUrl.startsWith('/')) {
         router.push(redirectUrl);
       } else {
-        // Use localized routing for dashboard
         i18nRouter.push('/dashboard');
       }
     } catch (error: any) {

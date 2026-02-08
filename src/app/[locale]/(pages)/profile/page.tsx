@@ -80,6 +80,10 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
+      // Log logout activity before signing out
+      const { logUserLogout } = await import('@/lib/user-activity');
+      await logUserLogout();
+
       const supabase = createClient();
       const { error } = await supabase.auth.signOut();
       

@@ -364,5 +364,22 @@
     "workerRequired": "At least one worker must be selected",
     "missionSummary": "Mission Summary",
     "clientName": "Client Name"
+  },
+  "Onboarding": {
+    "title": "Welcome! 👋",
+    "subtitle": "Complete your profile",
+    "description": "Let's set up your profile to get started",
+    "profilePictureHint": "Optional - Add a profile picture",
+    "firstName": "First Name",
+    "firstNamePlaceholder": "Enter your first name",
+    "lastName": "Last Name",
+    "lastNamePlaceholder": "Enter your last name",
+    "complete": "Complete Profile",
+    "completing": "Completing...",
+    "skip": "Skip for now",
+    "footer": "You can always update your profile later",
+    "success": "Profile completed!",
+    "successDescription": "Welcome to GoBoclean Rapport!",
+    "error": "Failed to complete profile"
   }
 }

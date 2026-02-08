@@ -364,5 +364,22 @@
     "workerRequired": "Au moins un ouvrier doit être sélectionné",
     "missionSummary": "Résumé de la Mission",
     "clientName": "Nom du Client"
+  },
+  "Onboarding": {
+    "title": "Bienvenue ! 👋",
+    "subtitle": "Complétez votre profil",
+    "description": "Configurons votre profil pour commencer",
+    "profilePictureHint": "Optionnel - Ajoutez une photo de profil",
+    "firstName": "Prénom",
+    "firstNamePlaceholder": "Entrez votre prénom",
+    "lastName": "Nom",
+    "lastNamePlaceholder": "Entrez votre nom",
+    "complete": "Compléter le Profil",
+    "completing": "Finalisation...",
+    "skip": "Passer pour l'instant",
+    "footer": "Vous pouvez toujours mettre à jour votre profil plus tard",
+    "success": "Profil complété !",
+    "successDescription": "Bienvenue sur GoBoclean Rapport !",
+    "error": "Échec de la complétion du profil"
   }
 }

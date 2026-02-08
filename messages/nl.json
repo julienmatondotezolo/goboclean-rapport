@@ -364,5 +364,22 @@
     "workerRequired": "Ten minste één werknemer moet worden geselecteerd",
     "missionSummary": "Missie Overzicht",
     "clientName": "Naam Klant"
+  },
+  "Onboarding": {
+    "title": "Welkom! 👋",
+    "subtitle": "Voltooi uw profiel",
+    "description": "Laten we uw profiel instellen om te beginnen",
+    "profilePictureHint": "Optioneel - Voeg een profielfoto toe",
+    "firstName": "Voornaam",
+    "firstNamePlaceholder": "Voer uw voornaam in",
+    "lastName": "Achternaam",
+    "lastNamePlaceholder": "Voer uw achternaam in",
+    "complete": "Profiel Voltooien",
+    "completing": "Voltooien...",
+    "skip": "Nu overslaan",
+    "footer": "U kunt uw profiel altijd later bijwerken",
+    "success": "Profiel voltooid!",
+    "successDescription": "Welkom bij GoBoclean Rapport!",
+    "error": "Profiel voltooien mislukt"
   }
 }
