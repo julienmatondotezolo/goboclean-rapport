@@ -26,6 +26,8 @@ export default function ProfilePage() {
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [fullName, setFullName] = useState('User');
   const [role, setRole] = useState('Worker');
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [isUploadingPicture, setIsUploadingPicture] = useState(false);
 
   // Fetch user data
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function ProfilePage() {
         
         const { data: profile, error } = await supabase
           .from('users')
-          .select('first_name, last_name, role')
+          .select('first_name, last_name, role, profile_picture_url')
           .eq('id', session.user.id)
           .single();
 
@@ -65,6 +67,7 @@ export default function ProfilePage() {
           console.log('Profile loaded:', profile);
           setFullName(`${profile.first_name} ${profile.last_name}`);
           setRole(profile.role === 'admin' ? 'Administrator' : 'Worker');
+          setProfilePicture(profile.profile_picture_url);
         }
       } catch (error) {
         console.error('Fetch user data error:', error);
@@ -76,6 +79,69 @@ export default function ProfilePage() {
 
     fetchUserData();
   }, [router]);
+
+  const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      handleError(new Error('Please select an image file'), { title: 'Invalid file type' });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      handleError(new Error('Image size must be less than 5MB'), { title: 'File too large' });
+      return;
+    }
+
+    setIsUploadingPicture(true);
+
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Create FormData to send to backend
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+
+      // Send to backend
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      const response = await fetch(`${backendUrl}/auth/profile/picture`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update profile picture');
+      }
+
+      const result = await response.json();
+
+      // Update local state with new picture URL
+      if (result.user?.profile_picture_url) {
+        setProfilePicture(result.user.profile_picture_url);
+      }
+
+      showSuccess(
+        t('profilePictureUpdated') || 'Profile picture updated',
+        t('profilePictureUpdatedDescription') || 'Your profile picture has been updated successfully'
+      );
+    } catch (error: any) {
+      handleError(error, { title: t('profilePictureError') || 'Failed to update profile picture' });
+    } finally {
+      setIsUploadingPicture(false);
+    }
+  };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -121,26 +187,45 @@ export default function ProfilePage() {
       <div className="pt-8 pb-10 px-8 flex flex-col items-center">
         {/* Avatar with Edit Button */}
         <div className="relative mb-4">
-          <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-[3px] border-(--brand-green)/20 p-1">
-            <div className="w-full h-full rounded-full overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=200&h=200"
-                alt={fullName}
-                className="w-full h-full object-cover"
-              />
+          <div className="w-[120px] h-[120px] rounded-full overflow-hidden border-[3px] border-[#064e3b]/20 p-1">
+            <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
+              {isUploadingPicture ? (
+                <Loader2 className="w-10 h-10 animate-spin text-[#064e3b]" />
+              ) : (
+                <img 
+                  src={profilePicture || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=200&h=200"}
+                  alt={fullName}
+                  className="w-full h-full object-cover"
+                />
+              )}
             </div>
           </div>
           {/* Edit Badge */}
-          <button className="absolute bottom-1 right-1 w-10 h-10 bg-(--brand-emerald) rounded-full border-[3px] border-white flex items-center justify-center shadow-md hover:scale-110 transition-transform">
-            <Pencil className="w-4 h-4 text-white fill-white" />
-          </button>
+          <label 
+            htmlFor="profile-picture-input"
+            className="absolute bottom-1 right-1 w-10 h-10 bg-[#064e3b] rounded-full border-[3px] border-white flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+          >
+            {isUploadingPicture ? (
+              <Loader2 className="w-4 h-4 text-white animate-spin" />
+            ) : (
+              <Pencil className="w-4 h-4 text-white fill-white" />
+            )}
+          </label>
+          <input
+            id="profile-picture-input"
+            type="file"
+            accept="image/*"
+            onChange={handleProfilePictureChange}
+            className="hidden"
+            disabled={isUploadingPicture}
+          />
         </div>
 
         {/* Name and Role */}
         <h1 className="text-[28px] font-bold text-slate-900 tracking-tight">
           {fullName}
         </h1>
-        <p className="text-(--brand-green) text-[16px] font-semibold">
+        <p className="text-[#064e3b] text-[16px] font-semibold">
           {role}
         </p>
       </div>

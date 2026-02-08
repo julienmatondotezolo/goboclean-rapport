@@ -5,19 +5,17 @@ import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { handleError, showSuccess } from '@/lib/error-handler';
-import { markUserAsOnboarded } from '@/lib/user-activity';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/ui/logo';
-import { Loader2, Upload, User, ArrowRight, Camera } from 'lucide-react';
+import { Loader2, User, ArrowRight, Camera } from 'lucide-react';
 import Image from 'next/image';
 
 export default function OnboardingPage() {
   const router = useRouter();
   const t = useTranslations('Onboarding');
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
@@ -86,41 +84,6 @@ export default function OnboardingPage() {
     }
   };
 
-  const uploadProfilePicture = async (): Promise<string | null> => {
-    if (!profilePicture || !userId) return null;
-
-    setIsUploading(true);
-    try {
-      const supabase = createClient();
-      
-      // Create unique filename
-      const fileExt = profilePicture.name.split('.').pop();
-      const fileName = `${userId}/profile.${fileExt}`;
-
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('profile-pictures')
-        .upload(fileName, profilePicture, {
-          cacheControl: '3600',
-          upsert: true, // Replace if exists
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-pictures')
-        .getPublicUrl(fileName);
-
-      return publicUrl;
-    } catch (error) {
-      handleError(error, { title: 'Failed to upload profile picture' });
-      return null;
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -140,32 +103,49 @@ export default function OnboardingPage() {
 
     try {
       const supabase = createClient();
-
-      // Upload profile picture if new one provided
-      let profilePictureUrl = profilePicturePreview; // Keep existing if no new upload
-      if (profilePicture) {
-        profilePictureUrl = await uploadProfilePicture();
-        if (!profilePictureUrl) {
-          throw new Error('Failed to upload profile picture');
-        }
+      
+      // Get auth token for backend request
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
       }
 
-      // Update user profile
-      const updateData: any = {
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        profile_picture_url: profilePictureUrl,
-      };
+      console.log('🔑 Session found, user ID:', session.user.id);
+      console.log('🔑 Access token length:', session.access_token?.length);
 
-      const { error: updateError } = await supabase
-        .from('users')
-        .update(updateData)
-        .eq('id', userId);
+      // Create FormData to send to backend
+      const formData = new FormData();
+      formData.append('firstName', firstName.trim());
+      formData.append('lastName', lastName.trim());
+      
+      if (profilePicture) {
+        formData.append('profilePicture', profilePicture);
+        console.log('📷 Profile picture added:', profilePicture.name, profilePicture.size, 'bytes');
+      } else {
+        // If no new picture but preview exists, user already has a picture
+        throw new Error('Please select a profile picture');
+      }
 
-      if (updateError) throw updateError;
+      // Send to backend
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      console.log('📤 Sending to:', `${backendUrl}/auth/onboarding`);
+      
+      const response = await fetch(`${backendUrl}/auth/onboarding`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
 
-      // Mark user as onboarded
-      await markUserAsOnboarded(userId);
+      console.log('📥 Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to complete onboarding');
+      }
+
+      const result = await response.json();
 
       showSuccess(
         t('success') || 'Profile completed!',
@@ -176,7 +156,7 @@ export default function OnboardingPage() {
       setTimeout(() => {
         router.push('/dashboard');
       }, 1000);
-    } catch (error) {
+    } catch (error: any) {
       handleError(error, { title: t('error') || 'Failed to complete profile' });
     } finally {
       setIsLoading(false);
@@ -230,11 +210,7 @@ export default function OnboardingPage() {
                 htmlFor="profile-picture"
                 className="absolute bottom-0 right-0 w-10 h-10 bg-[#1a2e1a] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#2a3e2a] transition-colors shadow-lg border-4 border-white"
               >
-                {isUploading ? (
-                  <Loader2 className="w-5 h-5 text-white animate-spin" />
-                ) : (
-                  <Camera className="w-5 h-5 text-white" />
-                )}
+                <Camera className="w-5 h-5 text-white" />
               </label>
               <input
                 id="profile-picture"
@@ -242,7 +218,7 @@ export default function OnboardingPage() {
                 accept="image/*"
                 onChange={handleFileChange}
                 className="hidden"
-                disabled={isLoading || isUploading}
+                disabled={isLoading}
               />
             </div>
             <p className="text-xs text-slate-500 text-center">
@@ -286,7 +262,7 @@ export default function OnboardingPage() {
           <Button
             type="submit"
             className="w-full mt-6"
-            disabled={isLoading || isUploading}
+            disabled={isLoading}
           >
             {isLoading ? (
               <>

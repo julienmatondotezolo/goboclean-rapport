@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import { Clock, ClipboardCheck, Bell, Loader2, Battery } from 'lucide-react';
 import { MissionCard } from '@/components/ui/mission-card';
 import { StatCard } from '@/components/ui/stat-card';
@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const t = useTranslations('Dashboard');
   const router = useRouter();
   const [userName, setUserName] = useState('Marc');
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [dbMission, setDbMission] = useState<Mission | null>(null);
 
@@ -63,13 +64,13 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchUserAndMission = async () => {
       try {
-        const supabase = createClientComponentClient();
+        const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
           const { data: profile, error: profileError } = await supabase
             .from('users')
-            .select('first_name, last_name')
+            .select('first_name, last_name, profile_picture_url')
             .eq('id', session.user.id)
             .single();
 
@@ -77,6 +78,7 @@ export default function DashboardPage() {
             handleSupabaseError(profileError, 'Failed to load profile');
           } else if (profile) {
             setUserName(profile.first_name);
+            setProfilePicture(profile.profile_picture_url);
           }
 
           const { data: reports, error: reportsError } = await supabase
@@ -167,7 +169,7 @@ export default function DashboardPage() {
             <div className="relative">
               <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white/20">
                 <img 
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marc&backgroundColor=ffad33&hat=hat&hatColor=ff9900" 
+                  src={profilePicture || "https://api.dicebear.com/7.x/avataaars/svg?seed=Marc&backgroundColor=ffad33&hat=hat&hatColor=ff9900"} 
                   alt="Avatar" 
                   className="w-full h-full object-cover"
                 />
