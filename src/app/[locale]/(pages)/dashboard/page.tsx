@@ -1,94 +1,117 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
-import { Clock, ClipboardCheck, Bell, Loader2, Battery } from 'lucide-react';
+import { Clock, ClipboardCheck, Bell, Loader2, AlertCircle } from 'lucide-react';
 import { MissionCard } from '@/components/ui/mission-card';
 import { StatCard } from '@/components/ui/stat-card';
 import { useRouter } from '@/i18n/routing';
 import { LogoGoBoClean } from '@/components/ui/logo';
-import { cn } from '@/lib/utils';
 import { handleSupabaseError } from '@/lib/error-handler';
-
-interface Mission {
-  id: string;
-  title: string;
-  location: string;
-  type: 'emergency' | 'scheduled';
-  startTime?: string;
-  teamMembers?: number;
-  status?: 'noodgeval' | 'gepland';
-  beforePictures?: string[];
-}
+import { useAuth } from '@/hooks/useAuth';
+import { useMyMissions } from '@/hooks/useMissions';
+import { useAdminStats } from '@/hooks/useAdminStats';
+import { useNotifications } from '@/hooks/useNotifications';
+import type { Mission } from '@/types/mission';
 
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
   const router = useRouter();
-  const [userName, setUserName] = useState('Marc');
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
 
-  // Dummy data for stats
-  const weekHours = 38.5;
-  const tasksCompleted = 12;
-  const totalTasks = 15;
-  const highPrioritySites = 3;
+  // Fetch missions from API
+  const {
+    data: missions,
+    isLoading: missionsLoading,
+    isError: missionsError,
+    refetch: refetchMissions,
+  } = useMyMissions();
 
-  // Dummy missions
-  const dummyMissions: Mission[] = [
-    {
-      id: '2',
-      title: 'Floor Degreasing',
-      location: 'Manufacturing Plant - Zone A',
-      type: 'scheduled',
-      startTime: '14:30',
-      status: 'gepland',
-      beforePictures: [
-        'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=400&q=80',
-        'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=400&q=80',
-        'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400&q=80',
-        'https://images.unsplash.com/photo-1581093588401-fbb62a02f120?w=400&q=80',
-      ],
-    },
-    {
-      id: '3',
-      title: 'Ventilation Service',
-      location: 'Storage Facility 3',
-      type: 'scheduled',
-      startTime: 'Tomorrow',
-    },
-  ];
+  // Admin stats (only fetched for admins)
+  const {
+    data: adminStats,
+  } = useAdminStats({ enabled: isAdmin });
 
+  // Notification count
+  const { data: notifData } = useNotifications();
+  const unreadCount = notifData?.unreadCount ?? 0;
+
+  // Fetch profile picture
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchProfile = async () => {
       try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
-        
         if (session) {
-          const { data: profile, error: profileError } = await supabase
+          const { data: profile, error } = await supabase
             .from('users')
-            .select('first_name, last_name, profile_picture_url')
+            .select('profile_picture_url')
             .eq('id', session.user.id)
             .single();
-
-          if (profileError) {
-            handleSupabaseError(profileError, 'Failed to load profile');
-          } else if (profile) {
-            setUserName(profile.first_name);
-            setProfilePicture(profile.profile_picture_url);
-          }
+          if (error) handleSupabaseError(error, 'Failed to load profile');
+          else if (profile) setProfilePicture((profile as any).profile_picture_url);
         }
       } catch (error) {
         handleSupabaseError(error, 'Dashboard');
       } finally {
-        setIsLoading(false);
+        setProfileLoading(false);
       }
     };
-
-    fetchUser();
+    fetchProfile();
   }, []);
+
+  // Derive today's missions sorted by appointment time
+  const todayMissions = useMemo(() => {
+    if (!missions) return [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return missions
+      .filter((m) => {
+        const appt = new Date(m.appointment_time);
+        return appt >= today && appt < tomorrow && m.status !== 'cancelled';
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.appointment_time).getTime() -
+          new Date(b.appointment_time).getTime(),
+      );
+  }, [missions]);
+
+  // Upcoming missions (not today, not cancelled/completed)
+  const upcomingMissions = useMemo(() => {
+    if (!missions) return [];
+    const tomorrow = new Date();
+    tomorrow.setHours(0, 0, 0, 0);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return missions
+      .filter((m) => {
+        const appt = new Date(m.appointment_time);
+        return appt >= tomorrow && m.status !== 'cancelled' && m.status !== 'completed';
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.appointment_time).getTime() -
+          new Date(b.appointment_time).getTime(),
+      )
+      .slice(0, 3);
+  }, [missions]);
+
+  // Compute stats
+  const completedCount = missions?.filter((m) => m.status === 'completed').length ?? 0;
+  const totalActive = missions?.filter((m) => m.status !== 'cancelled' && m.status !== 'completed').length ?? 0;
+  const weekHours = adminStats?.weekHours ?? 0;
+  const tasksDisplay = isAdmin
+    ? `${adminStats?.completedToday ?? 0}/${adminStats?.activeMissions ?? totalActive}`
+    : `${completedCount}/${(missions?.length ?? 0)}`;
+
+  const isLoading = authLoading || profileLoading;
 
   if (isLoading) {
     return (
@@ -101,17 +124,23 @@ export default function DashboardPage() {
     );
   }
 
-  const allMissions = [
-    {
-      id: '1',
-      title: 'Chemical Spill cleanup',
-      location: 'Logistics Hub - Sector B4',
-      type: 'emergency' as const,
-      teamMembers: 2,
-      status: 'noodgeval' as const,
-    },
-    ...dummyMissions,
-  ];
+  const userName = user?.first_name ?? 'User';
+
+  // Helper to format mission time
+  const formatTime = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Determine mission type for card
+  const getMissionType = (m: Mission): 'emergency' | 'scheduled' => {
+    return m.status === 'in_progress' || m.status === 'waiting_completion'
+      ? 'emergency'
+      : 'scheduled';
+  };
+
+  // Combine today + upcoming for display
+  const allDisplayMissions = [...todayMissions, ...upcomingMissions];
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-32 font-sans selection:bg-lime-200">
@@ -134,8 +163,13 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          <button className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 hover:bg-white/20 transition-all active:scale-90">
+          <button className="relative w-11 h-11 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 hover:bg-white/20 transition-all active:scale-90">
             <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -145,7 +179,7 @@ export default function DashboardPage() {
             <div className="relative">
               <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white/20">
                 <img 
-                  src={profilePicture || "https://api.dicebear.com/7.x/avataaars/svg?seed=Marc&backgroundColor=ffad33&hat=hat&hatColor=ff9900"} 
+                  src={profilePicture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}&backgroundColor=ffad33`} 
                   alt="Avatar" 
                   className="w-full h-full object-cover"
                 />
@@ -157,7 +191,7 @@ export default function DashboardPage() {
                 {t('welcome')}, {userName}
               </h2>
               <p className="text-white/70 text-[14px] font-medium">
-                {t('today')}: {highPrioritySites} {t('highPrioritySites')}
+                {t('today')}: {todayMissions.length} {t('activeMissions').toLowerCase()}
               </p>
             </div>
           </div>
@@ -170,14 +204,14 @@ export default function DashboardPage() {
           <StatCard
             icon={Clock}
             label={t('hours')}
-            value={weekHours}
-            subtitle={t('weekToDate')}
+            value={isAdmin ? weekHours : todayMissions.length}
+            subtitle={isAdmin ? t('weekToDate') : t('today')}
             iconColor="text-[#a3e635]"
           />
           <StatCard
             icon={ClipboardCheck}
             label={t('tasks')}
-            value={`${tasksCompleted}/${totalTasks}`}
+            value={tasksDisplay}
             subtitle={t('completed')}
             iconColor="text-[#064e3b]"
           />
@@ -190,26 +224,67 @@ export default function DashboardPage() {
           <h3 className="text-[20px] font-bold text-[#1e293b]">
             {t('assignedMissions')}
           </h3>
-          <button className="text-[14px] font-bold text-[#064e3b] hover:opacity-70 transition-opacity">
+          <button
+            onClick={() => router.push('/schedule')}
+            className="text-[14px] font-bold text-[#064e3b] hover:opacity-70 transition-opacity"
+          >
             {t('viewAll')}
           </button>
         </div>
 
-        <div className="space-y-4">
-          {allMissions.map((mission) => (
-            <MissionCard
-              key={mission.id}
-              type={mission.type}
-              title={mission.title}
-              location={mission.location}
-              startTime={mission.startTime}
-              teamMembers={mission.teamMembers}
-              status={mission.status}
-              onStartJob={() => router.push(`/mission/${mission.id}`)}
-              onViewDetails={() => router.push(`/mission/${mission.id}`)}
-            />
-          ))}
-        </div>
+        {/* Loading State */}
+        {missionsLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-[#064e3b]" />
+            <span className="ml-3 text-[14px] text-gray-500">{t('loading')}</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {missionsError && !missionsLoading && (
+          <div className="bg-red-50 rounded-2xl p-6 text-center">
+            <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
+            <p className="text-[14px] font-bold text-red-700 mb-2">{t('errorLoading')}</p>
+            <button
+              onClick={() => refetchMissions()}
+              className="text-[13px] font-bold text-[#064e3b] hover:underline"
+            >
+              {t('retry')}
+            </button>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!missionsLoading && !missionsError && allDisplayMissions.length === 0 && (
+          <div className="bg-[#f8fafc] rounded-2xl p-8 text-center border-2 border-dashed border-gray-200">
+            <ClipboardCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-[16px] font-bold text-gray-600 mb-1">{t('noMissions')}</p>
+            <p className="text-[13px] text-gray-400">{t('noMissionsDescription')}</p>
+          </div>
+        )}
+
+        {/* Missions List */}
+        {!missionsLoading && !missionsError && allDisplayMissions.length > 0 && (
+          <div className="space-y-4">
+            {allDisplayMissions.map((mission) => (
+              <MissionCard
+                key={mission.id}
+                type={getMissionType(mission)}
+                title={`${mission.client_first_name} ${mission.client_last_name}`}
+                location={mission.client_address}
+                startTime={formatTime(mission.appointment_time)}
+                teamMembers={mission.assigned_workers?.length}
+                status={
+                  mission.status === 'in_progress' || mission.status === 'waiting_completion'
+                    ? 'noodgeval'
+                    : 'gepland'
+                }
+                onStartJob={() => router.push(`/mission/${mission.id}`)}
+                onViewDetails={() => router.push(`/mission/${mission.id}`)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

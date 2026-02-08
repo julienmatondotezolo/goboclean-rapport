@@ -111,7 +111,14 @@
     "worker": "Ouvrier",
     "updated": "Mis à jour",
     "synced": "SYNCHRONISÉ",
-    "pending": "EN ATTENTE"
+    "pending": "EN ATTENTE",
+    "loading": "Chargement des rapports...",
+    "errorLoading": "Échec du chargement des rapports",
+    "retry": "Réessayer",
+    "noReports": "Aucun rapport trouvé",
+    "noReportsDescription": "Il n'y a aucun rapport correspondant à vos critères de recherche.",
+    "downloadPdf": "Télécharger le PDF",
+    "viewDetails": "Voir les Détails"
   },
   "Home": {
     "title": "GobloClean Rapport",
@@ -151,6 +158,12 @@
     "tomorrow": "Demain",
     "emergency": "URGENT",
     "scheduled": "PLANIFIÉ",
+    "loading": "Chargement des missions...",
+    "errorLoading": "Échec du chargement des missions",
+    "retry": "Réessayer",
+    "noMissions": "Aucune mission aujourd'hui",
+    "noMissionsDescription": "Vous n'avez aucune mission assignée pour aujourd'hui. Profitez de votre pause !",
+    "activeMissions": "Missions Actives",
     "navigation": {
       "home": "ACCUEIL",
       "schedule": "PLANNING",
@@ -236,6 +249,14 @@
     "highPriority": "Haute Priorité",
     "urgent": "URGENT",
     "scheduled": "PLANIFIÉ",
+    "loading": "Chargement du planning...",
+    "errorLoading": "Échec du chargement du planning",
+    "retry": "Réessayer",
+    "noMissions": "Aucune mission",
+    "noMissionsForDay": "Aucune mission prévue pour ce jour",
+    "dragToReschedule": "Glisser pour replanifier",
+    "rescheduled": "Mission replanifiée",
+    "rescheduleFailed": "Échec de la replanification",
     "mon": "LUN",
     "tue": "MAR",
     "wed": "MER",
@@ -255,7 +276,28 @@
     "confirmMission": "Confirmer Mission",
     "completeMission": "Terminer la Mission",
     "beforePictures": "Photos Avant",
-    "viewFullScreen": "Plein Écran"
+    "viewFullScreen": "Plein Écran",
+    "loading": "Chargement de la mission...",
+    "errorLoading": "Échec du chargement de la mission",
+    "notFound": "Mission non trouvée",
+    "starting": "Démarrage de la mission...",
+    "startFailed": "Échec du démarrage de la mission",
+    "waitingCompletion": "En attente de finalisation",
+    "timerRemaining": "Temps restant : {minutes}m {seconds}s",
+    "completionUnlocked": "Vous pouvez maintenant terminer cette mission",
+    "status": {
+      "created": "Créée",
+      "assigned": "Assignée",
+      "in_progress": "En Cours",
+      "waiting_completion": "En Attente de Finalisation",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    },
+    "subtypes": {
+      "cleaning": "Nettoyage",
+      "coating": "Revêtement"
+    },
+    "roofType": "Toiture"
   },
   "BeforePictures": {
     "title": "Photos Avant",
@@ -288,7 +330,11 @@
     "photosAdded": "photos ajoutées",
     "confirmButton": "Démarrer la Mission",
     "confirmAndStartButton": "Confirmer les Photos et Démarrer",
-    "backToPhotos": "← Retour aux Photos"
+    "backToPhotos": "← Retour aux Photos",
+    "uploading": "Téléchargement des photos...",
+    "uploadProgress": "Téléchargement : {percent}%",
+    "uploadFailed": "Échec du téléchargement des photos",
+    "uploadSuccess": "Photos téléchargées avec succès"
   },
   "AfterPictures": {
     "title": "Photos Après",
@@ -332,7 +378,11 @@
     "signHere": "Signez Ici",
     "allSignaturesComplete": "Toutes les signatures collectées !",
     "completeMission": "Terminer la Mission",
-    "backToConfirmation": "← Retour à la Confirmation"
+    "backToConfirmation": "← Retour à la Confirmation",
+    "uploading": "Téléchargement et finalisation...",
+    "uploadProgress": "Téléchargement : {percent}%",
+    "uploadFailed": "Échec de la finalisation de la mission",
+    "uploadSuccess": "Mission terminée avec succès !"
   },
   "MissionCreate": {
     "title": "Nouvelle Mission",
@@ -389,6 +439,10 @@
     "solarPanels": "Panneaux Solaires",
     "createMission": "Créer la Mission",
     "creating": "Création...",
+    "createSuccess": "Mission créée avec succès",
+    "createFailed": "Échec de la création de la mission",
+    "loadingWorkers": "Chargement des ouvriers...",
+    "noWorkersAvailable": "Aucun ouvrier disponible",
     "requiredField": "Ce champ est requis",
     "invalidEmail": "Adresse email invalide",
     "invalidPhone": "Numéro de téléphone invalide",

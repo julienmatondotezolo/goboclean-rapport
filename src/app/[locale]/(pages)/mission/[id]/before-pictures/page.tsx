@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Camera, X, ArrowRight, CheckCircle } from 'lucide-react';
+import { Camera, X, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
+import { useUploadBeforePictures } from '@/hooks/useMissions';
+import { showSuccess, handleError } from '@/lib/error-handler';
 
 const STEPS = {
   PHOTOS: 1,
@@ -22,11 +24,16 @@ export default function BeforePicturesPage() {
   const router = useRouter();
   const t = useTranslations('BeforePictures');
   const id = params.id as string;
+  const locale = params.locale as string;
 
   const [currentStep, setCurrentStep] = useState(STEPS.PHOTOS);
   const [photos, setPhotos] = useState<(string | null)[]>([null, null, null, null]);
+  const [photoFiles, setPhotoFiles] = useState<(File | null)[]>([null, null, null, null]);
   const [isUploading, setIsUploading] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const uploadMutation = useUploadBeforePictures();
 
   const progressValue = (currentStep / TOTAL_STEPS) * 100;
 
@@ -37,11 +44,9 @@ export default function BeforePicturesPage() {
     setIsUploading(true);
 
     try {
-      // Take only the first file selected
       const file = files[0];
       const preview = URL.createObjectURL(file);
       
-      // Find the first empty slot or use the currentPhotoIndex if set
       const targetIndex = currentPhotoIndex !== null 
         ? currentPhotoIndex 
         : photos.findIndex(p => p === null);
@@ -52,12 +57,14 @@ export default function BeforePicturesPage() {
           newPhotos[targetIndex] = preview;
           return newPhotos;
         });
+        setPhotoFiles((prev) => {
+          const newFiles = [...prev];
+          newFiles[targetIndex] = file;
+          return newFiles;
+        });
       }
       
-      // Reset current photo index
       setCurrentPhotoIndex(null);
-      
-      // Reset the file input so the same file can be selected again
       event.target.value = '';
     } catch (error) {
       console.error('Error processing images:', error);
@@ -74,6 +81,11 @@ export default function BeforePicturesPage() {
         newPhotos[index] = null;
         return newPhotos;
       });
+      setPhotoFiles((prev) => {
+        const newFiles = [...prev];
+        newFiles[index] = null;
+        return newFiles;
+      });
     }
   };
 
@@ -88,9 +100,27 @@ export default function BeforePicturesPage() {
     }
   };
 
-  const handleConfirmMission = () => {
-    // Navigate to the mission detail or report creation page
-    router.push(`/${params.locale}/mission/${id}`);
+  const handleConfirmMission = async () => {
+    // Build FormData with actual files
+    const formData = new FormData();
+    photoFiles.forEach((file, index) => {
+      if (file) {
+        formData.append('photos', file, `before-${index + 1}.jpg`);
+      }
+    });
+
+    try {
+      await uploadMutation.mutateAsync({
+        id,
+        formData,
+        onProgress: (pct) => setUploadProgress(pct),
+      });
+      showSuccess(t('uploadSuccess'));
+      // Navigate back to mission detail (which now shows waiting_completion)
+      router.push(`/${locale}/mission/${id}`);
+    } catch (error) {
+      handleError(error, { title: t('uploadFailed') });
+    }
   };
 
   const photoCount = photos.filter(p => p !== null).length;
@@ -99,8 +129,7 @@ export default function BeforePicturesPage() {
 
   return (
     <div className="min-h-screen bg-white pb-32 font-sans">
-      {/* Page Header */}
-      <PageHeader title={t('title')} onBack={() => router.push(`/${params.locale}/mission/${id}`)} />
+      <PageHeader title={t('title')} onBack={() => router.push(`/${locale}/mission/${id}`)} />
 
       {/* Progress Bar */}
       <div className="px-6 pt-4 pb-2">
@@ -118,7 +147,6 @@ export default function BeforePicturesPage() {
       {/* Step 1: Take Photos */}
       {currentStep === STEPS.PHOTOS && (
         <div className="px-6 py-6 space-y-6">
-          {/* Instructions */}
           <div className="bg-[#f8fafc] rounded-2xl p-5">
             <h2 className="text-[15px] font-bold text-gray-900 mb-2">{t('step1Title')}</h2>
             <p className="text-[13px] text-gray-600 leading-relaxed">{t('step1Description')}</p>
@@ -134,7 +162,6 @@ export default function BeforePicturesPage() {
             </div>
           </div>
 
-          {/* Photo Grid - Always show 4 slots */}
           <div className="grid grid-cols-2 gap-3">
             <input
               type="file"
@@ -160,7 +187,6 @@ export default function BeforePicturesPage() {
               
               return (
                 <div key={index} className="space-y-2">
-                  {/* Label above box */}
                   <div className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">
                     {getLabel(index)}
                   </div>
@@ -178,11 +204,9 @@ export default function BeforePicturesPage() {
                         className="object-cover"
                         sizes="(max-width: 768px) 50vw, 33vw"
                       />
-                      {/* Green checkmark on top right */}
                       <div className="absolute top-1.5 right-1.5 w-6 h-6 bg-[#a3e635] rounded-full flex items-center justify-center shadow-lg">
                         <CheckCircle className="w-4 h-4 text-[#064e3b]" />
                       </div>
-                      {/* Delete and Retake buttons at bottom */}
                       <div className="absolute bottom-0 left-0 right-0 flex gap-1 p-1.5 bg-linear-to-t from-black/80 to-transparent">
                         <button
                           onClick={() => handleRemovePhoto(index)}
@@ -223,7 +247,6 @@ export default function BeforePicturesPage() {
             })}
           </div>
 
-          {/* Status Message */}
           {!canProceed && photoCount > 0 && (
             <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl p-4">
               <p className="text-[13px] font-bold text-orange-800 text-center">
@@ -240,7 +263,6 @@ export default function BeforePicturesPage() {
             </div>
           )}
 
-          {/* Next Step Button */}
           <div className="pt-4">
             <Button
               onClick={handleNextStep}
@@ -257,14 +279,12 @@ export default function BeforePicturesPage() {
       {/* Step 2: Confirmation */}
       {currentStep === STEPS.CONFIRMATION && (
         <div className="px-6 py-6 space-y-6">
-          {/* Success Icon */}
           <div className="flex justify-center">
             <div className="w-20 h-20 bg-linear-to-br from-[#a3e635] to-[#84cc16] rounded-full flex items-center justify-center shadow-2xl animate-in zoom-in duration-500">
               <CheckCircle className="w-12 h-12 text-[#064e3b]" />
             </div>
           </div>
 
-          {/* Message */}
           <div className="text-center space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
             <h2 className="text-[20px] font-bold text-gray-900">{t('step2Title')}</h2>
             <p className="text-[14px] text-gray-600 leading-relaxed">
@@ -272,7 +292,6 @@ export default function BeforePicturesPage() {
             </p>
           </div>
 
-          {/* Photo Summary */}
           <div className="bg-[#f8fafc] rounded-2xl p-4 space-y-3 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
             <div className="flex items-center justify-between">
               <h3 className="text-[12px] font-bold text-gray-900 uppercase tracking-wide">
@@ -283,7 +302,6 @@ export default function BeforePicturesPage() {
               </span>
             </div>
             
-            {/* Photo Grid Summary - Smaller */}
             <div className="grid grid-cols-4 gap-2">
               {photos.filter(p => p !== null).map((photo, index) => (
                 <div
@@ -297,11 +315,9 @@ export default function BeforePicturesPage() {
                     className="object-cover"
                     sizes="(max-width: 768px) 25vw, 20vw"
                   />
-                  {/* Green checkmark */}
                   <div className="absolute top-1 right-1 w-5 h-5 bg-[#a3e635] rounded-full flex items-center justify-center shadow-lg">
                     <CheckCircle className="w-3 h-3 text-[#064e3b]" />
                   </div>
-                  {/* Photo number badge */}
                   <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">
                     {index + 1}
                   </div>
@@ -310,24 +326,45 @@ export default function BeforePicturesPage() {
             </div>
           </div>
 
-          {/* Motivation Message */}
           <div className="bg-linear-to-br from-[#064e3b] to-[#065f46] rounded-2xl p-5 text-center shadow-xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500">
             <p className="text-[14px] font-bold text-white leading-relaxed">
               {t('motivationMessage')}
             </p>
           </div>
 
-          {/* Confirm Button */}
+          {/* Upload Progress */}
+          {uploadMutation.isPending && (
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                <p className="text-[13px] font-bold text-blue-800">
+                  {t('uploadProgress', { percent: uploadProgress })}
+                </p>
+              </div>
+              <Progress value={uploadProgress} className="h-2 bg-blue-100" />
+            </div>
+          )}
+
           <div className="pt-4 space-y-3 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-700">
-            <Button onClick={handleConfirmMission} className="w-full">
-              <CheckCircle className="w-5 h-5" />
-              <span className="text-[15px] font-bold uppercase tracking-wide">{t('confirmAndStartButton')}</span>
+            <Button
+              onClick={handleConfirmMission}
+              disabled={uploadMutation.isPending}
+              className="w-full"
+            >
+              {uploadMutation.isPending ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <CheckCircle className="w-5 h-5" />
+              )}
+              <span className="text-[15px] font-bold uppercase tracking-wide">
+                {uploadMutation.isPending ? t('uploading') : t('confirmAndStartButton')}
+              </span>
             </Button>
 
-            {/* Back Link */}
             <button
               onClick={() => setCurrentStep(STEPS.PHOTOS)}
-              className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors"
+              disabled={uploadMutation.isPending}
+              className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors disabled:opacity-50"
             >
               {t('backToPhotos')}
             </button>

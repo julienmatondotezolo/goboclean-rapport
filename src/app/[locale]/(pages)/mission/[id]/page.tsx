@@ -1,126 +1,184 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { MapPin, Clock, FileText, Phone, CheckCircle2, X } from 'lucide-react';
+import { MapPin, Clock, FileText, Phone, CheckCircle2, X, Loader2, AlertCircle, Timer } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-
-// Mock mission data - In a real app, this would come from a database
-const getMissionById = (id: string) => {
-  const missions: Record<string, any> = {
-    '1': {
-      id: '1',
-      title: 'Chemical Spill Cleanup',
-      jobType: 'Roofing',
-      time: '08:30 AM',
-      status: 'noodgeval',
-      location: {
-        name: 'Logistics Hub - Sector B4',
-        address: '42 Industrial Way, Docking Area 7, NJ 07001',
-      },
-      description:
-        'Urgent cleanup required for a Class 3 flammable liquid spill in the loading dock area. Area has been cordoned off by security. Requires full PPE, absorbent pads, and neutralized disposal containers.',
-      tasks: [
-        { id: 1, text: 'Neutralize spill area (10sqm)', completed: true },
-        { id: 2, text: 'Decontamination of floor surface', completed: true },
-      ],
-      contact: {
-        name: 'John Anderson',
-        role: 'SITE MANAGER',
-        avatar: '👨‍💼',
-      },
-    },
-    '2': {
-      id: '2',
-      title: 'Floor Degreasing',
-      jobType: 'Industrial Cleaning',
-      time: '14:30',
-      status: 'gepland',
-      location: {
-        name: 'Manufacturing Plant - Zone A',
-        address: '124 Oak Street, Suite 400, NY 10001',
-      },
-      description:
-        'Complete floor degreasing for manufacturing facility. Remove oil stains, grease buildup, and ensure proper surface preparation.',
-      tasks: [
-        { id: 1, text: 'Pre-inspection of floor area', completed: true },
-        { id: 2, text: 'Apply degreasing solution', completed: false },
-        { id: 3, text: 'Pressure wash and rinse', completed: false },
-      ],
-      contact: {
-        name: 'Sarah Mitchell',
-        role: 'FACILITY MANAGER',
-        avatar: '👩‍💼',
-      },
-      beforePictures: [
-        'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80',
-        'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&q=80',
-        'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80',
-        'https://images.unsplash.com/photo-1581093588401-fbb62a02f120?w=800&q=80',
-      ],
-    },
-    '3': {
-      id: '3',
-      title: 'Ventilation Service',
-      jobType: 'Maintenance',
-      time: 'Tomorrow',
-      status: 'gepland',
-      location: {
-        name: 'Storage Facility 3',
-        address: '456 Industrial Blvd, Warehouse District, NJ 07002',
-      },
-      description:
-        'Scheduled ventilation system service and filter replacement for storage facility.',
-      tasks: [
-        { id: 1, text: 'Inspect ventilation ducts', completed: false },
-        { id: 2, text: 'Replace air filters', completed: false },
-        { id: 3, text: 'Test airflow', completed: false },
-      ],
-      contact: {
-        name: 'Mike Johnson',
-        role: 'OPERATIONS MANAGER',
-        avatar: '👨‍💼',
-      },
-    },
-  };
-
-  return missions[id] || missions['1'];
-};
+import { useMission, useStartMission } from '@/hooks/useMissions';
+import { handleError, showSuccess } from '@/lib/error-handler';
+import type { Mission, MissionStatus } from '@/types/mission';
 
 export default function MissionDetailPage() {
   const params = useParams();
   const router = useRouter();
   const t = useTranslations('Mission');
   const id = params.id as string;
-  const mission = getMissionById(id);
+  const locale = params.locale as string;
+
+  const { data: mission, isLoading, isError, refetch } = useMission(id);
+  const startMission = useStartMission();
+
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<{ minutes: number; seconds: number } | null>(null);
+  const [completionUnlocked, setCompletionUnlocked] = useState(false);
 
-  const isScheduledMission = mission.status === 'gepland';
-  const hasBeforePictures = mission.beforePictures && mission.beforePictures.length > 0;
+  // Timer logic for waiting_completion status
+  useEffect(() => {
+    if (!mission || mission.status !== 'waiting_completion' || !mission.completion_unlocked_at) {
+      setTimeRemaining(null);
+      setCompletionUnlocked(false);
+      return;
+    }
 
-  const handleConfirmMission = () => {
-    if (isScheduledMission) {
-      // For scheduled missions, go to after-pictures
-      router.push(`/${params.locale}/mission/${id}/after-pictures`);
-    } else {
-      // For emergency missions, go to before-pictures
-      router.push(`/${params.locale}/mission/${id}/before-pictures`);
+    const unlockTime = new Date(mission.completion_unlocked_at).getTime();
+
+    const tick = () => {
+      const now = Date.now();
+      const diff = unlockTime - now;
+
+      if (diff <= 0) {
+        setTimeRemaining(null);
+        setCompletionUnlocked(true);
+      } else {
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        setTimeRemaining({ minutes, seconds });
+        setCompletionUnlocked(false);
+      }
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [mission]);
+
+  const handleStartMission = async () => {
+    try {
+      await startMission.mutateAsync(id);
+      showSuccess(t('startMission'));
+      router.push(`/${locale}/mission/${id}/before-pictures`);
+    } catch (error) {
+      handleError(error, { title: t('startFailed') });
     }
   };
 
+  const handleAction = () => {
+    if (!mission) return;
+
+    switch (mission.status) {
+      case 'assigned':
+      case 'created':
+        handleStartMission();
+        break;
+      case 'in_progress':
+        router.push(`/${locale}/mission/${id}/before-pictures`);
+        break;
+      case 'waiting_completion':
+        if (completionUnlocked) {
+          router.push(`/${locale}/mission/${id}/after-pictures`);
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
+  const getActionLabel = (): string => {
+    if (!mission) return '';
+    switch (mission.status) {
+      case 'created':
+      case 'assigned':
+        return t('startMission');
+      case 'in_progress':
+        return t('startMission'); // Continue to before-pictures
+      case 'waiting_completion':
+        return completionUnlocked ? t('completeMission') : t('waitingCompletion');
+      case 'completed':
+        return t('completeMission');
+      default:
+        return '';
+    }
+  };
+
+  const isActionDisabled = (): boolean => {
+    if (!mission) return true;
+    if (startMission.isPending) return true;
+    if (mission.status === 'waiting_completion' && !completionUnlocked) return true;
+    if (mission.status === 'completed' || mission.status === 'cancelled') return true;
+    return false;
+  };
+
+  // Status badge color
+  const getStatusColor = (status: MissionStatus) => {
+    switch (status) {
+      case 'in_progress':
+      case 'waiting_completion':
+        return 'bg-[#f0f9e1] text-[#4d7c0f]';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-[#f1f5f9] text-[#64748b]';
+    }
+  };
+
+  // Loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white pb-32 font-sans">
+        <PageHeader title={t('loading')} />
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-[#064e3b]" />
+        </div>
+      </div>
+    );
+  }
+
+  // Error
+  if (isError || !mission) {
+    return (
+      <div className="min-h-screen bg-white pb-32 font-sans">
+        <PageHeader title={t('errorLoading')} />
+        <div className="px-6 py-12 text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-[16px] font-bold text-gray-700 mb-2">{t('notFound')}</p>
+          <button
+            onClick={() => refetch()}
+            className="text-[13px] font-bold text-[#064e3b] hover:underline"
+          >
+            {t('errorLoading')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const displayTitle = `${mission.client_first_name} ${mission.client_last_name}`;
+  const subtypesLabel = mission.mission_subtypes?.map((st) => st).join(', ') || '';
+  const appointmentTime = new Date(mission.appointment_time).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const hasBeforePictures = mission.before_pictures && mission.before_pictures.length > 0;
+
   return (
     <div className="min-h-screen bg-white pb-32 font-sans">
-      {/* Page Header with dynamic title */}
-      <PageHeader title={mission.title} />
+      <PageHeader title={displayTitle} />
 
-      {/* Content */}
       <div className="px-6 py-6 space-y-6">
+        {/* Status Badge */}
+        <div className="flex items-center gap-2">
+          <span className={`inline-block px-3 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${getStatusColor(mission.status)}`}>
+            {t(`status.${mission.status}`)}
+          </span>
+        </div>
+
         {/* Job Type and Time Cards */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Job Type */}
           <div className="bg-[#f8fafc] rounded-2xl p-4">
             <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
               {t('jobType')}
@@ -131,21 +189,38 @@ export default function MissionDetailPage() {
                   <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
                 </svg>
               </div>
-              <span className="text-[15px] font-bold text-gray-900">{mission.jobType}</span>
+              <span className="text-[15px] font-bold text-gray-900">
+                {subtypesLabel || t('roofType')}
+              </span>
             </div>
           </div>
 
-          {/* Rendez-vous Time */}
           <div className="bg-[#f8fafc] rounded-2xl p-4">
             <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
               {t('rendezvous')}
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-[#a3e635]" />
-              <span className="text-[15px] font-bold text-gray-900">{mission.time}</span>
+              <span className="text-[15px] font-bold text-gray-900">{appointmentTime}</span>
             </div>
           </div>
         </div>
+
+        {/* Timer Banner (waiting_completion) */}
+        {mission.status === 'waiting_completion' && (
+          <div className={`rounded-2xl p-4 flex items-center gap-3 ${completionUnlocked ? 'bg-green-50 border-2 border-[#a3e635]' : 'bg-orange-50 border-2 border-orange-200'}`}>
+            <Timer className={`w-6 h-6 ${completionUnlocked ? 'text-[#064e3b]' : 'text-orange-600'}`} />
+            <div>
+              {completionUnlocked ? (
+                <p className="text-[13px] font-bold text-[#064e3b]">✓ {t('completionUnlocked')}</p>
+              ) : timeRemaining ? (
+                <p className="text-[13px] font-bold text-orange-800">
+                  {t('timerRemaining', { minutes: timeRemaining.minutes, seconds: timeRemaining.seconds })}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        )}
 
         {/* Address Section */}
         <div className="bg-[#f8fafc] rounded-2xl p-5">
@@ -158,8 +233,7 @@ export default function MissionDetailPage() {
                 <MapPin className="w-5 h-5 text-[#a3e635]" />
               </div>
               <div className="flex-1">
-                <h3 className="text-[15px] font-bold text-gray-900 mb-1">{mission.location.name}</h3>
-                <p className="text-[13px] text-gray-600 leading-relaxed">{mission.location.address}</p>
+                <h3 className="text-[15px] font-bold text-gray-900 mb-1">{mission.client_address}</h3>
               </div>
             </div>
             <button className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm hover:shadow-md transition-all ml-3">
@@ -181,46 +255,46 @@ export default function MissionDetailPage() {
         </div>
 
         {/* Mission Description */}
-        <div className="bg-[#f8fafc] rounded-2xl p-5">
-          <div className="text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
-            {t('missionDescription')}
+        {mission.additional_info && (
+          <div className="bg-[#f8fafc] rounded-2xl p-5">
+            <div className="text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+              {t('missionDescription')}
+            </div>
+            <p className="text-[14px] text-gray-700 leading-relaxed">{mission.additional_info}</p>
           </div>
-          <p className="text-[14px] text-gray-700 leading-relaxed mb-4">{mission.description}</p>
+        )}
 
-          {/* Task List */}
-          <div className="space-y-2">
-            {mission.tasks.map((task: any) => (
-              <div
-                key={task.id}
-                className="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-100"
-              >
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
-                    task.completed ? 'bg-[#a3e635]' : 'bg-gray-100'
-                  }`}
-                >
-                  {task.completed && <CheckCircle2 className="w-4 h-4 text-gray-900" />}
+        {/* Mission Details */}
+        {(mission.surface_area || mission.facade_count) && (
+          <div className="bg-[#f8fafc] rounded-2xl p-5">
+            <div className="text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+              {t('missionDescription')}
+            </div>
+            <div className="space-y-2 text-[13px]">
+              {mission.surface_area && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Surface:</span>
+                  <span className="font-bold text-gray-900">{mission.surface_area} m²</span>
                 </div>
-                <span
-                  className={`text-[14px] font-medium ${
-                    task.completed ? 'text-gray-900' : 'text-gray-600'
-                  }`}
-                >
-                  {task.text}
-                </span>
-              </div>
-            ))}
+              )}
+              {mission.facade_count && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Facades:</span>
+                  <span className="font-bold text-gray-900">{mission.facade_count}</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Before Pictures Section - Only show for scheduled missions */}
-        {isScheduledMission && hasBeforePictures && (
+        {/* Before Pictures Section */}
+        {hasBeforePictures && (
           <div className="bg-[#f8fafc] rounded-2xl p-5">
             <div className="text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
               {t('beforePictures')}
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {mission.beforePictures.map((photo: string, index: number) => (
+              {mission.before_pictures!.map((photo: string, index: number) => (
                 <div
                   key={index}
                   onClick={() => setFullScreenImage(photo)}
@@ -234,9 +308,8 @@ export default function MissionDetailPage() {
                     className="object-cover"
                     sizes="(max-width: 768px) 50vw, 33vw"
                   />
-                  {/* Photo number badge */}
                   <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded">
-                    {index + 1}/4
+                    {index + 1}/{mission.before_pictures!.length}
                   </div>
                 </div>
               ))}
@@ -252,30 +325,43 @@ export default function MissionDetailPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-linear-to-br from-[#a3e635] to-[#84cc16] rounded-2xl flex items-center justify-center text-2xl">
-                {mission.contact.avatar}
+                👤
               </div>
               <div>
-                <h3 className="text-[15px] font-bold text-gray-900">{mission.contact.name}</h3>
+                <h3 className="text-[15px] font-bold text-gray-900">
+                  {mission.client_first_name} {mission.client_last_name}
+                </h3>
                 <p className="text-[11px] font-bold text-gray-500 tracking-wide">
-                  {mission.contact.role}
+                  {mission.client_phone}
                 </p>
               </div>
             </div>
-            <button className="w-14 h-14 bg-[#064e3b] rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95">
-              <Phone className="w-6 h-6 text-[#a3e635]" />
-            </button>
+            {mission.client_phone && (
+              <a
+                href={`tel:${mission.client_phone}`}
+                className="w-14 h-14 bg-[#064e3b] rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              >
+                <Phone className="w-6 h-6 text-[#a3e635]" />
+              </a>
+            )}
           </div>
         </div>
 
-        {/* Confirm Mission Button */}
-        <div className="pt-4">
-          <Button onClick={handleConfirmMission} className="w-full">
-            <FileText className="w-5 h-5" />
-            <span className="text-[15px] font-bold uppercase tracking-wide">
-              {isScheduledMission ? t('completeMission') : t('startMission')}
-            </span>
-          </Button>
-        </div>
+        {/* Action Button */}
+        {mission.status !== 'completed' && mission.status !== 'cancelled' && (
+          <div className="pt-4">
+            <Button onClick={handleAction} disabled={isActionDisabled()} className="w-full">
+              {startMission.isPending ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <FileText className="w-5 h-5" />
+              )}
+              <span className="text-[15px] font-bold uppercase tracking-wide">
+                {startMission.isPending ? t('starting') : getActionLabel()}
+              </span>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Full Screen Image Modal */}

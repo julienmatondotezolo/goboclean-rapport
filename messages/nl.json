@@ -111,7 +111,14 @@
     "worker": "Arbeider",
     "updated": "Bijgewerkt",
     "synced": "GESYNCHRONISEERD",
-    "pending": "IN BEHANDELING"
+    "pending": "IN BEHANDELING",
+    "loading": "Rapporten laden...",
+    "errorLoading": "Rapporten laden mislukt",
+    "retry": "Opnieuw proberen",
+    "noReports": "Geen rapporten gevonden",
+    "noReportsDescription": "Er zijn geen rapporten die overeenkomen met uw zoekcriteria.",
+    "downloadPdf": "PDF Downloaden",
+    "viewDetails": "Details Bekijken"
   },
   "Home": {
     "title": "GoboClean Rapport",
@@ -151,6 +158,12 @@
     "tomorrow": "Morgen",
     "emergency": "NOODGEVAL",
     "scheduled": "GEPLAND",
+    "loading": "Missies laden...",
+    "errorLoading": "Missies laden mislukt",
+    "retry": "Opnieuw proberen",
+    "noMissions": "Geen missies vandaag",
+    "noMissionsDescription": "U heeft geen toegewezen missies voor vandaag. Geniet van uw pauze!",
+    "activeMissions": "Actieve Missies",
     "navigation": {
       "home": "HOME",
       "schedule": "PLANNING",
@@ -236,6 +249,14 @@
     "highPriority": "Hoge Prioriteit",
     "urgent": "URGENT",
     "scheduled": "GEPLAND",
+    "loading": "Planning laden...",
+    "errorLoading": "Planning laden mislukt",
+    "retry": "Opnieuw proberen",
+    "noMissions": "Geen missies",
+    "noMissionsForDay": "Geen missies gepland voor deze dag",
+    "dragToReschedule": "Sleep om te herplannen",
+    "rescheduled": "Missie herplanned",
+    "rescheduleFailed": "Missie herplannen mislukt",
     "mon": "MA",
     "tue": "DI",
     "wed": "WO",
@@ -255,7 +276,28 @@
     "confirmMission": "Missie Bevestigen",
     "completeMission": "Missie Voltooien",
     "beforePictures": "Foto's Vooraf",
-    "viewFullScreen": "Volledig Scherm"
+    "viewFullScreen": "Volledig Scherm",
+    "loading": "Missie laden...",
+    "errorLoading": "Missie laden mislukt",
+    "notFound": "Missie niet gevonden",
+    "starting": "Missie starten...",
+    "startFailed": "Missie starten mislukt",
+    "waitingCompletion": "Wachten op voltooiing",
+    "timerRemaining": "Resterende tijd: {minutes}m {seconds}s",
+    "completionUnlocked": "U kunt deze missie nu voltooien",
+    "status": {
+      "created": "Aangemaakt",
+      "assigned": "Toegewezen",
+      "in_progress": "Bezig",
+      "waiting_completion": "Wacht op Voltooiing",
+      "completed": "Voltooid",
+      "cancelled": "Geannuleerd"
+    },
+    "subtypes": {
+      "cleaning": "Reiniging",
+      "coating": "Coating"
+    },
+    "roofType": "Dak"
   },
   "BeforePictures": {
     "title": "Foto's Vooraf",
@@ -288,7 +330,11 @@
     "photosAdded": "foto's toegevoegd",
     "confirmButton": "Missie Starten",
     "confirmAndStartButton": "Bevestig Foto's & Start Missie",
-    "backToPhotos": "← Terug naar Foto's"
+    "backToPhotos": "← Terug naar Foto's",
+    "uploading": "Foto's uploaden...",
+    "uploadProgress": "Uploaden: {percent}%",
+    "uploadFailed": "Foto's uploaden mislukt",
+    "uploadSuccess": "Foto's succesvol geüpload"
   },
   "AfterPictures": {
     "title": "Foto's Na",
@@ -332,7 +378,11 @@
     "signHere": "Teken Hier",
     "allSignaturesComplete": "Alle handtekeningen verzameld!",
     "completeMission": "Missie Voltooien",
-    "backToConfirmation": "← Terug naar Bevestiging"
+    "backToConfirmation": "← Terug naar Bevestiging",
+    "uploading": "Uploaden en voltooien...",
+    "uploadProgress": "Uploaden: {percent}%",
+    "uploadFailed": "Missie voltooien mislukt",
+    "uploadSuccess": "Missie succesvol voltooid!"
   },
   "MissionCreate": {
     "title": "Nieuwe Missie",
@@ -389,6 +439,10 @@
     "solarPanels": "Zonnepanelen",
     "createMission": "Missie Aanmaken",
     "creating": "Aanmaken...",
+    "createSuccess": "Missie succesvol aangemaakt",
+    "createFailed": "Missie aanmaken mislukt",
+    "loadingWorkers": "Werknemers laden...",
+    "noWorkersAvailable": "Geen werknemers beschikbaar",
     "requiredField": "Dit veld is verplicht",
     "invalidEmail": "Ongeldig e-mailadres",
     "invalidPhone": "Ongeldig telefoonnummer",

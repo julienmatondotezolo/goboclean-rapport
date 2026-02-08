@@ -3,12 +3,16 @@
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { MapPin, Phone, Mail, Calendar, FileText, Home, CheckCircle2, ArrowRight } from 'lucide-react';
+import { MapPin, Phone, Mail, Calendar, FileText, Home, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
+import { useWorkersList } from '@/hooks/useWorkers';
+import { useCreateMission } from '@/hooks/useMissions';
+import { showSuccess, handleError } from '@/lib/error-handler';
+import type { CreateMissionPayload, MissionSubtype } from '@/types/mission';
 
 interface ClientInfo {
   firstName: string;
@@ -44,23 +48,17 @@ interface MissionDetails {
 
 const TOTAL_STEPS = 3;
 
-// Mock workers data - In a real app, this would come from a database
-const WORKERS = [
-  { id: '1', name: 'Jan Janssen', role: 'Senior Technician' },
-  { id: '2', name: 'Marie Dubois', role: 'Lead Roofer' },
-  { id: '3', name: 'Hans Schmidt', role: 'Technician' },
-  { id: '4', name: 'Sophie Martin', role: 'Junior Technician' },
-  { id: '5', name: 'Lucas van Dijk', role: 'Roofer' },
-];
-
 export default function MissionCreatePage() {
   const router = useRouter();
   const params = useParams();
   const t = useTranslations('MissionCreate');
   const [currentStep, setCurrentStep] = useState(1);
-  const [isCreating, setIsCreating] = useState(false);
   const [selectedWorkers, setSelectedWorkers] = useState<string[]>([]);
   
+  // Real API hooks
+  const { data: workers, isLoading: workersLoading } = useWorkersList();
+  const createMission = useCreateMission();
+
   const progressValue = (currentStep / TOTAL_STEPS) * 100;
 
   const [clientInfo, setClientInfo] = useState<ClientInfo>({
@@ -130,12 +128,10 @@ export default function MissionCreatePage() {
   const validateStep2 = () => {
     const newErrors: Record<string, string> = {};
 
-    // At least one subtype must be selected
     if (!missionDetails.subTypes.cleaning && !missionDetails.subTypes.coating) {
       newErrors.subTypes = t('requiredField');
     }
 
-    // Surface area must be greater than 0
     if (!missionDetails.surfaceArea || parseFloat(missionDetails.surfaceArea) <= 0) {
       newErrors.surfaceArea = t('surfaceAreaRequired');
     }
@@ -169,7 +165,6 @@ export default function MissionCreatePage() {
           navigator.geolocation.getCurrentPosition(resolve, reject);
         });
         
-        // In a real app, you'd reverse geocode the coordinates to get an address
         const coords = `${position.coords.latitude}, ${position.coords.longitude}`;
         setClientInfo({ ...clientInfo, address: coords });
       } catch (error) {
@@ -190,23 +185,39 @@ export default function MissionCreatePage() {
   };
 
   const handleCreateMission = async () => {
-    // Validate worker selection
     if (selectedWorkers.length === 0) {
       setErrors({ worker: t('workerRequired') });
       return;
     }
 
-    setIsCreating(true);
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    
-    // In a real app, save to database here
-    const selectedWorkersData = WORKERS.filter(w => selectedWorkers.includes(w.id));
-    console.log('Mission created:', { clientInfo, missionDetails, workers: selectedWorkersData });
-    
-    // Redirect to missions list or dashboard
-    router.push(`/${params.locale}/schedule`);
+    // Build subtypes array
+    const subtypes: MissionSubtype[] = [];
+    if (missionDetails.subTypes.cleaning) subtypes.push('cleaning');
+    if (missionDetails.subTypes.coating) subtypes.push('coating');
+
+    const payload: CreateMissionPayload = {
+      client_first_name: clientInfo.firstName,
+      client_last_name: clientInfo.lastName,
+      client_phone: clientInfo.phone,
+      client_email: clientInfo.email || undefined,
+      client_address: clientInfo.address,
+      appointment_time: new Date(clientInfo.appointmentTime).toISOString(),
+      mission_type: 'roof',
+      mission_subtypes: subtypes,
+      surface_area: parseFloat(missionDetails.surfaceArea) || undefined,
+      facade_count: parseInt(missionDetails.facadeNumber) || 1,
+      additional_info: missionDetails.additionalInformation || undefined,
+      features: missionDetails.features,
+      assigned_workers: selectedWorkers,
+    };
+
+    try {
+      await createMission.mutateAsync(payload);
+      showSuccess(t('createSuccess'));
+      router.push(`/${params.locale}/schedule`);
+    } catch (error) {
+      handleError(error, { title: t('createFailed') });
+    }
   };
 
   return (
@@ -230,7 +241,6 @@ export default function MissionCreatePage() {
       <div className="px-6 py-6">
         {currentStep === 1 && (
           <div className="space-y-6">
-            {/* Step Title */}
             <div>
               <h2 className="text-[24px] font-bold text-[#064e3b] mb-2">{t('step1Title')}</h2>
               <p className="text-[14px] text-gray-600">{t('step1Description')}</p>
@@ -364,7 +374,6 @@ export default function MissionCreatePage() {
 
         {currentStep === 2 && (
           <div className="space-y-6">
-            {/* Step Title */}
             <div>
               <h2 className="text-[24px] font-bold text-[#064e3b] mb-2">{t('step2Title')}</h2>
               <p className="text-[14px] text-gray-600">{t('step2Description')}</p>
@@ -567,7 +576,6 @@ export default function MissionCreatePage() {
 
         {currentStep === 3 && (
           <div className="space-y-6">
-            {/* Step Title */}
             <div>
               <h2 className="text-[24px] font-bold text-[#064e3b] mb-2">{t('step3Title')}</h2>
               <p className="text-[14px] text-gray-600">{t('step3Description')}</p>
@@ -582,48 +590,68 @@ export default function MissionCreatePage() {
                 {t('selectWorkersHelp')} ({selectedWorkers.length} {t('selected')})
               </p>
               
-              {/* Workers List as Cards */}
-              <div className="space-y-3">
-                {WORKERS.map((worker) => {
-                  const isSelected = selectedWorkers.includes(worker.id);
-                  return (
-                    <button
-                      key={worker.id}
-                      type="button"
-                      onClick={() => toggleWorkerSelection(worker.id)}
-                      className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                        isSelected
-                          ? 'border-[#a3e635] bg-[#a3e635]/10'
-                          : 'border-gray-200 bg-[#f8fafc] hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        {/* Avatar */}
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${
-                          isSelected
-                            ? 'bg-[#a3e635] text-[#064e3b]'
-                            : 'bg-gray-200 text-gray-600'
-                        }`}>
-                          {worker.name.split(' ').map(n => n[0]).join('')}
-                        </div>
-                        
-                        {/* Worker Info */}
-                        <div className="flex-1">
-                          <h3 className="text-[15px] font-bold text-gray-900">{worker.name}</h3>
-                          <p className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
-                            {worker.role}
-                          </p>
-                        </div>
+              {/* Loading State */}
+              {workersLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-[#064e3b]" />
+                  <span className="ml-2 text-[13px] text-gray-500">{t('loadingWorkers')}</span>
+                </div>
+              )}
 
-                        {/* Checkmark */}
-                        {isSelected && (
-                          <CheckCircle2 className="w-6 h-6 text-[#a3e635]" />
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              {/* Empty State */}
+              {!workersLoading && (!workers || workers.length === 0) && (
+                <div className="bg-gray-50 rounded-2xl p-6 text-center">
+                  <p className="text-[14px] text-gray-500">{t('noWorkersAvailable')}</p>
+                </div>
+              )}
+
+              {/* Workers List */}
+              {!workersLoading && workers && workers.length > 0 && (
+                <div className="space-y-3">
+                  {workers.map((worker) => {
+                    const isSelected = selectedWorkers.includes(worker.id);
+                    return (
+                      <button
+                        key={worker.id}
+                        type="button"
+                        onClick={() => toggleWorkerSelection(worker.id)}
+                        className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+                          isSelected
+                            ? 'border-[#a3e635] bg-[#a3e635]/10'
+                            : 'border-gray-200 bg-[#f8fafc] hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold overflow-hidden ${
+                            isSelected
+                              ? 'bg-[#a3e635] text-[#064e3b]'
+                              : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            {worker.profile_picture_url ? (
+                              <img src={worker.profile_picture_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              `${worker.first_name[0]}${worker.last_name[0]}`
+                            )}
+                          </div>
+                          
+                          <div className="flex-1">
+                            <h3 className="text-[15px] font-bold text-gray-900">
+                              {worker.first_name} {worker.last_name}
+                            </h3>
+                            <p className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
+                              {worker.role}
+                            </p>
+                          </div>
+
+                          {isSelected && (
+                            <CheckCircle2 className="w-6 h-6 text-[#a3e635]" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               
               {errors.worker && (
                 <p className="text-red-500 text-xs mt-2">{errors.worker}</p>
@@ -667,12 +695,16 @@ export default function MissionCreatePage() {
             <div className="pt-2">
               <Button
                 onClick={handleCreateMission}
-                disabled={isCreating || selectedWorkers.length === 0}
+                disabled={createMission.isPending || selectedWorkers.length === 0}
                 className="w-full"
               >
-                <CheckCircle2 className="w-5 h-5" />
+                {createMission.isPending ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5" />
+                )}
                 <span className="text-[15px] font-bold uppercase tracking-wide">
-                  {isCreating ? t('creating') : t('createMission')}
+                  {createMission.isPending ? t('creating') : t('createMission')}
                 </span>
               </Button>
             </div>

@@ -40,3 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .trae
+test-results/
+e2e/
+playwright.config.ts

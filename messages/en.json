@@ -111,7 +111,14 @@
     "worker": "Worker",
     "updated": "Updated",
     "synced": "SYNCED",
-    "pending": "PENDING"
+    "pending": "PENDING",
+    "loading": "Loading reports...",
+    "errorLoading": "Failed to load reports",
+    "retry": "Retry",
+    "noReports": "No reports found",
+    "noReportsDescription": "There are no reports matching your search criteria.",
+    "downloadPdf": "Download PDF",
+    "viewDetails": "View Details"
   },
   "Home": {
     "title": "GoboClean Rapport",
@@ -151,6 +158,12 @@
     "tomorrow": "Tomorrow",
     "emergency": "EMERGENCY",
     "scheduled": "SCHEDULED",
+    "loading": "Loading missions...",
+    "errorLoading": "Failed to load missions",
+    "retry": "Retry",
+    "noMissions": "No missions today",
+    "noMissionsDescription": "You have no assigned missions for today. Enjoy your break!",
+    "activeMissions": "Active Missions",
     "navigation": {
       "home": "HOME",
       "schedule": "SCHEDULE",
@@ -236,6 +249,14 @@
     "highPriority": "High Priority",
     "urgent": "URGENT",
     "scheduled": "SCHEDULED",
+    "loading": "Loading schedule...",
+    "errorLoading": "Failed to load schedule",
+    "retry": "Retry",
+    "noMissions": "No missions",
+    "noMissionsForDay": "No missions scheduled for this day",
+    "dragToReschedule": "Drag to reschedule",
+    "rescheduled": "Mission rescheduled",
+    "rescheduleFailed": "Failed to reschedule mission",
     "mon": "MON",
     "tue": "TUE",
     "wed": "WED",
@@ -255,7 +276,28 @@
     "confirmMission": "Confirm Mission",
     "completeMission": "Complete Mission",
     "beforePictures": "Before Pictures",
-    "viewFullScreen": "View Full Screen"
+    "viewFullScreen": "View Full Screen",
+    "loading": "Loading mission...",
+    "errorLoading": "Failed to load mission",
+    "notFound": "Mission not found",
+    "starting": "Starting mission...",
+    "startFailed": "Failed to start mission",
+    "waitingCompletion": "Waiting for completion",
+    "timerRemaining": "Time remaining: {minutes}m {seconds}s",
+    "completionUnlocked": "You can now complete this mission",
+    "status": {
+      "created": "Created",
+      "assigned": "Assigned",
+      "in_progress": "In Progress",
+      "waiting_completion": "Waiting Completion",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "subtypes": {
+      "cleaning": "Cleaning",
+      "coating": "Coating"
+    },
+    "roofType": "Roof"
   },
   "BeforePictures": {
     "title": "Before Pictures",
@@ -288,7 +330,11 @@
     "photosAdded": "photos added",
     "confirmButton": "Start Mission",
     "confirmAndStartButton": "Confirm Pictures & Start Mission",
-    "backToPhotos": "← Back to Photos"
+    "backToPhotos": "← Back to Photos",
+    "uploading": "Uploading photos...",
+    "uploadProgress": "Uploading: {percent}%",
+    "uploadFailed": "Failed to upload photos",
+    "uploadSuccess": "Photos uploaded successfully"
   },
   "AfterPictures": {
     "title": "Pictures After",
@@ -332,7 +378,11 @@
     "signHere": "Sign Here",
     "allSignaturesComplete": "All signatures collected!",
     "completeMission": "Complete Mission",
-    "backToConfirmation": "← Back to Confirmation"
+    "backToConfirmation": "← Back to Confirmation",
+    "uploading": "Uploading and completing...",
+    "uploadProgress": "Uploading: {percent}%",
+    "uploadFailed": "Failed to complete mission",
+    "uploadSuccess": "Mission completed successfully!"
   },
   "MissionCreate": {
     "title": "New Mission",
@@ -389,6 +439,10 @@
     "solarPanels": "Solar Panels",
     "createMission": "Create Mission",
     "creating": "Creating...",
+    "createSuccess": "Mission created successfully",
+    "createFailed": "Failed to create mission",
+    "loadingWorkers": "Loading workers...",
+    "noWorkersAvailable": "No workers available",
     "requiredField": "This field is required",
     "invalidEmail": "Invalid email address",
     "invalidPhone": "Invalid phone number",

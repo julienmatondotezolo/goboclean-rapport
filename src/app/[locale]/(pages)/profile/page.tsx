@@ -94,7 +94,7 @@ export default function ProfilePage() {
         throw new Error('No active session');
       }
 
-      // Call backend API
+      // Call backend API to update preference
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
       const response = await fetch(`${backendUrl}/auth/preferences`, {
         method: 'PUT',
@@ -110,6 +110,15 @@ export default function ProfilePage() {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update notification preference');
+      }
+
+      // Subscribe / unsubscribe from Web Push
+      if (newValue) {
+        const { subscribeToPush } = await import('@/lib/push-notifications');
+        await subscribeToPush();
+      } else {
+        const { unsubscribeFromPush } = await import('@/lib/push-notifications');
+        await unsubscribeFromPush();
       }
 
       setPushNotifications(newValue);

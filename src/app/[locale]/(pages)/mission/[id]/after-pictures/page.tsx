@@ -3,11 +3,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Camera, X, ArrowRight, CheckCircle } from 'lucide-react';
+import { Camera, X, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
+import { useCompleteMission, useMission } from '@/hooks/useMissions';
+import { showSuccess, handleError } from '@/lib/error-handler';
 
 const STEPS = {
   PHOTOS: 1,
@@ -23,15 +25,21 @@ export default function AfterPicturesPage() {
   const router = useRouter();
   const t = useTranslations('AfterPictures');
   const id = params.id as string;
+  const locale = params.locale as string;
+
+  const { data: mission } = useMission(id);
+  const completeMutation = useCompleteMission();
 
   const [currentStep, setCurrentStep] = useState(STEPS.PHOTOS);
   const [photos, setPhotos] = useState<(string | null)[]>([null, null, null, null]);
+  const [photoFiles, setPhotoFiles] = useState<(File | null)[]>([null, null, null, null]);
   const [isUploading, setIsUploading] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number | null>(null);
   const [workerSignature, setWorkerSignature] = useState<string | null>(null);
   const [clientSignature, setClientSignature] = useState<string | null>(null);
   const [isWorkerCanvasEmpty, setIsWorkerCanvasEmpty] = useState(true);
   const [isClientCanvasEmpty, setIsClientCanvasEmpty] = useState(true);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const workerCanvasRef = useRef<HTMLCanvasElement>(null);
   const clientCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -47,11 +55,9 @@ export default function AfterPicturesPage() {
     setIsUploading(true);
 
     try {
-      // Take only the first file selected
       const file = files[0];
       const preview = URL.createObjectURL(file);
       
-      // Find the first empty slot or use the currentPhotoIndex if set
       const targetIndex = currentPhotoIndex !== null 
         ? currentPhotoIndex 
         : photos.findIndex(p => p === null);
@@ -62,12 +68,14 @@ export default function AfterPicturesPage() {
           newPhotos[targetIndex] = preview;
           return newPhotos;
         });
+        setPhotoFiles((prev) => {
+          const newFiles = [...prev];
+          newFiles[targetIndex] = file;
+          return newFiles;
+        });
       }
       
-      // Reset current photo index
       setCurrentPhotoIndex(null);
-      
-      // Reset the file input so the same file can be selected again
       event.target.value = '';
     } catch (error) {
       console.error('Error processing images:', error);
@@ -83,6 +91,11 @@ export default function AfterPicturesPage() {
         const newPhotos = [...prev];
         newPhotos[index] = null;
         return newPhotos;
+      });
+      setPhotoFiles((prev) => {
+        const newFiles = [...prev];
+        newFiles[index] = null;
+        return newFiles;
       });
     }
   };
@@ -100,25 +113,43 @@ export default function AfterPicturesPage() {
     }
   };
 
-  const handleCompleteMission = () => {
-    // TODO: Save signatures and photos to database
-    // Navigate back to the mission detail page
-    router.push(`/${params.locale}/mission/${id}`);
+  const handleCompleteMission = async () => {
+    // Build FormData with photos + signatures
+    const formData = new FormData();
+    photoFiles.forEach((file, index) => {
+      if (file) {
+        formData.append('photos', file, `after-${index + 1}.jpg`);
+      }
+    });
+
+    if (workerSignature) {
+      // Convert data URL to blob
+      const workerBlob = await (await fetch(workerSignature)).blob();
+      formData.append('workerSignature', workerBlob, 'worker-signature.png');
+    }
+
+    if (clientSignature) {
+      const clientBlob = await (await fetch(clientSignature)).blob();
+      formData.append('clientSignature', clientBlob, 'client-signature.png');
+    }
+
+    try {
+      await completeMutation.mutateAsync({
+        id,
+        formData,
+        onProgress: (pct) => setUploadProgress(pct),
+      });
+      showSuccess(t('uploadSuccess'));
+      router.push(`/${locale}/reports`);
+    } catch (error) {
+      handleError(error, { title: t('uploadFailed') });
+    }
   };
 
   const photoCount = photos.filter(p => p !== null).length;
   const canProceed = photoCount >= REQUIRED_PHOTOS;
   const remainingPhotos = Math.max(0, REQUIRED_PHOTOS - photoCount);
   const canComplete = workerSignature !== null && clientSignature !== null;
-
-  // Helper function to check if canvas is empty
-  const isCanvasBlank = (canvas: HTMLCanvasElement): boolean => {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return true;
-    
-    const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    return !pixelData.data.some(channel => channel !== 0);
-  };
 
   // Initialize canvas on mount
   useEffect(() => {
@@ -198,7 +229,6 @@ export default function AfterPicturesPage() {
 
     lastPosRef.current = coords;
 
-    // Mark canvas as not empty when drawing
     if (type === 'worker') {
       setIsWorkerCanvasEmpty(false);
     } else {
@@ -219,7 +249,6 @@ export default function AfterPicturesPage() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Reset canvas empty state
     if (type === 'worker') {
       setIsWorkerCanvasEmpty(true);
     } else {
@@ -242,8 +271,7 @@ export default function AfterPicturesPage() {
 
   return (
     <div className="min-h-screen bg-white pb-32 font-sans">
-      {/* Page Header */}
-      <PageHeader title={t('title')} onBack={() => router.push(`/${params.locale}/mission/${id}`)} />
+      <PageHeader title={t('title')} onBack={() => router.push(`/${locale}/mission/${id}`)} />
 
       {/* Progress Bar */}
       <div className="px-6 pt-4 pb-2">
@@ -261,7 +289,6 @@ export default function AfterPicturesPage() {
       {/* Step 1: Take Photos */}
       {currentStep === STEPS.PHOTOS && (
         <div className="px-6 py-6 space-y-6">
-          {/* Instructions */}
           <div className="bg-[#f8fafc] rounded-2xl p-5">
             <h2 className="text-[15px] font-bold text-gray-900 mb-2">{t('step1Title')}</h2>
             <p className="text-[13px] text-gray-600 leading-relaxed">{t('step1Description')}</p>
@@ -277,7 +304,6 @@ export default function AfterPicturesPage() {
             </div>
           </div>
 
-          {/* Photo Grid - Always show 4 slots */}
           <div className="grid grid-cols-2 gap-3">
             <input
               type="file"
@@ -303,7 +329,6 @@ export default function AfterPicturesPage() {
               
               return (
                 <div key={index} className="space-y-2">
-                  {/* Label above box */}
                   <div className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">
                     {getLabel(index)}
                   </div>
@@ -321,11 +346,9 @@ export default function AfterPicturesPage() {
                         className="object-cover"
                         sizes="(max-width: 768px) 50vw, 33vw"
                       />
-                      {/* Green checkmark on top right */}
                       <div className="absolute top-1.5 right-1.5 w-6 h-6 bg-[#a3e635] rounded-full flex items-center justify-center shadow-lg">
                         <CheckCircle className="w-4 h-4 text-[#064e3b]" />
                       </div>
-                      {/* Delete and Retake buttons at bottom */}
                       <div className="absolute bottom-0 left-0 right-0 flex gap-1 p-1.5 bg-linear-to-t from-black/80 to-transparent">
                         <button
                           onClick={() => handleRemovePhoto(index)}
@@ -366,7 +389,6 @@ export default function AfterPicturesPage() {
             })}
           </div>
 
-          {/* Status Message */}
           {!canProceed && photoCount > 0 && (
             <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl p-4">
               <p className="text-[13px] font-bold text-orange-800 text-center">
@@ -383,7 +405,6 @@ export default function AfterPicturesPage() {
             </div>
           )}
 
-          {/* Next Step Button */}
           <div className="pt-4">
             <Button
               onClick={handleNextStep}
@@ -400,14 +421,12 @@ export default function AfterPicturesPage() {
       {/* Step 2: Confirmation */}
       {currentStep === STEPS.CONFIRMATION && (
         <div className="px-6 py-6 space-y-6">
-          {/* Success Icon */}
           <div className="flex justify-center">
             <div className="w-20 h-20 bg-linear-to-br from-[#a3e635] to-[#84cc16] rounded-full flex items-center justify-center shadow-2xl animate-in zoom-in duration-500">
               <CheckCircle className="w-12 h-12 text-[#064e3b]" />
             </div>
           </div>
 
-          {/* Message */}
           <div className="text-center space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
             <h2 className="text-[20px] font-bold text-gray-900">{t('step2Title')}</h2>
             <p className="text-[14px] text-gray-600 leading-relaxed">
@@ -415,7 +434,6 @@ export default function AfterPicturesPage() {
             </p>
           </div>
 
-          {/* Photo Summary */}
           <div className="bg-[#f8fafc] rounded-2xl p-4 space-y-3 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
             <div className="flex items-center justify-between">
               <h3 className="text-[12px] font-bold text-gray-900 uppercase tracking-wide">
@@ -426,7 +444,6 @@ export default function AfterPicturesPage() {
               </span>
             </div>
             
-            {/* Photo Grid Summary - Smaller */}
             <div className="grid grid-cols-4 gap-2">
               {photos.filter(p => p !== null).map((photo, index) => (
                 <div
@@ -440,11 +457,9 @@ export default function AfterPicturesPage() {
                     className="object-cover"
                     sizes="(max-width: 768px) 25vw, 20vw"
                   />
-                  {/* Green checkmark */}
                   <div className="absolute top-1 right-1 w-5 h-5 bg-[#a3e635] rounded-full flex items-center justify-center shadow-lg">
                     <CheckCircle className="w-3 h-3 text-[#064e3b]" />
                   </div>
-                  {/* Photo number badge */}
                   <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">
                     {index + 1}
                   </div>
@@ -453,21 +468,18 @@ export default function AfterPicturesPage() {
             </div>
           </div>
 
-          {/* Motivation Message */}
           <div className="bg-linear-to-br from-[#064e3b] to-[#065f46] rounded-2xl p-5 text-center shadow-xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500">
             <p className="text-[14px] font-bold text-white leading-relaxed">
               {t('motivationMessage')}
             </p>
           </div>
 
-          {/* Continue Button */}
           <div className="pt-4 space-y-3 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-700">
             <Button onClick={handleNextStep} className="w-full">
               <CheckCircle className="w-5 h-5" />
               <span className="text-[15px] font-bold uppercase tracking-wide">{t('continueToSignature')}</span>
             </Button>
 
-            {/* Back Link */}
             <button
               onClick={() => setCurrentStep(STEPS.PHOTOS)}
               className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors"
@@ -481,7 +493,6 @@ export default function AfterPicturesPage() {
       {/* Step 3: Signatures */}
       {currentStep === STEPS.SIGNATURE && (
         <div className="px-6 py-6 space-y-6">
-          {/* Instructions */}
           <div className="bg-[#f8fafc] rounded-2xl p-5">
             <h2 className="text-[15px] font-bold text-gray-900 mb-2">{t('step3Title')}</h2>
             <p className="text-[13px] text-gray-600 leading-relaxed">{t('step3Description')}</p>
@@ -489,48 +500,41 @@ export default function AfterPicturesPage() {
 
           {/* Job Summary Section */}
           <div className="bg-white rounded-2xl border-2 border-gray-100 overflow-hidden">
-            {/* Header */}
             <div className="bg-linear-to-br from-[#064e3b] to-[#065f46] px-4 py-3">
               <h3 className="text-[13px] font-bold text-white uppercase tracking-wide">
                 {t('jobSummary')}
               </h3>
             </div>
             
-            {/* Content */}
             <div className="p-4 space-y-3">
-              {/* Job ID */}
               <div className="flex justify-between items-center pb-3 border-b border-gray-100">
                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
                   {t('jobId')}
                 </span>
-                <span className="text-[13px] font-bold text-gray-900">#RF-2024-001</span>
+                <span className="text-[13px] font-bold text-gray-900">#{id.slice(0, 8).toUpperCase()}</span>
               </div>
 
-              {/* Roof Type */}
-              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-                  {t('roofType')}
-                </span>
-                <span className="text-[13px] font-bold text-gray-900">{t('asphaltShingle')}</span>
-              </div>
+              {mission && (
+                <>
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+                      {t('roofType')}
+                    </span>
+                    <span className="text-[13px] font-bold text-gray-900">
+                      {mission.mission_subtypes?.join(', ') || 'Roof'}
+                    </span>
+                  </div>
 
-              {/* Materials Used */}
-              <div className="flex justify-between items-start pb-3 border-b border-gray-100">
-                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-                  {t('materialsUsed')}
-                </span>
-                <span className="text-[13px] font-bold text-gray-900 text-right">
-                  {t('materialsExample')}
-                </span>
-              </div>
-
-              {/* Total Area */}
-              <div className="flex justify-between items-center">
-                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-                  {t('totalArea')}
-                </span>
-                <span className="text-[13px] font-bold text-gray-900">2,400 sq ft</span>
-              </div>
+                  {mission.surface_area && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+                        {t('totalArea')}
+                      </span>
+                      <span className="text-[13px] font-bold text-gray-900">{mission.surface_area} m²</span>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
@@ -560,7 +564,6 @@ export default function AfterPicturesPage() {
                     height={150}
                     className="w-full h-[150px] object-contain bg-white"
                   />
-                  {/* Green checkmark */}
                   <div className="absolute top-2 right-2 w-7 h-7 bg-[#a3e635] rounded-full flex items-center justify-center shadow-lg">
                     <CheckCircle className="w-5 h-5 text-[#064e3b]" />
                   </div>
@@ -579,7 +582,6 @@ export default function AfterPicturesPage() {
                     onTouchMove={(e) => draw(e, 'worker')}
                     onTouchEnd={stopDrawing}
                   />
-                  {/* Placeholder text */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">
                       {t('signHere')}
@@ -634,7 +636,6 @@ export default function AfterPicturesPage() {
                     height={150}
                     className="w-full h-[150px] object-contain bg-white"
                   />
-                  {/* Green checkmark */}
                   <div className="absolute top-2 right-2 w-7 h-7 bg-[#a3e635] rounded-full flex items-center justify-center shadow-lg">
                     <CheckCircle className="w-5 h-5 text-[#064e3b]" />
                   </div>
@@ -653,7 +654,6 @@ export default function AfterPicturesPage() {
                     onTouchMove={(e) => draw(e, 'client')}
                     onTouchEnd={stopDrawing}
                   />
-                  {/* Placeholder text */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">
                       {t('signHere')}
@@ -682,7 +682,6 @@ export default function AfterPicturesPage() {
             )}
           </div>
 
-          {/* Status Message */}
           {canComplete && (
             <div className="bg-green-50 border-2 border-[#a3e635] rounded-2xl p-4">
               <p className="text-[13px] font-bold text-[#064e3b] text-center">
@@ -691,17 +690,40 @@ export default function AfterPicturesPage() {
             </div>
           )}
 
+          {/* Upload Progress */}
+          {completeMutation.isPending && (
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                <p className="text-[13px] font-bold text-blue-800">
+                  {t('uploadProgress', { percent: uploadProgress })}
+                </p>
+              </div>
+              <Progress value={uploadProgress} className="h-2 bg-blue-100" />
+            </div>
+          )}
+
           {/* Complete Button */}
           <div className="pt-4 space-y-3">
-            <Button onClick={handleCompleteMission} disabled={!canComplete} className="w-full">
-              <CheckCircle className="w-5 h-5" />
-              <span className="text-[15px] font-bold uppercase tracking-wide">{t('completeMission')}</span>
+            <Button
+              onClick={handleCompleteMission}
+              disabled={!canComplete || completeMutation.isPending}
+              className="w-full"
+            >
+              {completeMutation.isPending ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <CheckCircle className="w-5 h-5" />
+              )}
+              <span className="text-[15px] font-bold uppercase tracking-wide">
+                {completeMutation.isPending ? t('uploading') : t('completeMission')}
+              </span>
             </Button>
 
-            {/* Back Link */}
             <button
               onClick={() => setCurrentStep(STEPS.CONFIRMATION)}
-              className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors"
+              disabled={completeMutation.isPending}
+              className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors disabled:opacity-50"
             >
               {t('backToConfirmation')}
             </button>
