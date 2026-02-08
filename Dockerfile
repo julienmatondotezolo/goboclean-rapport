@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (needed for build)
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -26,6 +26,9 @@ ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
 
 # Build the application
 RUN npm run build
+
+# Remove dev dependencies for production
+RUN npm prune --production
 
 # Expose port
 EXPOSE 3000
