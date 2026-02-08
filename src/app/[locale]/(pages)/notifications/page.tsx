@@ -173,7 +173,7 @@ export default function NotificationsPage() {
                   <button
                     onClick={(e) => handleDelete(e, notification.id)}
                     disabled={deleteNotification.isPending}
-                    className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
                     aria-label={t('deleteNotification')}
                   >
                     <Trash2 className="w-4 h-4" />
