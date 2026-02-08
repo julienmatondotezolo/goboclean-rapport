@@ -56,10 +56,16 @@ export function useOfflineStatus(): OfflineStatusInfo {
     const updatePendingCount = async () => {
       try {
         const { getPendingSyncItems } = await import('@/lib/offline-store');
-        const items = await getPendingSyncItems();
+        const items = await Promise.race([
+          getPendingSyncItems(),
+          new Promise<[]>((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 2000)
+          )
+        ]);
         setPendingSyncCount(items.length);
       } catch (error) {
-        // Silently fail
+        // Silently fail - database might not be ready
+        setPendingSyncCount(0);
       }
     };
 

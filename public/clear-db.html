@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Database - GoBoclean</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #064e3b;
+            margin-top: 0;
+        }
+        button {
+            background: #064e3b;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 16px;
+        }
+        button:hover {
+            background: #065f46;
+        }
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔧 Database Reset Tool</h1>
+        <p>If you're experiencing loading issues or errors, clearing the local database can help.</p>
+        
+        <div class="info status">
+            <strong>Note:</strong> This will delete all offline data. Your online data is safe.
+        </div>
+
+        <button id="clearBtn" onclick="clearDatabase()">
+            Clear Database & Reload
+        </button>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        async function clearDatabase() {
+            const btn = document.getElementById('clearBtn');
+            const status = document.getElementById('status');
+            
+            btn.disabled = true;
+            btn.textContent = 'Clearing...';
+            
+            try {
+                // Delete the database
+                const request = indexedDB.deleteDatabase('GobocleanOfflineDB');
+                
+                request.onsuccess = () => {
+                    status.className = 'status success';
+                    status.textContent = '✓ Database cleared successfully! Reloading...';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                };
+                
+                request.onerror = () => {
+                    status.className = 'status error';
+                    status.textContent = '✗ Failed to clear database. Please try manually.';
+                    btn.disabled = false;
+                    btn.textContent = 'Try Again';
+                };
+                
+                request.onblocked = () => {
+                    status.className = 'status error';
+                    status.textContent = '⚠ Database is blocked. Please close all app tabs and try again.';
+                    btn.disabled = false;
+                    btn.textContent = 'Try Again';
+                };
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '✗ Error: ' + error.message;
+                btn.disabled = false;
+                btn.textContent = 'Try Again';
+            }
+        }
+    </script>
+</body>
+</html>

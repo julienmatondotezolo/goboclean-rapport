@@ -72,13 +72,11 @@ export function LanguageSelectorModal({ isOpen, onClose }: LanguageSelectorModal
       onClose();
 
       // Small delay before navigation
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Navigate to the same page but with new locale
+      // Next.js will handle the page transition and reload translations automatically
       router.replace(pathname, { locale: languageCode });
-      
-      // Force a page refresh to ensure all translations are updated
-      window.location.reload();
     } catch (error) {
       console.error('Error changing language:', error);
       setIsChanging(false);

@@ -362,7 +362,6 @@ export default function SchedulePage() {
           {/* Add Mission Button (admin only) */}
           {isAdmin && (
             <div className="flex items-center gap-4 mt-4">
-              <div className="text-[13px] font-semibold text-gray-500 w-16 flex-shrink-0" />
               <button
                 onClick={() => router.push('/mission/new')}
                 className="flex-1 border-2 border-dashed border-gray-300 rounded-2xl py-5 flex items-center justify-center gap-2 text-gray-400 hover:border-[#a3e635] hover:text-[#064e3b] hover:bg-[#a3e635]/5 transition-all"
@@ -455,7 +454,6 @@ export default function SchedulePage() {
           {/* Add Mission Button (admin only) */}
           {isAdmin && (
             <div className="flex items-center gap-4 mt-4">
-              <div className="text-[13px] font-semibold text-gray-500 w-16 flex-shrink-0" />
               <button
                 onClick={() => router.push('/mission/new')}
                 className="flex-1 border-2 border-dashed border-gray-300 rounded-2xl py-5 flex items-center justify-center gap-2 text-gray-400 hover:border-[#a3e635] hover:text-[#064e3b] hover:bg-[#a3e635]/5 transition-all"

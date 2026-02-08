@@ -14,8 +14,15 @@ export function OfflineInitializer() {
 
     const initializeOffline = async () => {
       try {
-        // Initialize IndexedDB
-        await initializeOfflineDB();
+        // Initialize IndexedDB with timeout
+        await Promise.race([
+          initializeOfflineDB(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Database initialization timeout')), 5000)
+          )
+        ]);
+        
+        console.log('✓ Offline database initialized successfully');
         
         // Initialize sync manager with event listeners
         cleanupSync = initializeSyncManager();
@@ -69,6 +76,9 @@ export function OfflineInitializer() {
       } catch (error) {
         // Offline features failed to initialize
         // App will continue to work but without offline functionality
+        console.error('Offline initialization failed:', error);
+        console.log('💡 To fix database issues, open DevTools Console and run:');
+        console.log('   indexedDB.deleteDatabase("GobocleanOfflineDB").onsuccess = () => location.reload()');
       }
     };
 

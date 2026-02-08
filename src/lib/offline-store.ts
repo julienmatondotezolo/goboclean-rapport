@@ -53,17 +53,9 @@ export class OfflineDatabase extends Dexie {
   constructor() {
     super('GobocleanOfflineDB');
     
-    // Version 1: Initial schema
-    this.version(1).stores({
-      reports: 'id, worker_id, status, sync_status, created_at, updated_at, offline_updated_at, has_pending_changes',
-      photos: 'id, report_id, type, order, storage_path, blob_size, offline_updated_at',
-      notifications: 'id, user_id, type, created_at, read_at, offline_read_at, has_pending_read',
-      syncQueue: '++id, type, entity_id, created_at, retry_count, priority',
-      settings: 'id',
-    });
-
-    // Version 2: Add compound index for syncQueue
-    this.version(2).stores({
+    // Use a high version number to ensure we're always upgrading, not downgrading
+    // Version 21: Current schema with compound index for syncQueue
+    this.version(21).stores({
       reports: 'id, worker_id, status, sync_status, created_at, updated_at, offline_updated_at, has_pending_changes',
       photos: 'id, report_id, type, order, storage_path, blob_size, offline_updated_at',
       notifications: 'id, user_id, type, created_at, read_at, offline_read_at, has_pending_read',
@@ -78,6 +70,17 @@ export class OfflineDatabase extends Dexie {
 
 // Singleton instance
 export const offlineDB = new OfflineDatabase();
+
+/**
+ * Check if database is ready
+ */
+export function isDatabaseReady(): boolean {
+  try {
+    return offlineDB.isOpen();
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Initialize the offline database
@@ -95,8 +98,29 @@ export async function initializeOfflineDB(): Promise<void> {
         sync_error_count: 0,
       });
     }
-  } catch (error) {
-    throw new Error('Failed to initialize offline database');
+  } catch (error: any) {
+    // If there's a version error, delete the database and try again
+    if (error.name === 'VersionError' || error.message?.includes('version')) {
+      console.warn('IndexedDB version conflict detected. Recreating database...');
+      try {
+        await offlineDB.delete();
+        await offlineDB.open();
+        
+        // Initialize settings
+        await offlineDB.settings.put({
+          id: 'main',
+          sync_in_progress: false,
+          sync_error_count: 0,
+        });
+        console.log('Database recreated successfully');
+      } catch (retryError) {
+        console.error('Failed to recreate database:', retryError);
+        throw new Error('Failed to initialize offline database after version conflict');
+      }
+    } else {
+      console.error('Failed to initialize offline database:', error);
+      throw new Error('Failed to initialize offline database');
+    }
   }
 }
 
@@ -247,10 +271,28 @@ export async function addToSyncQueue(
  * Get pending sync items ordered by priority and creation time
  */
 export async function getPendingSyncItems(): Promise<SyncQueueItem[]> {
-  return offlineDB.syncQueue
-    .orderBy(['priority', 'created_at'])
-    .reverse() // Higher priority first, then newer items
-    .toArray();
+  try {
+    // Check if database is ready
+    if (!isDatabaseReady()) {
+      console.warn('Database not ready, returning empty sync queue');
+      return [];
+    }
+
+    // Add timeout to prevent hanging
+    const result = await Promise.race([
+      offlineDB.syncQueue
+        .orderBy(['priority', 'created_at'])
+        .reverse() // Higher priority first, then newer items
+        .toArray(),
+      new Promise<SyncQueueItem[]>((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 3000)
+      )
+    ]);
+    return result;
+  } catch (error) {
+    console.error('Failed to get pending sync items:', error);
+    return []; // Return empty array on error to prevent app hanging
+  }
 }
 
 /**
