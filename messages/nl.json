@@ -257,6 +257,8 @@
     "dragToReschedule": "Sleep om te herplannen",
     "rescheduled": "Missie herplanned",
     "rescheduleFailed": "Missie herplannen mislukt",
+    "allWeekMissions": "Alle missies deze week",
+    "allMonthMissions": "Alle missies deze maand",
     "mon": "MA",
     "tue": "DI",
     "wed": "WO",
@@ -465,7 +467,9 @@
     "daysAgo": "{count}d geleden",
     "loading": "Meldingen laden...",
     "errorLoading": "Meldingen laden mislukt",
-    "retry": "Opnieuw proberen"
+    "retry": "Opnieuw proberen",
+    "clearAll": "Alles wissen",
+    "deleteNotification": "Melding verwijderen"
   },
   "MissionCard": {
     "status": {
@@ -483,13 +487,24 @@
     "assignedWorkers": "Toegewezen Werknemers",
     "noWorkersAssigned": "Geen werknemers toegewezen",
     "appointmentDate": "Afspraakdatum",
+    "missionDetails": "Missiedetails",
     "options": "Opties",
     "editStatus": "Dossierstatus wijzigen",
     "updateDetails": "Missie bijwerken",
     "changeStatus": "Status Wijzigen",
     "cancel": "Annuleren",
     "statusUpdated": "Status bijgewerkt",
-    "statusUpdateFailed": "Status bijwerken mislukt"
+    "statusUpdateFailed": "Status bijwerken mislukt",
+    "missionUpdated": "Missie bijgewerkt",
+    "updateFailed": "Missie bijwerken mislukt",
+    "saveChanges": "Wijzigingen opslaan",
+    "saving": "Opslaan...",
+    "deleteMission": "Missie verwijderen",
+    "deleteConfirm": "Ben je zeker dat je deze missie wilt verwijderen?",
+    "missionDeleted": "Missie verwijderd",
+    "deleteFailed": "Missie verwijderen mislukt",
+    "cancelAction": "Annuleren",
+    "confirmDelete": "Verwijderen"
   },
   "Onboarding": {
     "title": "Welkom! 👋",

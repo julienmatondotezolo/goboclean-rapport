@@ -24,8 +24,9 @@ export default function DashboardPage() {
   const [profileLoading, setProfileLoading] = useState(true);
 
   // Role-based mission fetching: admin sees all, worker sees own
-  const adminMissionsQuery = useAllMissions({ enabled: isAdmin });
-  const workerMissionsQuery = useMyMissions({ enabled: !isAdmin });
+  // Guard all queries with !!user to prevent 401 on login page
+  const adminMissionsQuery = useAllMissions({ enabled: !!user && isAdmin });
+  const workerMissionsQuery = useMyMissions({ enabled: !!user && !isAdmin });
   const missionsQuery = isAdmin ? adminMissionsQuery : workerMissionsQuery;
 
   const {
@@ -38,10 +39,10 @@ export default function DashboardPage() {
   // Admin stats (only fetched for admins)
   const {
     data: adminStats,
-  } = useAdminStats({ enabled: isAdmin });
+  } = useAdminStats({ enabled: !!user && isAdmin });
 
   // Notification count
-  const { data: notifData } = useNotifications();
+  const { data: notifData } = useNotifications({ enabled: !!user });
   const unreadCount = notifData?.unreadCount ?? 0;
 
   // Fetch profile picture

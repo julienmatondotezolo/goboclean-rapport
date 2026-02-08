@@ -257,6 +257,8 @@
     "dragToReschedule": "Drag to reschedule",
     "rescheduled": "Mission rescheduled",
     "rescheduleFailed": "Failed to reschedule mission",
+    "allWeekMissions": "All missions this week",
+    "allMonthMissions": "All missions this month",
     "mon": "MON",
     "tue": "TUE",
     "wed": "WED",
@@ -465,7 +467,9 @@
     "daysAgo": "{count}d ago",
     "loading": "Loading notifications...",
     "errorLoading": "Failed to load notifications",
-    "retry": "Retry"
+    "retry": "Retry",
+    "clearAll": "Clear all",
+    "deleteNotification": "Delete notification"
   },
   "MissionCard": {
     "status": {
@@ -483,13 +487,24 @@
     "assignedWorkers": "Assigned Workers",
     "noWorkersAssigned": "No workers assigned",
     "appointmentDate": "Appointment Date",
+    "missionDetails": "Mission Details",
     "options": "Options",
     "editStatus": "Edit dossier status",
     "updateDetails": "Update mission details",
     "changeStatus": "Change Status",
     "cancel": "Cancel",
     "statusUpdated": "Status updated",
-    "statusUpdateFailed": "Failed to update status"
+    "statusUpdateFailed": "Failed to update status",
+    "missionUpdated": "Mission updated",
+    "updateFailed": "Failed to update mission",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "deleteMission": "Delete Mission",
+    "deleteConfirm": "Are you sure you want to delete this mission?",
+    "missionDeleted": "Mission deleted",
+    "deleteFailed": "Failed to delete mission",
+    "cancelAction": "Cancel",
+    "confirmDelete": "Delete"
   },
   "Onboarding": {
     "title": "Welcome! 👋",

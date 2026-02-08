@@ -8,7 +8,6 @@ import {
   Clock,
   FileText,
   Phone,
-  CheckCircle2,
   X,
   Loader2,
   AlertCircle,
@@ -16,32 +15,97 @@ import {
   MoreVertical,
   User,
   Calendar,
+  Save,
+  XCircle,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { useMission, useStartMission } from '@/hooks/useMissions';
+import { useMission, useStartMission, useUpdateMission, useDeleteMission } from '@/hooks/useMissions';
 import { useAuth } from '@/hooks/useAuth';
 import { handleError, showSuccess } from '@/lib/error-handler';
-import type { Mission, MissionStatus } from '@/types/mission';
+import type { Mission, MissionStatus, MissionFeatures } from '@/types/mission';
 
 export default function MissionDetailPage() {
   const params = useParams();
   const router = useRouter();
   const t = useTranslations('Mission');
   const td = useTranslations('MissionDetail');
+  const tc = useTranslations('MissionCreate');
   const id = params.id as string;
   const locale = params.locale as string;
   const { isAdmin } = useAuth();
 
   const { data: mission, isLoading, isError, refetch } = useMission(id);
   const startMission = useStartMission();
+  const updateMission = useUpdateMission();
+  const deleteMission = useDeleteMission();
 
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<{ minutes: number; seconds: number } | null>(null);
   const [completionUnlocked, setCompletionUnlocked] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Edit form state
+  const [editForm, setEditForm] = useState({
+    client_first_name: '',
+    client_last_name: '',
+    client_phone: '',
+    client_email: '',
+    client_address: '',
+    appointment_time: '',
+    surface_area: '',
+    facade_count: '',
+    additional_info: '',
+    features: {
+      frontParking: false,
+      garden: false,
+      balcony: false,
+      terrace: false,
+      veranda: false,
+      swimmingPool: false,
+      greenhouse: false,
+      pergola: false,
+      awning: false,
+      solarPanels: false,
+    } as MissionFeatures,
+  });
+
+  // Populate edit form when mission loads or edit modal opens
+  useEffect(() => {
+    if (mission && showEditModal) {
+      setEditForm({
+        client_first_name: mission.client_first_name ?? '',
+        client_last_name: mission.client_last_name ?? '',
+        client_phone: mission.client_phone ?? '',
+        client_email: mission.client_email ?? '',
+        client_address: mission.client_address ?? '',
+        appointment_time: mission.appointment_time
+          ? new Date(mission.appointment_time).toISOString().slice(0, 16)
+          : '',
+        surface_area: mission.surface_area?.toString() ?? '',
+        facade_count: mission.facade_count?.toString() ?? '',
+        additional_info: mission.additional_info ?? '',
+        features: {
+          frontParking: mission.features?.frontParking ?? false,
+          garden: mission.features?.garden ?? false,
+          balcony: mission.features?.balcony ?? false,
+          terrace: mission.features?.terrace ?? false,
+          veranda: mission.features?.veranda ?? false,
+          swimmingPool: mission.features?.swimmingPool ?? false,
+          greenhouse: mission.features?.greenhouse ?? false,
+          pergola: mission.features?.pergola ?? false,
+          awning: mission.features?.awning ?? false,
+          solarPanels: mission.features?.solarPanels ?? false,
+        },
+      });
+    }
+  }, [mission, showEditModal]);
 
   // Timer logic for waiting_completion status
   useEffect(() => {
@@ -155,14 +219,68 @@ export default function MissionDetailPage() {
     }
   };
 
-  const allStatuses: MissionStatus[] = [
-    'created',
+  // Change 12: Remove "created" from status picker
+  const pickableStatuses: MissionStatus[] = [
     'assigned',
     'in_progress',
     'waiting_completion',
     'completed',
     'cancelled',
   ];
+
+  const handleStatusChange = async (newStatus: MissionStatus) => {
+    try {
+      await updateMission.mutateAsync({
+        id,
+        data: { status: newStatus },
+      });
+      showSuccess(td('statusUpdated'));
+    } catch (error) {
+      handleError(error, { title: td('statusUpdateFailed') });
+    } finally {
+      setShowStatusModal(false);
+    }
+  };
+
+  // Change 11: Save edited mission
+  const handleSaveEdit = async () => {
+    try {
+      await updateMission.mutateAsync({
+        id,
+        data: {
+          client_first_name: editForm.client_first_name,
+          client_last_name: editForm.client_last_name,
+          client_phone: editForm.client_phone,
+          client_email: editForm.client_email || undefined,
+          client_address: editForm.client_address,
+          appointment_time: editForm.appointment_time
+            ? new Date(editForm.appointment_time).toISOString()
+            : undefined,
+          surface_area: editForm.surface_area ? parseFloat(editForm.surface_area) : undefined,
+          facade_count: editForm.facade_count ? parseInt(editForm.facade_count) : undefined,
+          additional_info: editForm.additional_info || undefined,
+          features: editForm.features,
+        },
+      });
+      showSuccess(td('missionUpdated'));
+      setShowEditModal(false);
+    } catch (error) {
+      handleError(error, { title: td('updateFailed') });
+    }
+  };
+
+  // Delete mission
+  const handleDeleteMission = async () => {
+    try {
+      await deleteMission.mutateAsync(id);
+      showSuccess(td('missionDeleted'));
+      setShowDeleteConfirm(false);
+      setShowEditModal(false);
+      router.push(`/${locale}/dashboard`);
+    } catch (error) {
+      handleError(error, { title: td('deleteFailed') });
+    }
+  };
 
   // Loading
   if (isLoading) {
@@ -209,6 +327,19 @@ export default function MissionDetailPage() {
   const hasBeforePictures = mission.before_pictures && mission.before_pictures.length > 0;
   const assignedWorkers = mission.assigned_workers_details ?? [];
 
+  const featuresList: { key: keyof MissionFeatures; label: string }[] = [
+    { key: 'frontParking', label: tc('frontParking') },
+    { key: 'garden', label: tc('garden') },
+    { key: 'balcony', label: tc('balcony') },
+    { key: 'terrace', label: tc('terrace') },
+    { key: 'veranda', label: tc('veranda') },
+    { key: 'swimmingPool', label: tc('swimmingPool') },
+    { key: 'greenhouse', label: tc('greenhouse') },
+    { key: 'pergola', label: tc('pergola') },
+    { key: 'awning', label: tc('awning') },
+    { key: 'solarPanels', label: tc('solarPanels') },
+  ];
+
   return (
     <div className="min-h-screen bg-white pb-32 font-sans">
       {/* Custom header with options button */}
@@ -249,7 +380,7 @@ export default function MissionDetailPage() {
                 <button
                   onClick={() => {
                     setShowOptionsMenu(false);
-                    // TODO: navigate to edit form or open inline editing
+                    setShowEditModal(true);
                   }}
                   className="w-full text-left px-4 py-3.5 text-[15px] font-medium text-[#1e293b] hover:bg-[#f8fafc] transition-colors border-t border-gray-50"
                 >
@@ -409,18 +540,18 @@ export default function MissionDetailPage() {
         {(mission.surface_area || mission.facade_count) && (
           <div className="bg-[#f8fafc] rounded-2xl p-5">
             <div className="text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
-              {t('missionDescription')}
+              {td('missionDetails')}
             </div>
             <div className="space-y-2 text-[13px]">
               {mission.surface_area && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Surface:</span>
+                  <span className="text-gray-600">{tc('surfaceArea')}:</span>
                   <span className="font-bold text-gray-900">{mission.surface_area} m²</span>
                 </div>
               )}
               {mission.facade_count && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Facades:</span>
+                  <span className="text-gray-600">{tc('facadeNumber')}:</span>
                   <span className="font-bold text-gray-900">{mission.facade_count}</span>
                 </div>
               )}
@@ -529,7 +660,7 @@ export default function MissionDetailPage() {
         </div>
       )}
 
-      {/* Status Change Modal */}
+      {/* Status Change Modal — Change 12: no "created" */}
       {showStatusModal && (
         <div
           className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center"
@@ -542,13 +673,11 @@ export default function MissionDetailPage() {
             <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
             <h3 className="text-[18px] font-bold text-[#1e293b] mb-6">{td('changeStatus')}</h3>
             <div className="space-y-2">
-              {allStatuses.map((s) => (
+              {pickableStatuses.map((s) => (
                 <button
                   key={s}
-                  onClick={() => {
-                    // TODO: Call PATCH /missions/:id/status when backend endpoint exists
-                    setShowStatusModal(false);
-                  }}
+                  onClick={() => handleStatusChange(s)}
+                  disabled={updateMission.isPending}
                   className={`w-full text-left px-4 py-3.5 rounded-2xl text-[15px] font-medium transition-colors ${
                     mission.status === s
                       ? 'bg-[#064e3b] text-white'
@@ -565,6 +694,246 @@ export default function MissionDetailPage() {
             >
               {td('cancel')}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Change 11: Full scrollable edit popup */}
+      {showEditModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center"
+          onClick={() => setShowEditModal(false)}
+        >
+          <div
+            className="w-full max-w-lg bg-white rounded-t-3xl max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex-shrink-0">
+              <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4" />
+              <div className="flex items-center justify-between">
+                <h3 className="text-[18px] font-bold text-[#1e293b]">{td('updateDetails')}</h3>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+              {/* Client First Name */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+                  {tc('firstName')}
+                </label>
+                <Input
+                  value={editForm.client_first_name}
+                  onChange={(e) => setEditForm({ ...editForm, client_first_name: e.target.value })}
+                />
+              </div>
+
+              {/* Client Last Name */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+                  {tc('lastName')}
+                </label>
+                <Input
+                  value={editForm.client_last_name}
+                  onChange={(e) => setEditForm({ ...editForm, client_last_name: e.target.value })}
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+                  {tc('phoneNumber')}
+                </label>
+                <Input
+                  type="tel"
+                  value={editForm.client_phone}
+                  onChange={(e) => setEditForm({ ...editForm, client_phone: e.target.value })}
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+                  {tc('emailAddress')}
+                </label>
+                <Input
+                  type="email"
+                  value={editForm.client_email}
+                  onChange={(e) => setEditForm({ ...editForm, client_email: e.target.value })}
+                />
+              </div>
+
+              {/* Address */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+                  {tc('missionAddress')}
+                </label>
+                <Input
+                  value={editForm.client_address}
+                  onChange={(e) => setEditForm({ ...editForm, client_address: e.target.value })}
+                />
+              </div>
+
+              {/* Appointment Time */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+                  {tc('appointmentTime')}
+                </label>
+                <Input
+                  type="datetime-local"
+                  value={editForm.appointment_time}
+                  onChange={(e) => setEditForm({ ...editForm, appointment_time: e.target.value })}
+                />
+              </div>
+
+              {/* Surface Area */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+                  {tc('surfaceArea')}
+                </label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editForm.surface_area}
+                    onChange={(e) => setEditForm({ ...editForm, surface_area: e.target.value })}
+                    className="pr-12"
+                  />
+                  <span className="absolute right-5 top-1/2 transform -translate-y-1/2 text-sm font-medium text-gray-500">
+                    m²
+                  </span>
+                </div>
+              </div>
+
+              {/* Facade Count */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+                  {tc('facadeNumber')}
+                </label>
+                <div className="grid grid-cols-4 gap-3">
+                  {['1', '2', '3', '4'].map((number) => (
+                    <button
+                      key={number}
+                      type="button"
+                      onClick={() => setEditForm({ ...editForm, facade_count: number })}
+                      className={`h-12 rounded-xl font-bold text-lg transition-all ${
+                        editForm.facade_count === number
+                          ? 'bg-[#a3e635] text-[#064e3b] border-2 border-[#a3e635]'
+                          : 'bg-[#f8fafc] text-gray-700 border-2 border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      {number}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Additional Info */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+                  {tc('additionalInformation')}
+                </label>
+                <textarea
+                  value={editForm.additional_info}
+                  onChange={(e) => setEditForm({ ...editForm, additional_info: e.target.value })}
+                  placeholder={tc('additionalInformationPlaceholder')}
+                  className="w-full bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-[#84cc16] focus:ring-2 focus:ring-[#84cc16]/20 transition-all text-base min-h-[100px] resize-none"
+                />
+              </div>
+
+              {/* Property Features */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+                  {tc('propertyFeatures')}
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {featuresList.map((feature) => (
+                    <label
+                      key={feature.key}
+                      className="flex items-center gap-2 p-3 rounded-xl bg-[#f8fafc] cursor-pointer hover:bg-gray-100 transition-all"
+                    >
+                      <Checkbox
+                        checked={editForm.features[feature.key] ?? false}
+                        onCheckedChange={(checked) =>
+                          setEditForm({
+                            ...editForm,
+                            features: {
+                              ...editForm.features,
+                              [feature.key]: checked as boolean,
+                            },
+                          })
+                        }
+                      />
+                      <span className="text-[12px] font-medium text-gray-900">{feature.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="pt-4">
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={updateMission.isPending}
+                  className="w-full"
+                >
+                  {updateMission.isPending ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Save className="w-5 h-5" />
+                  )}
+                  <span className="text-[15px] font-bold uppercase tracking-wide">
+                    {updateMission.isPending ? td('saving') : td('saveChanges')}
+                  </span>
+                </Button>
+              </div>
+
+              {/* Delete Mission Button */}
+              <div className="pt-2 pb-6">
+                {!showDeleteConfirm ? (
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="w-full py-3.5 rounded-2xl bg-red-600 text-white font-bold text-[15px] hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+                  >
+                    <XCircle className="w-5 h-5" />
+                    {td('deleteMission')}
+                  </button>
+                ) : (
+                  <div className="bg-red-50 rounded-2xl p-4 border-2 border-red-200">
+                    <p className="text-[14px] font-bold text-red-700 mb-3 text-center">
+                      {td('deleteConfirm')}
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold text-[14px] hover:bg-gray-200 transition-all"
+                      >
+                        {td('cancelAction')}
+                      </button>
+                      <button
+                        onClick={handleDeleteMission}
+                        disabled={deleteMission.isPending}
+                        className="flex-1 py-3 rounded-xl bg-red-600 text-white font-bold text-[14px] hover:bg-red-700 transition-all disabled:opacity-50"
+                      >
+                        {deleteMission.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                        ) : (
+                          td('confirmDelete')
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

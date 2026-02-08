@@ -257,6 +257,8 @@
     "dragToReschedule": "Glisser pour replanifier",
     "rescheduled": "Mission replanifiée",
     "rescheduleFailed": "Échec de la replanification",
+    "allWeekMissions": "Toutes les missions de la semaine",
+    "allMonthMissions": "Toutes les missions du mois",
     "mon": "LUN",
     "tue": "MAR",
     "wed": "MER",
@@ -465,7 +467,9 @@
     "daysAgo": "il y a {count}j",
     "loading": "Chargement des notifications...",
     "errorLoading": "Échec du chargement des notifications",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "clearAll": "Tout effacer",
+    "deleteNotification": "Supprimer la notification"
   },
   "MissionCard": {
     "status": {
@@ -483,13 +487,24 @@
     "assignedWorkers": "Ouvriers Assignés",
     "noWorkersAssigned": "Aucun ouvrier assigné",
     "appointmentDate": "Date de Rendez-vous",
+    "missionDetails": "Détails de la Mission",
     "options": "Options",
     "editStatus": "Modifier le statut du dossier",
     "updateDetails": "Mettre à jour la mission",
     "changeStatus": "Modifier le Statut",
     "cancel": "Annuler",
     "statusUpdated": "Statut mis à jour",
-    "statusUpdateFailed": "Échec de la mise à jour du statut"
+    "statusUpdateFailed": "Échec de la mise à jour du statut",
+    "missionUpdated": "Mission mise à jour",
+    "updateFailed": "Échec de la mise à jour de la mission",
+    "saveChanges": "Enregistrer les modifications",
+    "saving": "Enregistrement...",
+    "deleteMission": "Supprimer la mission",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette mission ?",
+    "missionDeleted": "Mission supprimée",
+    "deleteFailed": "Échec de la suppression de la mission",
+    "cancelAction": "Annuler",
+    "confirmDelete": "Supprimer"
   },
   "Onboarding": {
     "title": "Bienvenue ! 👋",

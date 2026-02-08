@@ -654,7 +654,12 @@ export default function MissionCreatePage() {
               )}
               
               {errors.worker && (
-                <p className="text-red-500 text-xs mt-2">{errors.worker}</p>
+                <div className="mt-3 bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-red-500 font-bold text-lg">!</span>
+                  </div>
+                  <p className="text-red-700 text-[14px] font-bold">{errors.worker}</p>
+                </div>
               )}
             </div>
 

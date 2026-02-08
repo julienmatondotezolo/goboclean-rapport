@@ -50,6 +50,32 @@ export function useMarkNotificationRead() {
 }
 
 /**
+ * Delete a single notification.
+ */
+export function useDeleteNotification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiClient.delete(`/notifications/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: notificationKeys.all });
+    },
+  });
+}
+
+/**
+ * Delete all notifications for the current user.
+ */
+export function useClearAllNotifications() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiClient.delete('/notifications'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: notificationKeys.all });
+    },
+  });
+}
+
+/**
  * Subscribe to push notifications.
  */
 export function useSubscribePush() {

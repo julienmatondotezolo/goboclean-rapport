@@ -170,6 +170,34 @@ export function useCompleteMission() {
 }
 
 /**
+ * Update mission details (admin only)
+ */
+export function useUpdateMission() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<CreateMissionPayload> & { status?: string } }) =>
+      apiClient.patch<Mission>(`/missions/${id}`, data),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: missionKeys.detail(id) });
+      qc.invalidateQueries({ queryKey: missionKeys.all });
+    },
+  });
+}
+
+/**
+ * Delete a mission (admin only)
+ */
+export function useDeleteMission() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiClient.delete(`/missions/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: missionKeys.all });
+    },
+  });
+}
+
+/**
  * Reschedule mission (admin only — drag-to-reschedule)
  */
 export function useRescheduleMission() {

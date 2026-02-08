@@ -4,6 +4,7 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import { BottomNav } from '@/components/ui/bottom-nav';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * NavigationWrapper component that conditionally renders
@@ -11,6 +12,7 @@ import { FloatingActionButton } from '@/components/ui/floating-action-button';
  */
 export function NavigationWrapper() {
   const pathname = usePathname();
+  const { isAdmin } = useAuth();
   
   // Pages where navigation should be hidden
   const hideNavigationPaths = [
@@ -28,7 +30,7 @@ export function NavigationWrapper() {
   
   return (
     <>
-      <FloatingActionButton />
+      {isAdmin && <FloatingActionButton />}
       <BottomNav />
     </>
   );
