@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -17,16 +17,21 @@ import {
   Calendar,
   Save,
   XCircle,
+  UserPlus,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ToastAction } from '@/components/ui/toast';
+import { useToast } from '@/components/ui/use-toast';
+import { AddressAutocomplete } from '@/components/address-autocomplete';
 import Image from 'next/image';
 import { useMission, useStartMission, useUpdateMission, useDeleteMission } from '@/hooks/useMissions';
+import { useWorkersList } from '@/hooks/useWorkers';
 import { useAuth } from '@/hooks/useAuth';
 import { handleError, showSuccess } from '@/lib/error-handler';
-import type { Mission, MissionStatus, MissionFeatures } from '@/types/mission';
+import type { Mission, MissionStatus, MissionFeatures, WorkerSummary } from '@/types/mission';
 
 export default function MissionDetailPage() {
   const params = useParams();
@@ -34,6 +39,7 @@ export default function MissionDetailPage() {
   const t = useTranslations('Mission');
   const td = useTranslations('MissionDetail');
   const tc = useTranslations('MissionCreate');
+  const { toast } = useToast();
   const id = params.id as string;
   const locale = params.locale as string;
   const { isAdmin } = useAuth();
@@ -42,6 +48,7 @@ export default function MissionDetailPage() {
   const startMission = useStartMission();
   const updateMission = useUpdateMission();
   const deleteMission = useDeleteMission();
+  const { data: allWorkers, isLoading: workersLoading } = useWorkersList({ enabled: isAdmin });
 
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<{ minutes: number; seconds: number } | null>(null);
@@ -50,6 +57,10 @@ export default function MissionDetailPage() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showWorkerPicker, setShowWorkerPicker] = useState(false);
+
+  // Delete undo refs
+  const deleteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -58,10 +69,12 @@ export default function MissionDetailPage() {
     client_phone: '',
     client_email: '',
     client_address: '',
+    appointment_date: '',
     appointment_time: '',
     surface_area: '',
     facade_count: '',
     additional_info: '',
+    assigned_workers: [] as string[],
     features: {
       frontParking: false,
       garden: false,
@@ -79,18 +92,25 @@ export default function MissionDetailPage() {
   // Populate edit form when mission loads or edit modal opens
   useEffect(() => {
     if (mission && showEditModal) {
+      const apptDate = mission.appointment_time
+        ? new Date(mission.appointment_time)
+        : null;
       setEditForm({
         client_first_name: mission.client_first_name ?? '',
         client_last_name: mission.client_last_name ?? '',
         client_phone: mission.client_phone ?? '',
         client_email: mission.client_email ?? '',
         client_address: mission.client_address ?? '',
-        appointment_time: mission.appointment_time
-          ? new Date(mission.appointment_time).toISOString().slice(0, 16)
+        appointment_date: apptDate
+          ? apptDate.toISOString().slice(0, 10)
+          : '',
+        appointment_time: apptDate
+          ? apptDate.toTimeString().slice(0, 5)
           : '',
         surface_area: mission.surface_area?.toString() ?? '',
         facade_count: mission.facade_count?.toString() ?? '',
         additional_info: mission.additional_info ?? '',
+        assigned_workers: mission.assigned_workers ?? [],
         features: {
           frontParking: mission.features?.frontParking ?? false,
           garden: mission.features?.garden ?? false,
@@ -148,6 +168,20 @@ export default function MissionDetailPage() {
     }
   }, [showOptionsMenu]);
 
+  // Cleanup delete timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (deleteTimeoutRef.current) {
+        clearTimeout(deleteTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Change 3: Check if mission is in the future
+  const isFutureMission = mission
+    ? new Date(mission.appointment_time).getTime() > Date.now() + 30 * 60 * 1000
+    : false;
+
   const handleStartMission = async () => {
     try {
       await startMission.mutateAsync(id);
@@ -199,6 +233,8 @@ export default function MissionDetailPage() {
   const isActionDisabled = (): boolean => {
     if (!mission) return true;
     if (startMission.isPending) return true;
+    // Change 3: disable if future mission and status is assigned/created
+    if (isFutureMission && (mission.status === 'assigned' || mission.status === 'created')) return true;
     if (mission.status === 'waiting_completion' && !completionUnlocked) return true;
     if (mission.status === 'completed' || mission.status === 'cancelled') return true;
     return false;
@@ -219,7 +255,6 @@ export default function MissionDetailPage() {
     }
   };
 
-  // Change 12: Remove "created" from status picker
   const pickableStatuses: MissionStatus[] = [
     'assigned',
     'in_progress',
@@ -242,9 +277,17 @@ export default function MissionDetailPage() {
     }
   };
 
-  // Change 11: Save edited mission
+  // Save edited mission (Change 7: includes assigned_workers, Change 8: split date+time)
   const handleSaveEdit = async () => {
     try {
+      // Combine split date + time into ISO string
+      let appointmentIso: string | undefined;
+      if (editForm.appointment_date && editForm.appointment_time) {
+        appointmentIso = new Date(`${editForm.appointment_date}T${editForm.appointment_time}`).toISOString();
+      } else if (editForm.appointment_date) {
+        appointmentIso = new Date(`${editForm.appointment_date}T00:00`).toISOString();
+      }
+
       await updateMission.mutateAsync({
         id,
         data: {
@@ -253,13 +296,12 @@ export default function MissionDetailPage() {
           client_phone: editForm.client_phone,
           client_email: editForm.client_email || undefined,
           client_address: editForm.client_address,
-          appointment_time: editForm.appointment_time
-            ? new Date(editForm.appointment_time).toISOString()
-            : undefined,
+          appointment_time: appointmentIso,
           surface_area: editForm.surface_area ? parseFloat(editForm.surface_area) : undefined,
           facade_count: editForm.facade_count ? parseInt(editForm.facade_count) : undefined,
           additional_info: editForm.additional_info || undefined,
           features: editForm.features,
+          assigned_workers: editForm.assigned_workers,
         },
       });
       showSuccess(td('missionUpdated'));
@@ -269,18 +311,74 @@ export default function MissionDetailPage() {
     }
   };
 
-  // Delete mission
-  const handleDeleteMission = async () => {
-    try {
-      await deleteMission.mutateAsync(id);
-      showSuccess(td('missionDeleted'));
-      setShowDeleteConfirm(false);
-      setShowEditModal(false);
-      router.push(`/${locale}/dashboard`);
-    } catch (error) {
-      handleError(error, { title: td('deleteFailed') });
-    }
+  // Change 5: Delete mission with undo toast
+  const handleDeleteMission = () => {
+    setShowDeleteConfirm(false);
+    setShowEditModal(false);
+
+    // Navigate away immediately
+    router.push(`/${locale}/dashboard`);
+
+    // Show toast with undo
+    toast({
+      title: td('missionDeleted'),
+      description: td('undoDescription'),
+      action: (
+        <ToastAction altText={td('undo')} onClick={() => handleUndoDelete()}>
+          {td('undo')}
+        </ToastAction>
+      ),
+    });
+
+    // Schedule actual delete after 5 seconds
+    deleteTimeoutRef.current = setTimeout(async () => {
+      deleteTimeoutRef.current = null;
+      try {
+        await deleteMission.mutateAsync(id);
+      } catch (error) {
+        handleError(error, { title: td('deleteFailed') });
+      }
+    }, 5000);
   };
+
+  const handleUndoDelete = () => {
+    if (deleteTimeoutRef.current) {
+      clearTimeout(deleteTimeoutRef.current);
+      deleteTimeoutRef.current = null;
+    }
+    // Navigate back to the mission
+    router.push(`/${locale}/mission/${id}`);
+  };
+
+  // Change 7: Worker management helpers
+  const handleAddWorker = (workerId: string) => {
+    if (!editForm.assigned_workers.includes(workerId)) {
+      setEditForm({
+        ...editForm,
+        assigned_workers: [...editForm.assigned_workers, workerId],
+      });
+    }
+    setShowWorkerPicker(false);
+  };
+
+  const handleRemoveWorker = (workerId: string) => {
+    setEditForm({
+      ...editForm,
+      assigned_workers: editForm.assigned_workers.filter((wid) => wid !== workerId),
+    });
+  };
+
+  // Get worker details by ID from allWorkers or mission data
+  const getWorkerDetails = (workerId: string): WorkerSummary | undefined => {
+    const fromAll = allWorkers?.find((w) => w.id === workerId);
+    if (fromAll) return fromAll;
+    return mission?.assigned_workers_details?.find((w) => w.id === workerId);
+  };
+
+  // Available workers (not yet assigned)
+  const availableWorkers = allWorkers?.filter(
+    (w) => !editForm.assigned_workers.includes(w.id)
+  ) ?? [];
 
   // Loading
   if (isLoading) {
@@ -365,7 +463,6 @@ export default function MissionDetailPage() {
               <MoreVertical className="w-6 h-6 text-slate-700" />
             </button>
 
-            {/* Options dropdown */}
             {showOptionsMenu && (
               <div className="absolute right-0 top-12 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
                 <button
@@ -390,7 +487,7 @@ export default function MissionDetailPage() {
             )}
           </div>
         ) : (
-          <div className="w-10" /> /* Spacer for centering */
+          <div className="w-10" />
         )}
       </header>
 
@@ -477,6 +574,16 @@ export default function MissionDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Change 3: Future mission warning */}
+        {isFutureMission && (mission.status === 'assigned' || mission.status === 'created') && (
+          <div className="rounded-2xl p-4 flex items-center gap-3 bg-amber-50 border-2 border-amber-200">
+            <Calendar className="w-6 h-6 text-amber-600 flex-shrink-0" />
+            <p className="text-[13px] font-bold text-amber-800">
+              {td('futureMission')}
+            </p>
+          </div>
+        )}
 
         {/* Timer Banner (waiting_completion) */}
         {mission.status === 'waiting_completion' && (
@@ -660,7 +767,7 @@ export default function MissionDetailPage() {
         </div>
       )}
 
-      {/* Status Change Modal — Change 12: no "created" */}
+      {/* Status Change Modal */}
       {showStatusModal && (
         <div
           className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center"
@@ -698,7 +805,7 @@ export default function MissionDetailPage() {
         </div>
       )}
 
-      {/* Change 11: Full scrollable edit popup */}
+      {/* Edit Modal (Changes 7 + 8) */}
       {showEditModal && (
         <div
           className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center"
@@ -770,27 +877,46 @@ export default function MissionDetailPage() {
                 />
               </div>
 
-              {/* Address */}
+              {/* Address — Change 6: with autocomplete */}
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
                   {tc('missionAddress')}
                 </label>
-                <Input
+                <AddressAutocomplete
                   value={editForm.client_address}
-                  onChange={(e) => setEditForm({ ...editForm, client_address: e.target.value })}
+                  onChange={(addr) => setEditForm({ ...editForm, client_address: addr })}
+                  placeholder={tc('searchAddress')}
+                  noResultsText={tc('noResults')}
                 />
               </div>
 
-              {/* Appointment Time */}
+              {/* Change 8: Split date + time inputs */}
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
                   {tc('appointmentTime')}
                 </label>
-                <Input
-                  type="datetime-local"
-                  value={editForm.appointment_time}
-                  onChange={(e) => setEditForm({ ...editForm, appointment_time: e.target.value })}
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
+                      {tc('date')}
+                    </label>
+                    <Input
+                      type="date"
+                      value={editForm.appointment_date}
+                      onChange={(e) => setEditForm({ ...editForm, appointment_date: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
+                      {tc('time')}
+                    </label>
+                    <Input
+                      type="time"
+                      value={editForm.appointment_time}
+                      onChange={(e) => setEditForm({ ...editForm, appointment_time: e.target.value })}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Surface Area */}
@@ -878,6 +1004,138 @@ export default function MissionDetailPage() {
                 </div>
               </div>
 
+              {/* Change 7: Workers management section */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+                  {td('workers')}
+                </label>
+
+                {/* Currently assigned workers */}
+                {editForm.assigned_workers.length === 0 ? (
+                  <p className="text-[14px] text-gray-400 mb-3">{td('noWorkersAssigned')}</p>
+                ) : (
+                  <div className="space-y-2 mb-3">
+                    {editForm.assigned_workers.map((workerId) => {
+                      const worker = getWorkerDetails(workerId);
+                      return (
+                        <div
+                          key={workerId}
+                          className="flex items-center justify-between p-3 rounded-xl bg-[#f8fafc]"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full overflow-hidden bg-[#064e3b] flex items-center justify-center">
+                              {worker?.profile_picture_url ? (
+                                <img
+                                  src={worker.profile_picture_url}
+                                  alt={worker ? `${worker.first_name} ${worker.last_name}` : ''}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : worker ? (
+                                <span className="text-[11px] font-bold text-[#a3e635]">
+                                  {worker.first_name[0]}{worker.last_name[0]}
+                                </span>
+                              ) : (
+                                <User className="w-4 h-4 text-[#a3e635]" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-[14px] font-bold text-gray-900">
+                                {worker
+                                  ? `${worker.first_name} ${worker.last_name}`
+                                  : workerId.slice(0, 8)}
+                              </p>
+                              {worker?.role && (
+                                <p className="text-[10px] font-bold text-gray-500 tracking-wide uppercase">
+                                  {worker.role}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveWorker(workerId)}
+                            className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center hover:bg-red-100 transition-colors"
+                            title={td('removeWorker')}
+                          >
+                            <X className="w-4 h-4 text-red-500" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Add worker button */}
+                {!showWorkerPicker ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowWorkerPicker(true)}
+                    className="w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-[13px] font-bold text-[#064e3b] hover:border-[#a3e635] hover:bg-[#a3e635]/5 transition-all flex items-center justify-center gap-2"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    {td('addWorker')}
+                  </button>
+                ) : (
+                  <div className="border-2 border-[#a3e635] rounded-xl overflow-hidden">
+                    <div className="px-3 py-2 bg-[#f8fafc] border-b border-gray-100 flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
+                        {td('addWorker')}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowWorkerPicker(false)}
+                        className="w-6 h-6 rounded-full hover:bg-gray-200 flex items-center justify-center"
+                      >
+                        <X className="w-3.5 h-3.5 text-gray-500" />
+                      </button>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {workersLoading ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                          <span className="ml-2 text-[12px] text-gray-400">{td('loadingWorkers')}</span>
+                        </div>
+                      ) : availableWorkers.length === 0 ? (
+                        <p className="text-[13px] text-gray-400 text-center py-4">
+                          {td('noWorkersAvailable')}
+                        </p>
+                      ) : (
+                        availableWorkers.map((worker) => (
+                          <button
+                            key={worker.id}
+                            type="button"
+                            onClick={() => handleAddWorker(worker.id)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[#f8fafc] transition-colors border-b border-gray-50 last:border-b-0"
+                          >
+                            <div className="w-8 h-8 rounded-full overflow-hidden bg-[#064e3b] flex items-center justify-center">
+                              {worker.profile_picture_url ? (
+                                <img
+                                  src={worker.profile_picture_url}
+                                  alt={`${worker.first_name} ${worker.last_name}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-[10px] font-bold text-[#a3e635]">
+                                  {worker.first_name[0]}{worker.last_name[0]}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-left">
+                              <p className="text-[13px] font-bold text-gray-900">
+                                {worker.first_name} {worker.last_name}
+                              </p>
+                              <p className="text-[10px] font-bold text-gray-500 tracking-wide uppercase">
+                                {worker.role}
+                              </p>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Save Button */}
               <div className="pt-4">
                 <Button
@@ -896,7 +1154,7 @@ export default function MissionDetailPage() {
                 </Button>
               </div>
 
-              {/* Delete Mission Button */}
+              {/* Delete Mission Button (Change 5: with undo) */}
               <div className="pt-2 pb-6">
                 {!showDeleteConfirm ? (
                   <button
@@ -920,14 +1178,9 @@ export default function MissionDetailPage() {
                       </button>
                       <button
                         onClick={handleDeleteMission}
-                        disabled={deleteMission.isPending}
-                        className="flex-1 py-3 rounded-xl bg-red-600 text-white font-bold text-[14px] hover:bg-red-700 transition-all disabled:opacity-50"
+                        className="flex-1 py-3 rounded-xl bg-red-600 text-white font-bold text-[14px] hover:bg-red-700 transition-all"
                       >
-                        {deleteMission.isPending ? (
-                          <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                        ) : (
-                          td('confirmDelete')
-                        )}
+                        {td('confirmDelete')}
                       </button>
                     </div>
                   </div>

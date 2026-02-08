@@ -454,7 +454,11 @@
     "selected": "geselecteerd",
     "workerRequired": "Ten minste één werknemer moet worden geselecteerd",
     "missionSummary": "Missie Overzicht",
-    "clientName": "Naam Klant"
+    "clientName": "Naam Klant",
+    "searchAddress": "Zoek adres...",
+    "noResults": "Geen resultaten gevonden",
+    "date": "Datum",
+    "time": "Tijd"
   },
   "Notifications": {
     "title": "Meldingen",
@@ -504,7 +508,15 @@
     "missionDeleted": "Missie verwijderd",
     "deleteFailed": "Missie verwijderen mislukt",
     "cancelAction": "Annuleren",
-    "confirmDelete": "Verwijderen"
+    "confirmDelete": "Verwijderen",
+    "undo": "Ongedaan maken",
+    "undoDescription": "Klik om de verwijdering ongedaan te maken",
+    "futureMission": "Missie kan pas gestart worden op de geplande datum",
+    "addWorker": "Werknemer toevoegen",
+    "removeWorker": "Werknemer verwijderen",
+    "workers": "Werknemers",
+    "noWorkersAvailable": "Geen werknemers beschikbaar",
+    "loadingWorkers": "Werknemers laden..."
   },
   "Onboarding": {
     "title": "Welkom! 👋",

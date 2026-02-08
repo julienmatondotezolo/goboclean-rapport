@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { MapPin, Phone, Mail, Calendar, FileText, Home, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
+import { MapPin, Phone, Mail, Calendar, Clock, FileText, Home, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
+import { AddressAutocomplete } from '@/components/address-autocomplete';
 import { useWorkersList } from '@/hooks/useWorkers';
 import { useCreateMission } from '@/hooks/useMissions';
 import { showSuccess, handleError } from '@/lib/error-handler';
@@ -20,6 +21,7 @@ interface ClientInfo {
   phone: string;
   email: string;
   address: string;
+  appointmentDate: string;
   appointmentTime: string;
 }
 
@@ -67,6 +69,7 @@ export default function MissionCreatePage() {
     phone: '',
     email: '',
     address: '',
+    appointmentDate: '',
     appointmentTime: '',
   });
 
@@ -116,6 +119,9 @@ export default function MissionCreatePage() {
     }
     if (!clientInfo.address.trim()) {
       newErrors.address = t('requiredField');
+    }
+    if (!clientInfo.appointmentDate.trim()) {
+      newErrors.appointmentDate = t('requiredField');
     }
     if (!clientInfo.appointmentTime.trim()) {
       newErrors.appointmentTime = t('requiredField');
@@ -201,7 +207,7 @@ export default function MissionCreatePage() {
       client_phone: clientInfo.phone,
       client_email: clientInfo.email || undefined,
       client_address: clientInfo.address,
-      appointment_time: new Date(clientInfo.appointmentTime).toISOString(),
+      appointment_time: new Date(`${clientInfo.appointmentDate}T${clientInfo.appointmentTime}`).toISOString(),
       mission_type: 'roof',
       mission_subtypes: subtypes,
       surface_area: parseFloat(missionDetails.surfaceArea) || undefined,
@@ -318,7 +324,7 @@ export default function MissionCreatePage() {
               )}
             </div>
 
-            {/* Mission Address */}
+            {/* Mission Address — Change 6: with autocomplete */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-[11px] font-bold text-gray-500 tracking-wide uppercase">
@@ -332,10 +338,11 @@ export default function MissionCreatePage() {
                   {t('locateMe')}
                 </button>
               </div>
-              <Input
+              <AddressAutocomplete
                 value={clientInfo.address}
-                onChange={(e) => setClientInfo({ ...clientInfo, address: e.target.value })}
-                placeholder={t('addressPlaceholder')}
+                onChange={(addr) => setClientInfo({ ...clientInfo, address: addr })}
+                placeholder={t('searchAddress')}
+                noResultsText={t('noResults')}
                 className={errors.address ? 'border-red-500' : ''}
               />
               {errors.address && (
@@ -343,23 +350,47 @@ export default function MissionCreatePage() {
               )}
             </div>
 
-            {/* Appointment Time */}
+            {/* Appointment Time — Change 8: split date + time */}
             <div>
               <label className="block text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
                 {t('appointmentTime')} *
               </label>
-              <div className="relative">
-                <Calendar className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
-                <Input
-                  type="datetime-local"
-                  value={clientInfo.appointmentTime}
-                  onChange={(e) => setClientInfo({ ...clientInfo, appointmentTime: e.target.value })}
-                  className={`pl-14 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer ${errors.appointmentTime ? 'border-red-500' : ''}`}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-medium text-gray-400 mb-1">
+                    {t('date')}
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
+                    <Input
+                      type="date"
+                      value={clientInfo.appointmentDate}
+                      onChange={(e) => setClientInfo({ ...clientInfo, appointmentDate: e.target.value })}
+                      className={`pl-11 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer ${errors.appointmentDate ? 'border-red-500' : ''}`}
+                    />
+                  </div>
+                  {errors.appointmentDate && (
+                    <p className="text-red-500 text-xs mt-1">{errors.appointmentDate}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-gray-400 mb-1">
+                    {t('time')}
+                  </label>
+                  <div className="relative">
+                    <Clock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
+                    <Input
+                      type="time"
+                      value={clientInfo.appointmentTime}
+                      onChange={(e) => setClientInfo({ ...clientInfo, appointmentTime: e.target.value })}
+                      className={`pl-11 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer ${errors.appointmentTime ? 'border-red-500' : ''}`}
+                    />
+                  </div>
+                  {errors.appointmentTime && (
+                    <p className="text-red-500 text-xs mt-1">{errors.appointmentTime}</p>
+                  )}
+                </div>
               </div>
-              {errors.appointmentTime && (
-                <p className="text-red-500 text-xs mt-1">{errors.appointmentTime}</p>
-              )}
             </div>
 
             {/* Next Button */}

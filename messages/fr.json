@@ -454,7 +454,11 @@
     "selected": "sélectionné(s)",
     "workerRequired": "Au moins un ouvrier doit être sélectionné",
     "missionSummary": "Résumé de la Mission",
-    "clientName": "Nom du Client"
+    "clientName": "Nom du Client",
+    "searchAddress": "Rechercher une adresse...",
+    "noResults": "Aucun résultat trouvé",
+    "date": "Date",
+    "time": "Heure"
   },
   "Notifications": {
     "title": "Notifications",
@@ -504,7 +508,15 @@
     "missionDeleted": "Mission supprimée",
     "deleteFailed": "Échec de la suppression de la mission",
     "cancelAction": "Annuler",
-    "confirmDelete": "Supprimer"
+    "confirmDelete": "Supprimer",
+    "undo": "Annuler",
+    "undoDescription": "Cliquez pour annuler la suppression",
+    "futureMission": "La mission ne peut être démarrée qu'à la date prévue",
+    "addWorker": "Ajouter un ouvrier",
+    "removeWorker": "Supprimer l'ouvrier",
+    "workers": "Ouvriers",
+    "noWorkersAvailable": "Aucun ouvrier disponible",
+    "loadingWorkers": "Chargement des ouvriers..."
   },
   "Onboarding": {
     "title": "Bienvenue ! 👋",

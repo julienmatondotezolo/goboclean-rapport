@@ -292,6 +292,7 @@ export default function DashboardPage() {
                   date={formatDate(mission.appointment_time)}
                   startTime={formatTime(mission.appointment_time)}
                   assignedWorkerName={workerName}
+                  assignedWorkers={mission.assigned_workers_details}
                   onClick={() => router.push(`/mission/${mission.id}`)}
                 />
               );

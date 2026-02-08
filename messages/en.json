@@ -454,7 +454,11 @@
     "selected": "selected",
     "workerRequired": "At least one worker must be selected",
     "missionSummary": "Mission Summary",
-    "clientName": "Client Name"
+    "clientName": "Client Name",
+    "searchAddress": "Search address...",
+    "noResults": "No results found",
+    "date": "Date",
+    "time": "Time"
   },
   "Notifications": {
     "title": "Notifications",
@@ -504,7 +508,15 @@
     "missionDeleted": "Mission deleted",
     "deleteFailed": "Failed to delete mission",
     "cancelAction": "Cancel",
-    "confirmDelete": "Delete"
+    "confirmDelete": "Delete",
+    "undo": "Undo",
+    "undoDescription": "Click to undo the deletion",
+    "futureMission": "Mission can only be started on the scheduled date",
+    "addWorker": "Add worker",
+    "removeWorker": "Remove worker",
+    "workers": "Workers",
+    "noWorkersAvailable": "No workers available",
+    "loadingWorkers": "Loading workers..."
   },
   "Onboarding": {
     "title": "Welcome! 👋",
