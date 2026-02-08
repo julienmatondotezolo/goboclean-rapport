@@ -53,11 +53,21 @@ export class OfflineDatabase extends Dexie {
   constructor() {
     super('GobocleanOfflineDB');
     
+    // Version 1: Initial schema
     this.version(1).stores({
       reports: 'id, worker_id, status, sync_status, created_at, updated_at, offline_updated_at, has_pending_changes',
       photos: 'id, report_id, type, order, storage_path, blob_size, offline_updated_at',
       notifications: 'id, user_id, type, created_at, read_at, offline_read_at, has_pending_read',
       syncQueue: '++id, type, entity_id, created_at, retry_count, priority',
+      settings: 'id',
+    });
+
+    // Version 2: Add compound index for syncQueue
+    this.version(2).stores({
+      reports: 'id, worker_id, status, sync_status, created_at, updated_at, offline_updated_at, has_pending_changes',
+      photos: 'id, report_id, type, order, storage_path, blob_size, offline_updated_at',
+      notifications: 'id, user_id, type, created_at, read_at, offline_read_at, has_pending_read',
+      syncQueue: '++id, type, entity_id, created_at, retry_count, priority, [priority+created_at]',
       settings: 'id',
     });
 

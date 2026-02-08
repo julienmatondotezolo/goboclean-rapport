@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useOfflineStatus, useManualSync } from '@/hooks/useOfflineStatus';
 import { 
   Wifi, 
@@ -83,13 +83,18 @@ export function OfflineIndicator() {
   const { isOnline, syncStatus, pendingSyncCount, lastSyncAt, lastSyncResult } = useOfflineStatus();
   const { isSyncing, triggerSync } = useManualSync();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   const statusInfo = getStatusInfo(isOnline, syncStatus);
   const IconComponent = statusInfo.icon;
   const showPendingCount = pendingSyncCount > 0;
 
   // Don't show indicator if online and no pending changes
-  if (isOnline && syncStatus === 'idle' && pendingSyncCount === 0) {
+  if (!isMounted || (isOnline && syncStatus === 'idle' && pendingSyncCount === 0)) {
     return null;
   }
 
@@ -196,8 +201,13 @@ export function OfflineIndicator() {
  */
 export function OfflineStatusBadge() {
   const { isOnline, syncStatus, pendingSyncCount } = useOfflineStatus();
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
-  if (isOnline && pendingSyncCount === 0) {
+  if (!isMounted || (isOnline && pendingSyncCount === 0)) {
     return null;
   }
 
@@ -217,9 +227,14 @@ export function OfflineStatusBadge() {
  */
 export function SyncStatusBar() {
   const { isOnline, syncStatus, lastSyncResult } = useOfflineStatus();
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   // Only show for errors or when offline with pending changes
-  if (isOnline && syncStatus !== 'error') {
+  if (!isMounted || (isOnline && syncStatus !== 'error')) {
     return null;
   }
 

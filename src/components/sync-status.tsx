@@ -11,8 +11,10 @@ interface SyncStatusProps {
 
 export function SyncStatus({ status, className }: SyncStatusProps) {
   const [isOnline, setIsOnline] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const updateOnlineStatus = () => {
       setIsOnline(navigator.onLine);
     };
@@ -26,6 +28,10 @@ export function SyncStatus({ status, className }: SyncStatusProps) {
       window.removeEventListener('offline', updateOnlineStatus);
     };
   }, []);
+
+  if (!isMounted) {
+    return null;
+  }
 
   const getStatusConfig = () => {
     if (!isOnline || status === 'pending') {
@@ -70,8 +76,10 @@ export function SyncStatus({ status, className }: SyncStatusProps) {
 
 export function NetworkIndicator() {
   const [isOnline, setIsOnline] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const updateOnlineStatus = () => {
       setIsOnline(navigator.onLine);
     };
@@ -86,7 +94,7 @@ export function NetworkIndicator() {
     };
   }, []);
 
-  if (isOnline) return null;
+  if (!isMounted || isOnline) return null;
 
   return (
     <div className="fixed top-0 left-0 right-0 bg-yellow-500 text-white py-2 px-4 text-center text-sm font-medium z-50">
