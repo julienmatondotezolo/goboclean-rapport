@@ -10,7 +10,7 @@ import { useRouter } from '@/i18n/routing';
 import { LogoGoBoClean } from '@/components/ui/logo';
 import { handleSupabaseError } from '@/lib/error-handler';
 import { useAuth } from '@/hooks/useAuth';
-import { useMyMissions } from '@/hooks/useMissions';
+import { useMyMissions, useAllMissions } from '@/hooks/useMissions';
 import { useAdminStats } from '@/hooks/useAdminStats';
 import { useNotifications } from '@/hooks/useNotifications';
 import { OfflineStatusBadge } from '@/components/offline-indicator';
@@ -23,13 +23,17 @@ export default function DashboardPage() {
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
-  // Fetch missions from API
+  // Role-based mission fetching: admin sees all, worker sees own
+  const adminMissionsQuery = useAllMissions({ enabled: isAdmin });
+  const workerMissionsQuery = useMyMissions({ enabled: !isAdmin });
+  const missionsQuery = isAdmin ? adminMissionsQuery : workerMissionsQuery;
+
   const {
     data: missions,
     isLoading: missionsLoading,
     isError: missionsError,
     refetch: refetchMissions,
-  } = useMyMissions();
+  } = missionsQuery;
 
   // Admin stats (only fetched for admins)
   const {
@@ -133,11 +137,10 @@ export default function DashboardPage() {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Determine mission type for card
-  const getMissionType = (m: Mission): 'emergency' | 'scheduled' => {
-    return m.status === 'in_progress' || m.status === 'waiting_completion'
-      ? 'emergency'
-      : 'scheduled';
+  // Helper to format mission date
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   // Combine today + upcoming for display
@@ -167,7 +170,10 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          <button className="relative w-11 h-11 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 hover:bg-white/20 transition-all active:scale-90">
+          <button
+            onClick={() => router.push('/notifications')}
+            className="relative w-11 h-11 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 hover:bg-white/20 transition-all active:scale-90"
+          >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -270,23 +276,25 @@ export default function DashboardPage() {
         {/* Missions List */}
         {!missionsLoading && !missionsError && allDisplayMissions.length > 0 && (
           <div className="space-y-4">
-            {allDisplayMissions.map((mission) => (
-              <MissionCard
-                key={mission.id}
-                type={getMissionType(mission)}
-                title={`${mission.client_first_name} ${mission.client_last_name}`}
-                location={mission.client_address}
-                startTime={formatTime(mission.appointment_time)}
-                teamMembers={mission.assigned_workers?.length}
-                status={
-                  mission.status === 'in_progress' || mission.status === 'waiting_completion'
-                    ? 'noodgeval'
-                    : 'gepland'
-                }
-                onStartJob={() => router.push(`/mission/${mission.id}`)}
-                onViewDetails={() => router.push(`/mission/${mission.id}`)}
-              />
-            ))}
+            {allDisplayMissions.map((mission) => {
+              const workerDetail = mission.assigned_workers_details?.[0];
+              const workerName = workerDetail
+                ? `${workerDetail.first_name} ${workerDetail.last_name}`
+                : undefined;
+
+              return (
+                <MissionCard
+                  key={mission.id}
+                  status={mission.status}
+                  title={`${mission.client_first_name} ${mission.client_last_name}`}
+                  location={mission.client_address}
+                  date={formatDate(mission.appointment_time)}
+                  startTime={formatTime(mission.appointment_time)}
+                  assignedWorkerName={workerName}
+                  onClick={() => router.push(`/mission/${mission.id}`)}
+                />
+              );
+            })}
           </div>
         )}
       </div>

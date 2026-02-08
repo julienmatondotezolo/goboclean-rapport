@@ -16,6 +16,7 @@ import {
   LogOut,
   Pencil
 } from 'lucide-react';
+import { OfflineIndicator, SyncStatusBar } from '@/components/offline-indicator';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -367,6 +368,10 @@ export default function ProfilePage() {
         isOpen={isLanguageModalOpen}
         onClose={() => setIsLanguageModalOpen(false)}
       />
+
+      {/* Sync/Offline Indicators — only visible on profile page */}
+      <SyncStatusBar />
+      <OfflineIndicator />
     </div>
   );
 }

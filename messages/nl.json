@@ -454,6 +454,43 @@
     "missionSummary": "Missie Overzicht",
     "clientName": "Naam Klant"
   },
+  "Notifications": {
+    "title": "Meldingen",
+    "noNotifications": "Geen meldingen",
+    "noNotificationsDescription": "U heeft momenteel geen meldingen.",
+    "markAsRead": "Markeer als gelezen",
+    "justNow": "Zojuist",
+    "minutesAgo": "{count}m geleden",
+    "hoursAgo": "{count}u geleden",
+    "daysAgo": "{count}d geleden",
+    "loading": "Meldingen laden...",
+    "errorLoading": "Meldingen laden mislukt",
+    "retry": "Opnieuw proberen"
+  },
+  "MissionCard": {
+    "status": {
+      "created": "Aangemaakt",
+      "assigned": "Toegewezen",
+      "in_progress": "Bezig",
+      "waiting_completion": "Wacht op Voltooiing",
+      "completed": "Voltooid",
+      "cancelled": "Geannuleerd"
+    },
+    "assignedTo": "Toegewezen aan",
+    "noWorkerAssigned": "Geen werknemer"
+  },
+  "MissionDetail": {
+    "assignedWorkers": "Toegewezen Werknemers",
+    "noWorkersAssigned": "Geen werknemers toegewezen",
+    "appointmentDate": "Afspraakdatum",
+    "options": "Opties",
+    "editStatus": "Dossierstatus wijzigen",
+    "updateDetails": "Missie bijwerken",
+    "changeStatus": "Status Wijzigen",
+    "cancel": "Annuleren",
+    "statusUpdated": "Status bijgewerkt",
+    "statusUpdateFailed": "Status bijwerken mislukt"
+  },
   "Onboarding": {
     "title": "Welkom! 👋",
     "subtitle": "Voltooi uw profiel",

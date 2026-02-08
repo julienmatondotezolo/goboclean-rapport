@@ -3,11 +3,25 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { MapPin, Clock, FileText, Phone, CheckCircle2, X, Loader2, AlertCircle, Timer } from 'lucide-react';
+import {
+  MapPin,
+  Clock,
+  FileText,
+  Phone,
+  CheckCircle2,
+  X,
+  Loader2,
+  AlertCircle,
+  Timer,
+  MoreVertical,
+  User,
+  Calendar,
+} from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useMission, useStartMission } from '@/hooks/useMissions';
+import { useAuth } from '@/hooks/useAuth';
 import { handleError, showSuccess } from '@/lib/error-handler';
 import type { Mission, MissionStatus } from '@/types/mission';
 
@@ -15,8 +29,10 @@ export default function MissionDetailPage() {
   const params = useParams();
   const router = useRouter();
   const t = useTranslations('Mission');
+  const td = useTranslations('MissionDetail');
   const id = params.id as string;
   const locale = params.locale as string;
+  const { isAdmin } = useAuth();
 
   const { data: mission, isLoading, isError, refetch } = useMission(id);
   const startMission = useStartMission();
@@ -24,6 +40,8 @@ export default function MissionDetailPage() {
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<{ minutes: number; seconds: number } | null>(null);
   const [completionUnlocked, setCompletionUnlocked] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
 
   // Timer logic for waiting_completion status
   useEffect(() => {
@@ -54,6 +72,17 @@ export default function MissionDetailPage() {
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [mission]);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (showOptionsMenu) setShowOptionsMenu(false);
+    };
+    if (showOptionsMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showOptionsMenu]);
 
   const handleStartMission = async () => {
     try {
@@ -93,7 +122,7 @@ export default function MissionDetailPage() {
       case 'assigned':
         return t('startMission');
       case 'in_progress':
-        return t('startMission'); // Continue to before-pictures
+        return t('startMission');
       case 'waiting_completion':
         return completionUnlocked ? t('completeMission') : t('waitingCompletion');
       case 'completed':
@@ -125,6 +154,15 @@ export default function MissionDetailPage() {
         return 'bg-[#f1f5f9] text-[#64748b]';
     }
   };
+
+  const allStatuses: MissionStatus[] = [
+    'created',
+    'assigned',
+    'in_progress',
+    'waiting_completion',
+    'completed',
+    'cancelled',
+  ];
 
   // Loading
   if (isLoading) {
@@ -159,15 +197,71 @@ export default function MissionDetailPage() {
 
   const displayTitle = `${mission.client_first_name} ${mission.client_last_name}`;
   const subtypesLabel = mission.mission_subtypes?.map((st) => st).join(', ') || '';
+  const appointmentDate = new Date(mission.appointment_time).toLocaleDateString([], {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
   const appointmentTime = new Date(mission.appointment_time).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
   });
   const hasBeforePictures = mission.before_pictures && mission.before_pictures.length > 0;
+  const assignedWorkers = mission.assigned_workers_details ?? [];
 
   return (
     <div className="min-h-screen bg-white pb-32 font-sans">
-      <PageHeader title={displayTitle} />
+      {/* Custom header with options button */}
+      <header className="px-6 py-4 flex items-center justify-between border-b border-gray-100 sticky top-0 bg-white z-10">
+        <button
+          onClick={() => router.back()}
+          className="p-2 -ml-2 hover:bg-gray-50 rounded-full transition-colors"
+        >
+          <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <h1 className="text-[18px] font-bold text-[#064e3b] truncate max-w-[60%]">{displayTitle}</h1>
+        {isAdmin ? (
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowOptionsMenu(!showOptionsMenu);
+              }}
+              className="p-2 -mr-2 hover:bg-gray-50 rounded-full transition-colors"
+            >
+              <MoreVertical className="w-6 h-6 text-slate-700" />
+            </button>
+
+            {/* Options dropdown */}
+            {showOptionsMenu && (
+              <div className="absolute right-0 top-12 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                <button
+                  onClick={() => {
+                    setShowOptionsMenu(false);
+                    setShowStatusModal(true);
+                  }}
+                  className="w-full text-left px-4 py-3.5 text-[15px] font-medium text-[#1e293b] hover:bg-[#f8fafc] transition-colors"
+                >
+                  {td('editStatus')}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowOptionsMenu(false);
+                    // TODO: navigate to edit form or open inline editing
+                  }}
+                  className="w-full text-left px-4 py-3.5 text-[15px] font-medium text-[#1e293b] hover:bg-[#f8fafc] transition-colors border-t border-gray-50"
+                >
+                  {td('updateDetails')}
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="w-10" /> /* Spacer for centering */
+        )}
+      </header>
 
       <div className="px-6 py-6 space-y-6">
         {/* Status Badge */}
@@ -175,6 +269,17 @@ export default function MissionDetailPage() {
           <span className={`inline-block px-3 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${getStatusColor(mission.status)}`}>
             {t(`status.${mission.status}`)}
           </span>
+        </div>
+
+        {/* Appointment Date */}
+        <div className="bg-[#f8fafc] rounded-2xl p-4">
+          <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+            {td('appointmentDate')}
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-[#a3e635]" />
+            <span className="text-[15px] font-bold text-gray-900">{appointmentDate}</span>
+          </div>
         </div>
 
         {/* Job Type and Time Cards */}
@@ -204,6 +309,42 @@ export default function MissionDetailPage() {
               <span className="text-[15px] font-bold text-gray-900">{appointmentTime}</span>
             </div>
           </div>
+        </div>
+
+        {/* Assigned Workers Section */}
+        <div className="bg-[#f8fafc] rounded-2xl p-5">
+          <div className="text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+            {td('assignedWorkers')}
+          </div>
+          {assignedWorkers.length === 0 ? (
+            <p className="text-[14px] text-gray-400">{td('noWorkersAssigned')}</p>
+          ) : (
+            <div className="space-y-3">
+              {assignedWorkers.map((worker) => (
+                <div key={worker.id} className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-[#064e3b] flex items-center justify-center">
+                    {worker.profile_picture_url ? (
+                      <img
+                        src={worker.profile_picture_url}
+                        alt={`${worker.first_name} ${worker.last_name}`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-5 h-5 text-[#a3e635]" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[15px] font-bold text-gray-900">
+                      {worker.first_name} {worker.last_name}
+                    </p>
+                    <p className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
+                      {worker.role}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Timer Banner (waiting_completion) */}
@@ -384,6 +525,46 @@ export default function MissionDetailPage() {
               className="object-contain"
               sizes="100vw"
             />
+          </div>
+        </div>
+      )}
+
+      {/* Status Change Modal */}
+      {showStatusModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center"
+          onClick={() => setShowStatusModal(false)}
+        >
+          <div
+            className="w-full max-w-lg bg-white rounded-t-3xl p-6 pb-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
+            <h3 className="text-[18px] font-bold text-[#1e293b] mb-6">{td('changeStatus')}</h3>
+            <div className="space-y-2">
+              {allStatuses.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => {
+                    // TODO: Call PATCH /missions/:id/status when backend endpoint exists
+                    setShowStatusModal(false);
+                  }}
+                  className={`w-full text-left px-4 py-3.5 rounded-2xl text-[15px] font-medium transition-colors ${
+                    mission.status === s
+                      ? 'bg-[#064e3b] text-white'
+                      : 'bg-[#f8fafc] text-[#1e293b] hover:bg-[#f1f5f9]'
+                  }`}
+                >
+                  {t(`status.${s}`)}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowStatusModal(false)}
+              className="w-full mt-4 py-3.5 text-[15px] font-bold text-[#64748b] hover:text-[#1e293b] transition-colors"
+            >
+              {td('cancel')}
+            </button>
           </div>
         </div>
       )}

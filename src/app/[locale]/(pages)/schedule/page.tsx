@@ -43,7 +43,7 @@ export default function SchedulePage() {
   const t = useTranslations('Schedule');
   const router = useRouter();
   const { isAdmin } = useAuth();
-  const [viewMode, setViewMode] = useState<ViewMode>('day');
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
   const [draggedMission, setDraggedMission] = useState<string | null>(null);

@@ -1,7 +1,6 @@
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { NetworkIndicator } from "@/components/sync-status";
-import { OfflineIndicator, SyncStatusBar } from "@/components/offline-indicator";
 import { NavigationWrapper } from "@/components/navigation-wrapper";
 
 export default function PagesLayout({
@@ -12,11 +11,9 @@ export default function PagesLayout({
   return (
     <>
       <NetworkIndicator />
-      <SyncStatusBar />
       {children}
       <Toaster />
       <NavigationWrapper />
-      <OfflineIndicator />
     </>
   );
 }

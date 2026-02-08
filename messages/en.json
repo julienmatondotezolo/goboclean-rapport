@@ -454,6 +454,43 @@
     "missionSummary": "Mission Summary",
     "clientName": "Client Name"
   },
+  "Notifications": {
+    "title": "Notifications",
+    "noNotifications": "No notifications",
+    "noNotificationsDescription": "You have no notifications at this time.",
+    "markAsRead": "Mark as read",
+    "justNow": "Just now",
+    "minutesAgo": "{count}m ago",
+    "hoursAgo": "{count}h ago",
+    "daysAgo": "{count}d ago",
+    "loading": "Loading notifications...",
+    "errorLoading": "Failed to load notifications",
+    "retry": "Retry"
+  },
+  "MissionCard": {
+    "status": {
+      "created": "Created",
+      "assigned": "Assigned",
+      "in_progress": "In Progress",
+      "waiting_completion": "Waiting Completion",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "assignedTo": "Assigned to",
+    "noWorkerAssigned": "No worker"
+  },
+  "MissionDetail": {
+    "assignedWorkers": "Assigned Workers",
+    "noWorkersAssigned": "No workers assigned",
+    "appointmentDate": "Appointment Date",
+    "options": "Options",
+    "editStatus": "Edit dossier status",
+    "updateDetails": "Update mission details",
+    "changeStatus": "Change Status",
+    "cancel": "Cancel",
+    "statusUpdated": "Status updated",
+    "statusUpdateFailed": "Failed to update status"
+  },
   "Onboarding": {
     "title": "Welcome! 👋",
     "subtitle": "Complete your profile",

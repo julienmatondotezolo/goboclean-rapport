@@ -454,6 +454,43 @@
     "missionSummary": "Résumé de la Mission",
     "clientName": "Nom du Client"
   },
+  "Notifications": {
+    "title": "Notifications",
+    "noNotifications": "Aucune notification",
+    "noNotificationsDescription": "Vous n'avez aucune notification pour le moment.",
+    "markAsRead": "Marquer comme lu",
+    "justNow": "À l'instant",
+    "minutesAgo": "il y a {count}min",
+    "hoursAgo": "il y a {count}h",
+    "daysAgo": "il y a {count}j",
+    "loading": "Chargement des notifications...",
+    "errorLoading": "Échec du chargement des notifications",
+    "retry": "Réessayer"
+  },
+  "MissionCard": {
+    "status": {
+      "created": "Créée",
+      "assigned": "Assignée",
+      "in_progress": "En Cours",
+      "waiting_completion": "En Attente",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    },
+    "assignedTo": "Assignée à",
+    "noWorkerAssigned": "Aucun ouvrier"
+  },
+  "MissionDetail": {
+    "assignedWorkers": "Ouvriers Assignés",
+    "noWorkersAssigned": "Aucun ouvrier assigné",
+    "appointmentDate": "Date de Rendez-vous",
+    "options": "Options",
+    "editStatus": "Modifier le statut du dossier",
+    "updateDetails": "Mettre à jour la mission",
+    "changeStatus": "Modifier le Statut",
+    "cancel": "Annuler",
+    "statusUpdated": "Statut mis à jour",
+    "statusUpdateFailed": "Échec de la mise à jour du statut"
+  },
   "Onboarding": {
     "title": "Bienvenue ! 👋",
     "subtitle": "Complétez votre profil",
