@@ -125,12 +125,12 @@ export default function AfterPicturesPage() {
     if (workerSignature) {
       // Convert data URL to blob
       const workerBlob = await (await fetch(workerSignature)).blob();
-      formData.append('workerSignature', workerBlob, 'worker-signature.png');
+      formData.append('worker_signature', workerBlob, 'worker-signature.png');
     }
 
     if (clientSignature) {
       const clientBlob = await (await fetch(clientSignature)).blob();
-      formData.append('clientSignature', clientBlob, 'client-signature.png');
+      formData.append('client_signature', clientBlob, 'client-signature.png');
     }
 
     try {
