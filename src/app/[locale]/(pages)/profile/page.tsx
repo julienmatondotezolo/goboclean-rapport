@@ -23,6 +23,7 @@ export default function ProfilePage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
+  const [isUpdatingPreference, setIsUpdatingPreference] = useState(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [fullName, setFullName] = useState('User');
   const [role, setRole] = useState('Worker');
@@ -51,7 +52,7 @@ export default function ProfilePage() {
         
         const { data: profile, error } = await supabase
           .from('users')
-          .select('first_name, last_name, role, profile_picture_url')
+          .select('first_name, last_name, role, profile_picture_url, push_notifications_enabled')
           .eq('id', session.user.id)
           .single();
 
@@ -68,6 +69,7 @@ export default function ProfilePage() {
           setFullName(`${profile.first_name} ${profile.last_name}`);
           setRole(profile.role === 'admin' ? 'Administrator' : 'Worker');
           setProfilePicture(profile.profile_picture_url);
+          setPushNotifications(profile.push_notifications_enabled ?? true);
         }
       } catch (error) {
         console.error('Fetch user data error:', error);
@@ -79,6 +81,53 @@ export default function ProfilePage() {
 
     fetchUserData();
   }, [router]);
+
+  const handlePushNotificationsToggle = async () => {
+    const newValue = !pushNotifications;
+    setIsUpdatingPreference(true);
+
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Call backend API
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      const response = await fetch(`${backendUrl}/auth/preferences`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          push_notifications_enabled: newValue,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update notification preference');
+      }
+
+      setPushNotifications(newValue);
+      
+      showSuccess(
+        t('notificationUpdated') || 'Notification preference updated',
+        newValue 
+          ? (t('notificationsEnabled') || 'Push notifications enabled')
+          : (t('notificationsDisabled') || 'Push notifications disabled')
+      );
+    } catch (error: any) {
+      handleError(error, { title: t('notificationError') || 'Failed to update notification preference' });
+      // Revert on error
+      setPushNotifications(!newValue);
+    } finally {
+      setIsUpdatingPreference(false);
+    }
+  };
 
   const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -261,10 +310,11 @@ export default function ProfilePage() {
             </span>
             {/* Toggle Switch */}
             <button
-              onClick={() => setPushNotifications(!pushNotifications)}
+              onClick={handlePushNotificationsToggle}
+              disabled={isUpdatingPreference}
               className={`relative w-[52px] h-[31px] rounded-full transition-colors duration-200 ${
-                pushNotifications ? 'bg-(--brand-green)' : 'bg-slate-300'
-              }`}
+                pushNotifications ? 'bg-[#064e3b]' : 'bg-slate-300'
+              } ${isUpdatingPreference ? 'opacity-50' : ''}`}
             >
               <div
                 className={`absolute top-[2px] left-[2px] w-[27px] h-[27px] bg-white rounded-full shadow-sm transition-transform duration-200 ${

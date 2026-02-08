@@ -1,6 +1,7 @@
 # Testing Profile API - Quick Guide
 
 ## Prerequisites
+
 ✅ Backend is running on `http://localhost:3001`
 ✅ Frontend is running
 ✅ User is logged in
@@ -8,7 +9,7 @@
 ## Test 1: Dashboard Profile Display
 
 1. Navigate to the dashboard page
-2. **Expected Result**: 
+2. **Expected Result**:
    - Welcome card shows your profile picture (not the default "Marc" avatar)
    - Your first name appears instead of "Marc"
    - If you completed onboarding, your picture should be visible
@@ -36,10 +37,12 @@
 ## Test 4: Validation Tests
 
 ### Test Invalid File Type
+
 1. Try to upload a PDF or text file
 2. **Expected Result**: Error message "Please select an image file"
 
 ### Test Large File
+
 1. Try to upload an image larger than 5MB
 2. **Expected Result**: Error message "Image size must be less than 5MB"
 
@@ -55,12 +58,14 @@
 ## API Endpoints to Test Manually
 
 ### Get Profile
+
 ```bash
 curl -X GET http://localhost:3001/auth/profile \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "id": "user-id",
@@ -74,6 +79,7 @@ curl -X GET http://localhost:3001/auth/profile \
 ```
 
 ### Update Profile Picture
+
 ```bash
 curl -X PUT http://localhost:3001/auth/profile/picture \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
@@ -81,6 +87,7 @@ curl -X PUT http://localhost:3001/auth/profile/picture \
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -96,18 +103,21 @@ curl -X PUT http://localhost:3001/auth/profile/picture \
 ## Troubleshooting
 
 ### Picture Not Showing
+
 - Check browser console for errors
 - Verify Supabase Storage bucket `profile-pictures` exists
 - Check RLS policies allow public read access
 - Verify `SUPABASE_SERVICE_ROLE_KEY` is set in backend `.env`
 
 ### Upload Fails
+
 - Check backend logs in terminal
 - Verify user is authenticated (valid session)
 - Check file size and type
 - Verify Supabase Storage permissions
 
 ### Old Picture Still Shows
+
 - Hard refresh browser (Cmd+Shift+R / Ctrl+Shift+F5)
 - Check if URL includes cache-busting parameter
 - Clear browser cache

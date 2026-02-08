@@ -1,6 +1,7 @@
 # Profile API Implementation
 
 ## Summary
+
 Successfully implemented profile API endpoints and updated the frontend to display and update user profile pictures.
 
 ## Backend Changes
@@ -8,15 +9,17 @@ Successfully implemented profile API endpoints and updated the frontend to displ
 ### 1. New API Endpoints
 
 #### GET `/auth/profile`
+
 - **Description**: Fetch user profile including profile picture
 - **Authentication**: Required (Bearer token)
 - **Response**: User profile object with `profile_picture_url`
 
 #### PUT `/auth/profile/picture`
+
 - **Description**: Update user profile picture
 - **Authentication**: Required (Bearer token)
 - **Request**: `multipart/form-data` with `profilePicture` file
-- **Validation**: 
+- **Validation**:
   - File must be an image
   - Max size: 5MB
 - **Response**: Updated user profile with new picture URL
@@ -41,6 +44,7 @@ Successfully implemented profile API endpoints and updated the frontend to displ
 ## Frontend Changes
 
 ### 1. Dashboard Page
+
 **File**: `src/app/[locale]/(pages)/dashboard/page.tsx`
 
 - Added `profilePicture` state
@@ -49,6 +53,7 @@ Successfully implemented profile API endpoints and updated the frontend to displ
 - Falls back to default avatar if no picture is set
 
 ### 2. Profile Page
+
 **File**: `src/app/[locale]/(pages)/profile/page.tsx`
 
 - Added `profilePicture` and `isUploadingPicture` states
@@ -62,11 +67,13 @@ Successfully implemented profile API endpoints and updated the frontend to displ
 ## Features Implemented
 
 ✅ **Dashboard Screen**
+
 - Displays user's profile picture in welcome card
 - Shows user's first name (replacing "Marc")
 - Falls back to default avatar if no picture
 
 ✅ **Profile Screen**
+
 - Displays user's profile picture
 - Shows user's full name and role
 - Allows updating profile picture by clicking edit button
@@ -77,6 +84,7 @@ Successfully implemented profile API endpoints and updated the frontend to displ
 ## API Flow
 
 ### Fetching Profile
+
 ```
 Frontend → GET /auth/profile (with Bearer token)
 Backend → Fetch from users table (includes profile_picture_url)
@@ -85,6 +93,7 @@ Frontend → Display picture and name
 ```
 
 ### Updating Profile Picture
+
 ```
 Frontend → Select image file
 Frontend → Validate file (type & size)
