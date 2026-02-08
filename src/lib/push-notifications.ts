@@ -54,7 +54,6 @@ export function getNotificationPermission(): NotificationPermission | null {
  */
 export async function subscribeToPush(): Promise<boolean> {
   if (!isPushSupported() || !VAPID_PUBLIC_KEY) {
-    console.warn('Push not supported or VAPID key missing');
     return false;
   }
 
@@ -63,7 +62,7 @@ export async function subscribeToPush(): Promise<boolean> {
     if (permission !== 'granted') return false;
 
     // Register the service worker
-    const registration = await navigator.serviceWorker.register('/sw-push.js');
+    const registration = await navigator.serviceWorker.register('/sw.js');
     await navigator.serviceWorker.ready;
 
     // Check for existing subscription
@@ -82,7 +81,6 @@ export async function subscribeToPush(): Promise<boolean> {
     const auth = subscription.getKey('auth');
 
     if (!key || !auth) {
-      console.error('Missing subscription keys');
       return false;
     }
 
@@ -95,7 +93,6 @@ export async function subscribeToPush(): Promise<boolean> {
 
     return true;
   } catch (error) {
-    console.error('Failed to subscribe to push:', error);
     return false;
   }
 }
@@ -107,19 +104,23 @@ export async function unsubscribeFromPush(): Promise<boolean> {
   if (!isPushSupported()) return false;
 
   try {
-    const registration = await navigator.serviceWorker.getRegistration('/sw-push.js');
+    const registration = await navigator.serviceWorker.getRegistration('/sw.js');
     if (!registration) return true;
 
     const subscription = await registration.pushManager.getSubscription();
+    
     if (subscription) {
+      // Notify backend with the endpoint before unsubscribing
+      await apiClient.request('/notifications/unsubscribe', {
+        method: 'DELETE',
+        body: JSON.stringify({ endpoint: subscription.endpoint }),
+      });
+      
       await subscription.unsubscribe();
     }
 
-    // Notify backend
-    await apiClient.delete('/notifications/unsubscribe');
     return true;
   } catch (error) {
-    console.error('Failed to unsubscribe from push:', error);
     return false;
   }
 }

@@ -106,7 +106,6 @@ export default function ChangePasswordPage() {
       {/* Header */}
       <PageHeader 
         title={t('changePassword') || 'Change Password'} 
-        showBackButton 
         onBack={() => router.push('/profile')}
       />
       

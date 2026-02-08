@@ -29,7 +29,7 @@ export function useAuth(options: UseAuthOptions = {}) {
             .from('users')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .single() as { data: any };
 
           if (profile) {
             setUser(profile);
@@ -73,7 +73,7 @@ export function useAuth(options: UseAuthOptions = {}) {
             .from('users')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .single() as { data: any };
 
           if (profile) {
             setUser(profile);

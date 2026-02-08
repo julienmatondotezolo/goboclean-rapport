@@ -64,6 +64,23 @@ export function useSubscribePush() {
  */
 export function useUnsubscribePush() {
   return useMutation({
-    mutationFn: () => apiClient.delete('/notifications/unsubscribe'),
+    mutationFn: async () => {
+      // Get the current subscription endpoint
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
+        const registration = await navigator.serviceWorker.getRegistration('/sw.js');
+        if (registration) {
+          const subscription = await registration.pushManager.getSubscription();
+          if (subscription) {
+            // Send the endpoint to the backend
+            return apiClient.request('/notifications/unsubscribe', {
+              method: 'DELETE',
+              body: JSON.stringify({ endpoint: subscription.endpoint }),
+            });
+          }
+        }
+      }
+      // If no subscription found, just make a simple DELETE call
+      return apiClient.delete('/notifications/unsubscribe');
+    },
   });
 }

@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useMyMissions } from '@/hooks/useMissions';
 import { useAdminStats } from '@/hooks/useAdminStats';
 import { useNotifications } from '@/hooks/useNotifications';
+import { OfflineStatusBadge } from '@/components/offline-indicator';
 import type { Mission } from '@/types/mission';
 
 export default function DashboardPage() {
@@ -50,7 +51,7 @@ export default function DashboardPage() {
             .from('users')
             .select('profile_picture_url')
             .eq('id', session.user.id)
-            .single();
+            .single() as { data: any; error: any };
           if (error) handleSupabaseError(error, 'Failed to load profile');
           else if (profile) setProfilePicture((profile as any).profile_picture_url);
         }
@@ -157,7 +158,10 @@ export default function DashboardPage() {
               <LogoGoBoClean className="scale-75" />
             </div>
             <div>
-              <h1 className="text-[20px] font-bold leading-none mb-1">GoBoclean Rapport</h1>
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-[20px] font-bold leading-none">GoBoclean Rapport</h1>
+                <OfflineStatusBadge />
+              </div>
               <p className="text-[#a3e635] text-[10px] font-bold tracking-widest uppercase">
                 Made with love
               </p>

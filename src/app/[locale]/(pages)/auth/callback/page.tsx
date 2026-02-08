@@ -15,10 +15,6 @@ export default function AuthCallbackPage() {
       try {
         const supabase = createClient();
         
-        console.log('🔍 Auth callback - checking URL for tokens');
-        console.log('Hash:', window.location.hash);
-        console.log('Search:', window.location.search);
-        
         // Check for tokens in URL hash (from email links)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
@@ -32,9 +28,6 @@ export default function AuthCallbackPage() {
           throw new Error(errorDescription || errorParam);
         }
 
-        console.log('Token type:', type);
-        console.log('Has access token:', !!accessToken);
-
         if (type === 'invite' || type === 'recovery' || type === 'signup') {
           setStatus('Setting up your session...');
           
@@ -46,13 +39,11 @@ export default function AuthCallbackPage() {
             });
 
             if (sessionError) {
-              console.error('Session error:', sessionError);
               throw sessionError;
             }
           }
           
           setStatus('Redirecting to password setup...');
-          console.log('✅ Redirecting to /set-password');
           
           // Redirect to password setup page with hash params preserved
           window.location.href = `/set-password${window.location.hash}`;
@@ -71,17 +62,14 @@ export default function AuthCallbackPage() {
           }
 
           setStatus('Redirecting to dashboard...');
-          console.log('✅ Redirecting to /dashboard');
           
           // Redirect to dashboard
           router.push('/dashboard');
         } else {
-          console.warn('⚠️ No valid tokens found, redirecting to login');
           setStatus('No valid session found...');
           setTimeout(() => router.push('/login'), 1000);
         }
       } catch (err: any) {
-        console.error('❌ Auth callback error:', err);
         setError(err.message);
         setTimeout(() => router.push('/login'), 3000);
       }

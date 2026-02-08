@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { RequireAuth } from '@/components/require-auth';
+import { apiClient } from '@/lib/api-client';
 import { FileText, Users, CheckCircle, Clock } from 'lucide-react';
 
 interface Statistics {
@@ -22,9 +25,10 @@ interface Statistics {
   activeWorkers: number;
 }
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
   const [stats, setStats] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStatistics();
@@ -32,12 +36,11 @@ export default function AdminDashboard() {
 
   const fetchStatistics = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/admin/stats`);
-      const data = await response.json();
+      setError(null);
+      const data = await apiClient.get<Statistics>('/admin/stats');
       setStats(data);
     } catch (error) {
-      console.error('Error fetching statistics:', error);
+      setError(error instanceof Error ? error.message : 'Erreur lors du chargement des statistiques');
     } finally {
       setLoading(false);
     }
@@ -54,11 +57,17 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!stats) {
+  if (error || !stats) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-red-600">Erreur lors du chargement des statistiques</p>
+          <p className="text-red-600">{error || 'Erreur lors du chargement des statistiques'}</p>
+          <button
+            onClick={fetchStatistics}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Réessayer
+          </button>
         </div>
       </div>
     );
@@ -178,5 +187,33 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function NonAdminFallback() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    // Redirect non-admin users to regular dashboard
+    router.replace('/dashboard');
+  }, [router]);
+
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <p className="text-gray-600">Redirection vers le tableau de bord...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <RequireAuth 
+      requiredRole="admin" 
+      fallback={<NonAdminFallback />}
+    >
+      <AdminDashboardContent />
+    </RequireAuth>
   );
 }

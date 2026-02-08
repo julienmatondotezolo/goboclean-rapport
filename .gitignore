@@ -43,3 +43,5 @@ next-env.d.ts
 test-results/
 e2e/
 playwright.config.ts
+playwright-report/
+test-results/

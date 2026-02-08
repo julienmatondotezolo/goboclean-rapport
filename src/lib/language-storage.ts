@@ -30,9 +30,8 @@ export function saveLanguagePreference(locale: SupportedLocale): void {
     // Save to cookie for server-side rendering
     document.cookie = `${COOKIE_NAME}=${locale}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
 
-    console.log('✅ Language preference saved:', locale);
   } catch (error) {
-    console.error('Error saving language preference:', error);
+    // Silently fail if storage is not available
   }
 }
 
@@ -57,7 +56,7 @@ export function loadLanguagePreference(): SupportedLocale | null {
       return cookieLocale as SupportedLocale;
     }
   } catch (error) {
-    console.error('Error loading language preference:', error);
+    // Silently fail if storage is not available
   }
 
   return null;
@@ -73,7 +72,7 @@ export function clearLanguagePreference(): void {
     localStorage.removeItem(STORAGE_KEY);
     document.cookie = `${COOKIE_NAME}=; path=/; max-age=0`;
   } catch (error) {
-    console.error('Error clearing language preference:', error);
+    // Silently fail if storage is not available
   }
 }
 

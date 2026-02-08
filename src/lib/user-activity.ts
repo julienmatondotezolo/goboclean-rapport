@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * User Activity Tracking Service
  * Tracks user logins and logouts

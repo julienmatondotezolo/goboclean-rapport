@@ -46,7 +46,7 @@ export class PreferencesService {
         .from("users")
         .select("language, push_notifications_enabled, stay_connected")
         .eq("id", session.user.id)
-        .single();
+        .single() as { data: any; error: any };
 
       if (error || !user) {
         console.error("Failed to fetch preferences:", error);

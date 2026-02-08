@@ -39,7 +39,7 @@ export default function OnboardingPage() {
         .from('users')
         .select('first_name, last_name, profile_picture_url, is_onboarded')
         .eq('id', session.user.id)
-        .single();
+        .single() as { data: any };
 
       if (userData) {
         // If already onboarded, redirect to dashboard
@@ -110,9 +110,6 @@ export default function OnboardingPage() {
         throw new Error('No active session');
       }
 
-      console.log('🔑 Session found, user ID:', session.user.id);
-      console.log('🔑 Access token length:', session.access_token?.length);
-
       // Create FormData to send to backend
       const formData = new FormData();
       formData.append('firstName', firstName.trim());
@@ -120,7 +117,6 @@ export default function OnboardingPage() {
       
       if (profilePicture) {
         formData.append('profilePicture', profilePicture);
-        console.log('📷 Profile picture added:', profilePicture.name, profilePicture.size, 'bytes');
       } else {
         // If no new picture but preview exists, user already has a picture
         throw new Error('Please select a profile picture');
@@ -128,7 +124,6 @@ export default function OnboardingPage() {
 
       // Send to backend
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      console.log('📤 Sending to:', `${backendUrl}/auth/onboarding`);
       
       const response = await fetch(`${backendUrl}/auth/onboarding`, {
         method: 'POST',
@@ -137,8 +132,6 @@ export default function OnboardingPage() {
         },
         body: formData,
       });
-
-      console.log('📥 Response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();

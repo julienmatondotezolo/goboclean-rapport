@@ -38,41 +38,31 @@ export default function ProfilePage() {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('Session error:', sessionError);
           throw sessionError;
         }
         
         if (!session) {
-          console.error('No session found');
           router.push('/login');
           return;
         }
-
-        console.log('Fetching profile for user:', session.user.id);
         
         const { data: profile, error } = await supabase
           .from('users')
           .select('first_name, last_name, role, profile_picture_url, push_notifications_enabled')
           .eq('id', session.user.id)
-          .single();
+          .single() as { data: any; error: any };
 
         if (error) {
-          console.error('Profile fetch error:', error);
-          console.error('Error code:', error.code);
-          console.error('Error message:', error.message);
-          console.error('Error details:', error.details);
           throw error;
         }
 
         if (profile) {
-          console.log('Profile loaded:', profile);
           setFullName(`${profile.first_name} ${profile.last_name}`);
           setRole(profile.role === 'admin' ? 'Administrator' : 'Worker');
           setProfilePicture(profile.profile_picture_url);
           setPushNotifications(profile.push_notifications_enabled ?? true);
         }
       } catch (error) {
-        console.error('Fetch user data error:', error);
         handleError(error, { title: 'Failed to load profile' });
       } finally {
         setIsLoading(false);

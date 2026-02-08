@@ -35,13 +35,8 @@ export async function compressImage(
       lastModified: Date.now(),
     });
     
-    console.log(
-      `Image compressed: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(newFile.size / 1024 / 1024).toFixed(2)}MB`
-    );
-    
     return newFile;
   } catch (error) {
-    console.error('Error compressing image:', error);
     throw new Error('Échec de la compression de l\'image');
   }
 }
