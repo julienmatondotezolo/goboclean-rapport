@@ -28,7 +28,6 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState('Marc');
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [dbMission, setDbMission] = useState<Mission | null>(null);
 
   // Dummy data for stats
   const weekHours = 38.5;
@@ -62,7 +61,7 @@ export default function DashboardPage() {
   ];
 
   useEffect(() => {
-    const fetchUserAndMission = async () => {
+    const fetchUser = async () => {
       try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
@@ -80,27 +79,6 @@ export default function DashboardPage() {
             setUserName(profile.first_name);
             setProfilePicture(profile.profile_picture_url);
           }
-
-          const { data: reports, error: reportsError } = await supabase
-            .from('reports')
-            .select('id, client_address, status, created_at')
-            .eq('worker_id', session.user.id)
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-          if (reportsError) {
-            handleSupabaseError(reportsError, 'Failed to load reports');
-          } else if (reports && reports.length > 0) {
-            const report = reports[0];
-            setDbMission({
-              id: report.id,
-              title: 'Chemical Spill cleanup',
-              location: report.client_address || 'Logistics Hub - Sector B4',
-              type: 'emergency',
-              teamMembers: 2,
-              status: 'noodgeval',
-            });
-          }
         }
       } catch (error) {
         handleSupabaseError(error, 'Dashboard');
@@ -109,7 +87,7 @@ export default function DashboardPage() {
       }
     };
 
-    fetchUserAndMission();
+    fetchUser();
   }, []);
 
   if (isLoading) {
@@ -123,19 +101,17 @@ export default function DashboardPage() {
     );
   }
 
-  const allMissions = dbMission 
-    ? [dbMission, ...dummyMissions]
-    : [
-        {
-          id: '1',
-          title: 'Chemical Spill cleanup',
-          location: 'Logistics Hub - Sector B4',
-          type: 'emergency' as const,
-          teamMembers: 2,
-          status: 'noodgeval' as const,
-        },
-        ...dummyMissions,
-      ];
+  const allMissions = [
+    {
+      id: '1',
+      title: 'Chemical Spill cleanup',
+      location: 'Logistics Hub - Sector B4',
+      type: 'emergency' as const,
+      teamMembers: 2,
+      status: 'noodgeval' as const,
+    },
+    ...dummyMissions,
+  ];
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-32 font-sans selection:bg-lime-200">
