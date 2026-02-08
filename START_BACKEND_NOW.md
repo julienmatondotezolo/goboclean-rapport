@@ -3,6 +3,7 @@
 ## ✅ The Fix is Ready
 
 I've fixed the AuthGuard error:
+
 - ✅ Changed from `.single()` to array handling
 - ✅ No more "Cannot coerce" error
 - ✅ More robust error handling
@@ -19,6 +20,7 @@ npm run start:dev
 ```
 
 **Wait for:**
+
 ```
 🚀 Application is running on: http://localhost:3001
 📚 Swagger docs available at: http://localhost:3001/api
@@ -45,6 +47,7 @@ Click **"Profiel Voltooien"**
 ### Step 4: Watch Backend Logs
 
 **Should see:**
+
 ```
 🔑 AuthGuard: Token received, verifying...
 ✅ AuthGuard: Token valid for user: 9e024594-5a44-4278-b796-64077eaf2d69
@@ -52,6 +55,7 @@ Click **"Profiel Voltooien"**
 ```
 
 **No more:**
+
 ```
 ❌ AuthGuard: Profile fetch failed: Cannot coerce the result to a single JSON object
 ```
@@ -71,22 +75,17 @@ Click **"Profiel Voltooien"**
 
 ```typescript
 // Old code - throws error if 0 or multiple results
-const { data: profile } = await supabase
-  .from('users')
-  .eq('id', user.id)
-  .single(); // ❌ Error: "Cannot coerce the result to a single JSON object"
+const { data: profile } = await supabase.from("users").eq("id", user.id).single(); // ❌ Error: "Cannot coerce the result to a single JSON object"
 ```
 
 ### The Solution
 
 ```typescript
 // New code - returns array, handles empty case
-const { data: profiles } = await supabase
-  .from('users')
-  .eq('id', user.id); // ✅ Returns array
+const { data: profiles } = await supabase.from("users").eq("id", user.id); // ✅ Returns array
 
 if (!profiles || profiles.length === 0) {
-  throw new UnauthorizedException('User profile not found');
+  throw new UnauthorizedException("User profile not found");
 }
 
 const profile = profiles[0]; // ✅ Take first result
@@ -99,7 +98,7 @@ const profile = profiles[0]; // ✅ Take first result
 **Error:** "Cannot coerce the result to a single JSON object"  
 **Cause:** `.single()` method expects exactly 1 result  
 **Fix:** Use array and take first result  
-**Status:** ✅ **FIXED!**  
+**Status:** ✅ **FIXED!**
 
 ---
 

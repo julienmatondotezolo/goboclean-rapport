@@ -9,6 +9,7 @@
 ## 🔍 Root Cause
 
 The user existed in the database but had **empty strings** for `first_name` and `last_name`:
+
 ```
 first_name: ""  (empty string)
 last_name: ""   (empty string)
@@ -23,14 +24,15 @@ This was causing the AuthGuard to not find the profile properly.
 I updated the user profile with default values:
 
 ```sql
-UPDATE users 
-SET 
+UPDATE users
+SET
   first_name = 'New',
   last_name = 'User'
 WHERE id = '9e024594-5a44-4278-b796-64077eaf2d69';
 ```
 
 **Current user data:**
+
 ```
 id: 9e024594-5a44-4278-b796-64077eaf2d69
 email: emji@yopmail.com
@@ -48,6 +50,7 @@ profile_picture_url: null
 ### Step 1: Refresh Onboarding Page
 
 Just refresh the page:
+
 - http://localhost:3000/fr/onboarding
 
 ### Step 2: Fill Form
@@ -69,6 +72,7 @@ Click **"Profiel Voltooien"**
 ```
 
 **No more:**
+
 ```
 ❌ AuthGuard: No profile found for user: ...
 ```
@@ -152,6 +156,7 @@ The AuthGuard query was looking for the user but the empty strings might have ca
 ### The Solution
 
 Updated the profile with proper default values:
+
 - `first_name: "New"`
 - `last_name: "User"`
 
@@ -164,16 +169,17 @@ Now the AuthGuard can find and authenticate the user properly.
 After successful onboarding, check the database:
 
 ```sql
-SELECT 
+SELECT
   first_name,
   last_name,
   profile_picture_url,
   is_onboarded
-FROM users 
+FROM users
 WHERE email = 'emji@yopmail.com';
 ```
 
 **Expected after onboarding:**
+
 ```
 first_name: "Emji"
 last_name: "Test"
@@ -188,7 +194,7 @@ is_onboarded: true
 **Issue:** User profile had empty strings for names  
 **Cause:** Trigger created profile with empty strings  
 **Fix:** Updated profile with default values  
-**Status:** ✅ **FIXED!**  
+**Status:** ✅ **FIXED!**
 
 ---
 
@@ -205,8 +211,8 @@ Just refresh the onboarding page and submit the form - should work perfectly now
 Reset the user to test multiple times:
 
 ```sql
-UPDATE users 
-SET 
+UPDATE users
+SET
   is_onboarded = false,
   profile_picture_url = NULL,
   first_name = 'New',
@@ -221,6 +227,7 @@ Then login and try onboarding again!
 ## 📝 What's Next
 
 After successful onboarding:
+
 1. ✅ User can access dashboard
 2. ✅ Profile picture displays everywhere
 3. ✅ Name shows in UI

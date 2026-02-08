@@ -19,6 +19,7 @@ I've added detailed logging to both frontend and backend to help diagnose the is
 The backend now has detailed logging. When you try to complete onboarding, check the backend terminal for:
 
 **Good signs:**
+
 ```
 🔑 AuthGuard: Token received, verifying...
 ✅ AuthGuard: Token valid for user: 9e024594-...
@@ -26,6 +27,7 @@ The backend now has detailed logging. When you try to complete onboarding, check
 ```
 
 **Bad signs:**
+
 ```
 ❌ AuthGuard: No token provided
 ❌ AuthGuard: Token verification failed: ...
@@ -36,6 +38,7 @@ The backend now has detailed logging. When you try to complete onboarding, check
 ### Step 2: Check Frontend Console
 
 The frontend now logs:
+
 ```
 🔑 Session found, user ID: 9e024594-...
 🔑 Access token length: 500+ (should be a long string)
@@ -47,18 +50,21 @@ The frontend now logs:
 ### Step 3: Verify Session
 
 Open browser console and run:
+
 ```javascript
 const supabase = createClient();
 const { data } = await supabase.auth.getSession();
-console.log('Session:', data.session);
-console.log('Access token:', data.session?.access_token);
+console.log("Session:", data.session);
+console.log("Access token:", data.session?.access_token);
 ```
 
 **Expected:**
+
 - `session` should exist
 - `access_token` should be a long JWT string
 
 **If null:**
+
 - User is not logged in
 - Session expired
 - Need to login again
@@ -70,10 +76,12 @@ console.log('Access token:', data.session?.access_token);
 ### Cause 1: Session Expired
 
 **Symptoms:**
+
 - No session in browser console
 - Frontend logs show "No active session"
 
 **Fix:**
+
 1. Logout
 2. Clear browser cache (Ctrl+Shift+Delete)
 3. Login again
@@ -82,6 +90,7 @@ console.log('Access token:', data.session?.access_token);
 ### Cause 2: Token Not Being Sent
 
 **Symptoms:**
+
 - Backend logs: "❌ AuthGuard: No token provided"
 - Frontend logs show token exists
 
@@ -89,22 +98,25 @@ console.log('Access token:', data.session?.access_token);
 Check if CORS is blocking the Authorization header.
 
 Backend `main.ts` should have:
+
 ```typescript
 app.enableCors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 });
 ```
 
 ### Cause 3: Invalid Token
 
 **Symptoms:**
+
 - Backend logs: "❌ AuthGuard: Token verification failed"
 - Token exists but is invalid
 
 **Fix:**
+
 1. Check if `SUPABASE_ANON_KEY` in backend `.env` matches frontend
 2. Verify backend `.env`:
    ```env
@@ -116,11 +128,13 @@ app.enableCors({
 ### Cause 4: User Profile Not Found
 
 **Symptoms:**
+
 - Backend logs: "❌ AuthGuard: Profile fetch failed"
 - Token is valid but profile doesn't exist
 
 **Fix:**
 Check if user exists in database:
+
 ```sql
 SELECT * FROM users WHERE email = 'emji@yopmail.com';
 ```
@@ -130,22 +144,26 @@ If not found, the `handle_new_user` trigger might have failed.
 ### Cause 5: RLS Blocking Profile Fetch
 
 **Symptoms:**
+
 - Backend logs: "❌ AuthGuard: Profile fetch failed: permission denied"
 
 **Fix:**
 The AuthGuard uses the anon key, which might be blocked by RLS. We need to use the service role key instead.
 
 **Update backend `.env`:**
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY=your_actual_service_role_key_here
 ```
 
 Get the service role key from:
+
 1. Supabase Dashboard
 2. Project Settings → API
 3. Copy "service_role" key (secret)
 
 Then update `auth.guard.ts` to use service role key:
+
 ```typescript
 constructor(private configService: ConfigService) {
   const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
@@ -187,6 +205,7 @@ npm run start:dev
 ### Step 4: Check Logs
 
 **Frontend should show:**
+
 ```
 🔑 Session found, user ID: ...
 🔑 Access token length: 500+
@@ -196,6 +215,7 @@ npm run start:dev
 ```
 
 **Backend should show:**
+
 ```
 🔑 AuthGuard: Token received, verifying...
 ✅ AuthGuard: Token valid for user: ...
@@ -209,6 +229,7 @@ npm run start:dev
 ### Test with cURL
 
 Get your access token:
+
 ```javascript
 // In browser console
 const supabase = createClient();
@@ -217,6 +238,7 @@ console.log(data.session.access_token);
 ```
 
 Then test the endpoint:
+
 ```bash
 curl -X POST http://localhost:3001/auth/onboarding \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" \
@@ -266,6 +288,7 @@ Should work now! ✅
 ## ✅ Summary
 
 **The issue is likely:**
+
 - Session expired → Login again
 - Service role key not set → Get from dashboard and update `.env`
 - RLS blocking profile fetch → Use service role key in AuthGuard

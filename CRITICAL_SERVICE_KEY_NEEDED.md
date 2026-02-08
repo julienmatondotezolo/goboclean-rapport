@@ -44,21 +44,25 @@ Supabase Dashboard
 ## 📝 Update .env File
 
 ### Location
+
 ```
 /Users/julienmatondo/goboclean-rapport-backend/.env
 ```
 
 ### Find This Line
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY=GET_THIS_FROM_SUPABASE_DASHBOARD
 ```
 
 ### Replace With
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.YOUR_COPIED_KEY_HERE
 ```
 
 ### Example (Your Key Will Be Different!)
+
 ```env
 # Before (doesn't work)
 SUPABASE_SERVICE_ROLE_KEY=GET_THIS_FROM_SUPABASE_DASHBOARD
@@ -89,6 +93,7 @@ npm run start:dev
 ### After Restart, Try Onboarding
 
 **Backend logs should show:**
+
 ```
 🔑 AuthGuard: Token received, verifying...
 ✅ AuthGuard: Token valid for user: 9e024594...
@@ -98,11 +103,13 @@ npm run start:dev
 ```
 
 **If you still see:**
+
 ```
 ❌ AuthGuard: No profile found for user: ...
 ```
 
 Then the service role key is either:
+
 - Not copied correctly
 - Not pasted in .env
 - Backend not restarted
@@ -114,6 +121,7 @@ Then the service role key is either:
 ### The Problem
 
 **Without service role key:**
+
 ```
 Frontend → Backend → Database (with anon key)
                      ↓
@@ -123,6 +131,7 @@ Frontend → Backend → Database (with anon key)
 ```
 
 **With service role key:**
+
 ```
 Frontend → Backend → Database (with service role key)
                      ↓
@@ -133,10 +142,10 @@ Frontend → Backend → Database (with service role key)
 
 ### What Each Key Does
 
-| Key | Used In | Purpose | RLS |
-|-----|---------|---------|-----|
-| **anon** | Frontend + Backend auth | Public operations | ✅ Applied |
-| **service_role** | Backend queries | Admin operations | ❌ Bypassed |
+| Key              | Used In                 | Purpose           | RLS         |
+| ---------------- | ----------------------- | ----------------- | ----------- |
+| **anon**         | Frontend + Backend auth | Public operations | ✅ Applied  |
+| **service_role** | Backend queries         | Admin operations  | ❌ Bypassed |
 
 ---
 
@@ -193,6 +202,7 @@ Login with your Supabase account.
 ### Can't Find the Project?
 
 Look for:
+
 - Project name: "goboclean-rapport"
 - Project ID: `ihlnwzrsvfxgossytuiz`
 
@@ -232,6 +242,7 @@ Project API keys
 ## 🚀 After Adding the Key
 
 Everything will work:
+
 - ✅ AuthGuard finds user profile
 - ✅ Onboarding processes successfully
 - ✅ Image uploads to Storage

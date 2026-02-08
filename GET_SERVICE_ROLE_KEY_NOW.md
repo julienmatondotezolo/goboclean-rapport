@@ -8,7 +8,7 @@
 
 ## 🔍 Root Cause
 
-The AuthGuard is using the **anon key** to query the database, but RLS policies are blocking the query. 
+The AuthGuard is using the **anon key** to query the database, but RLS policies are blocking the query.
 
 The solution is to use the **service role key** which bypasses RLS for backend operations.
 
@@ -50,7 +50,8 @@ Scroll down to **Project API keys** section:
 - ✅ **anon / public** - Already have this (starts with `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`)
 - 🔑 **service_role** - **COPY THIS ONE!** (also starts with `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` but different)
 
-**IMPORTANT:** 
+**IMPORTANT:**
+
 - The service_role key is **SECRET** - never expose it to the frontend!
 - It's safe to use in the backend because it's server-side only
 - It bypasses all RLS policies
@@ -60,16 +61,19 @@ Scroll down to **Project API keys** section:
 Open: `/Users/julienmatondo/goboclean-rapport-backend/.env`
 
 **Replace this line:**
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY=GET_THIS_FROM_SUPABASE_DASHBOARD
 ```
 
 **With:**
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.YOUR_ACTUAL_SERVICE_ROLE_KEY_HERE
 ```
 
 **Example (yours will be different):**
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlobG53enJzdmZ4Z29zc3l0dWl6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDEzODAwOCwiZXhwIjoyMDg1NzE0MDA4fQ.SOME_LONG_STRING_HERE
 ```
@@ -85,6 +89,7 @@ npm run start:dev
 ```
 
 **Wait for:**
+
 ```
 🚀 Application is running on: http://localhost:3001
 📚 Swagger docs available at: http://localhost:3001/api
@@ -101,13 +106,14 @@ http://localhost:3000/fr/onboarding
 ### Step 2: Fill Form & Submit
 
 - First name: "Emji"
-- Last name: "Test"  
+- Last name: "Test"
 - Upload profile picture
 - Click "Profiel Voltooien"
 
 ### Step 3: Check Backend Logs
 
 **Should now see:**
+
 ```
 🔑 AuthGuard: Token received, verifying...
 ✅ AuthGuard: Token valid for user: 9e024594-5a44-4278-b796-64077eaf2d69
@@ -117,6 +123,7 @@ http://localhost:3000/fr/onboarding
 ```
 
 **No more:**
+
 ```
 ❌ AuthGuard: No profile found for user: ...
 ```
@@ -136,12 +143,14 @@ http://localhost:3000/fr/onboarding
 ### Why Service Role Key is Safe
 
 **Frontend (anon key):**
+
 - ✅ Exposed to browser
 - ✅ Subject to RLS policies
 - ✅ Limited permissions
 - ✅ Safe for public use
 
 **Backend (service role key):**
+
 - ✅ Server-side only
 - ✅ Never exposed to browser
 - ✅ Bypasses RLS
@@ -151,10 +160,12 @@ http://localhost:3000/fr/onboarding
 ### What We Use Each Key For
 
 **Anon Key (Frontend & Backend Auth):**
+
 - Frontend: All Supabase operations
 - Backend: JWT token verification
 
 **Service Role Key (Backend Only):**
+
 - Backend: Database queries
 - Backend: Storage operations
 - Backend: Admin operations
@@ -191,7 +202,7 @@ http://localhost:3000/fr/onboarding
 **Problem:** RLS blocking profile fetch  
 **Cause:** Using anon key for database queries  
 **Solution:** Use service role key for backend queries  
-**Status:** ⏳ **WAITING FOR SERVICE ROLE KEY**  
+**Status:** ⏳ **WAITING FOR SERVICE ROLE KEY**
 
 ---
 
@@ -224,6 +235,7 @@ http://localhost:3000/fr/onboarding
 ### Option 2: Check Project Settings
 
 The service role key is in the same place as the anon key, just labeled differently:
+
 - **anon** / **public** - For frontend
 - **service_role** - For backend (this is what you need!)
 
@@ -232,6 +244,7 @@ The service role key is in the same place as the anon key, just labeled differen
 ## 🚀 After Adding the Key
 
 The onboarding will work perfectly:
+
 - ✅ AuthGuard can query database
 - ✅ Profile found successfully
 - ✅ Image uploads to Storage

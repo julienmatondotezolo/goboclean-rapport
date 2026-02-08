@@ -5,6 +5,7 @@
 ### 1. Added Detailed Logging ✅
 
 **Backend (`auth.guard.ts`):**
+
 - ✅ Logs when token is received
 - ✅ Logs token verification result
 - ✅ Logs user authentication success/failure
@@ -12,6 +13,7 @@
 - ✅ Shows exact error messages
 
 **Frontend (`onboarding/page.tsx`):**
+
 - ✅ Logs session status
 - ✅ Logs access token length
 - ✅ Logs file upload details
@@ -21,13 +23,14 @@
 ### 2. Improved CORS Configuration ✅
 
 **Backend (`main.ts`):**
+
 ```typescript
 app.enableCors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  exposedHeaders: ['Authorization'],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  exposedHeaders: ["Authorization"],
 });
 ```
 
@@ -47,11 +50,13 @@ npm run start:dev
 ### Step 2: Open Both Consoles
 
 **Frontend Console:**
+
 - Open browser
 - Press F12
 - Go to Console tab
 
 **Backend Console:**
+
 - Terminal 2 (where backend is running)
 
 ### Step 3: Test Onboarding
@@ -70,6 +75,7 @@ npm run start:dev
 3. **Watch Logs:**
 
 **Frontend Console should show:**
+
 ```
 🔑 Session found, user ID: 9e024594-5a44-4278-b796-64077eaf2d69
 🔑 Access token length: 500
@@ -79,6 +85,7 @@ npm run start:dev
 ```
 
 **Backend Terminal should show:**
+
 ```
 🔑 AuthGuard: Token received, verifying...
 ✅ AuthGuard: Token valid for user: 9e024594-5a44-4278-b796-64077eaf2d69
@@ -96,11 +103,13 @@ The logs will now tell you **exactly** what's wrong:
 **Meaning:** Authorization header not reaching backend
 
 **Possible causes:**
+
 1. CORS blocking the header
 2. Frontend not sending the header
 3. Proxy stripping the header
 
 **Fix:**
+
 - Backend CORS is now fixed ✅
 - Check if using a proxy (nginx, etc.)
 
@@ -109,11 +118,13 @@ The logs will now tell you **exactly** what's wrong:
 **Meaning:** Token is invalid or expired
 
 **Possible causes:**
+
 1. Session expired
 2. Wrong Supabase keys
 3. Token format incorrect
 
 **Fix:**
+
 1. **Logout and login again**
 2. **Check backend `.env`:**
    ```env
@@ -130,6 +141,7 @@ The logs will now tell you **exactly** what's wrong:
 The AuthGuard needs to use the **service role key** instead of anon key.
 
 **Update `auth.guard.ts`:**
+
 ```typescript
 constructor(private configService: ConfigService) {
   const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
@@ -141,6 +153,7 @@ constructor(private configService: ConfigService) {
 ```
 
 **Get service role key:**
+
 1. Supabase Dashboard → Project Settings → API
 2. Copy "service_role" key (secret)
 3. Update backend `.env`:
@@ -154,6 +167,7 @@ constructor(private configService: ConfigService) {
 **Meaning:** User exists in auth but not in users table
 
 **Fix:**
+
 ```sql
 -- Check if user exists
 SELECT * FROM auth.users WHERE email = 'emji@yopmail.com';
@@ -163,7 +177,7 @@ SELECT * FROM users WHERE email = 'emji@yopmail.com';
 -- Manually create profile:
 INSERT INTO users (id, email, first_name, last_name, role)
 SELECT id, email, 'Emji', 'User', 'worker'
-FROM auth.users 
+FROM auth.users
 WHERE email = 'emji@yopmail.com'
 ON CONFLICT (id) DO NOTHING;
 ```
@@ -177,31 +191,37 @@ ON CONFLICT (id) DO NOTHING;
 ```
 🔑 Session found, user ID: 9e024594...
 ```
+
 ✅ Good: User is logged in
 
 ```
 🔑 Access token length: 0
 ```
+
 ❌ Bad: No access token (session expired)
 
 ```
 📷 Profile picture added: image.jpg 123456 bytes
 ```
+
 ✅ Good: File is being sent
 
 ```
 📤 Sending to: http://localhost:3001/auth/onboarding
 ```
+
 ✅ Good: Correct URL
 
 ```
 📥 Response status: 200
 ```
+
 ✅ Good: Success!
 
 ```
 📥 Response status: 401
 ```
+
 ❌ Bad: Unauthorized (check backend logs)
 
 ### Backend Logs
@@ -209,31 +229,37 @@ ON CONFLICT (id) DO NOTHING;
 ```
 🔑 AuthGuard: Token received, verifying...
 ```
+
 ✅ Good: Token reached backend
 
 ```
 ❌ AuthGuard: No token provided
 ```
+
 ❌ Bad: Authorization header missing
 
 ```
 ✅ AuthGuard: Token valid for user: 9e024594...
 ```
+
 ✅ Good: Token is valid
 
 ```
 ❌ AuthGuard: Token verification failed: Invalid JWT
 ```
+
 ❌ Bad: Token is malformed or wrong key
 
 ```
 ✅ AuthGuard: User authenticated: emji@yopmail.com
 ```
+
 ✅ Good: Everything works!
 
 ```
 ❌ AuthGuard: Profile fetch failed: permission denied
 ```
+
 ❌ Bad: RLS blocking (need service role key)
 
 ---
@@ -245,6 +271,7 @@ Based on typical issues, the problem is usually:
 ### Option 1: Session Expired (Most Common)
 
 **Solution:**
+
 1. Clear browser cache
 2. Logout
 3. Login again
@@ -256,6 +283,7 @@ Based on typical issues, the problem is usually:
 Update AuthGuard to use service role key:
 
 **File:** `src/auth/auth.guard.ts`
+
 ```typescript
 constructor(private configService: ConfigService) {
   const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
@@ -270,6 +298,7 @@ constructor(private configService: ConfigService) {
 ```
 
 **File:** `.env`
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.YOUR_ACTUAL_SERVICE_ROLE_KEY
 ```
@@ -310,11 +339,13 @@ The logs will tell you exactly what to fix!
 ## 📝 Summary
 
 **What I Did:**
+
 - ✅ Added comprehensive logging to both frontend and backend
 - ✅ Improved CORS configuration
 - ✅ Made error messages more descriptive
 
 **What You Need to Do:**
+
 1. Restart backend
 2. Test onboarding
 3. Read the logs
@@ -327,18 +358,22 @@ The logs will tell you exactly what to fix!
 ## 🆘 Quick Fixes
 
 ### If "No token provided":
+
 - Check CORS (already fixed ✅)
 - Check if Authorization header is being sent
 
 ### If "Token verification failed":
+
 - Logout and login again
 - Check SUPABASE_ANON_KEY in backend .env
 
 ### If "Profile fetch failed":
+
 - Use SUPABASE_SERVICE_ROLE_KEY in AuthGuard
 - Get key from Supabase Dashboard
 
 ### If "No profile found":
+
 - Check users table
 - Run handle_new_user trigger manually
 

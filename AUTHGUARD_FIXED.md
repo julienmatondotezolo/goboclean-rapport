@@ -9,6 +9,7 @@
 ## 🔍 Root Cause
 
 The `.single()` method in Supabase expects **exactly one result**. If there are:
+
 - **0 results** → Error
 - **Multiple results** → Error
 
@@ -21,29 +22,32 @@ The error message "Cannot coerce the result to a single JSON object" means the q
 **Changed from `.single()` to array handling:**
 
 ### Before (Broken)
+
 ```typescript
 const { data: profile, error: profileError } = await this.supabase
-  .from('users')
-  .select('id, email, role, first_name, last_name')
-  .eq('id', user.id)
+  .from("users")
+  .select("id, email, role, first_name, last_name")
+  .eq("id", user.id)
   .single(); // ❌ Throws error if 0 or multiple results
 ```
 
 ### After (Fixed)
+
 ```typescript
 const { data: profiles, error: profileError } = await this.supabase
-  .from('users')
-  .select('id, email, role, first_name, last_name')
-  .eq('id', user.id); // ✅ Returns array
+  .from("users")
+  .select("id, email, role, first_name, last_name")
+  .eq("id", user.id); // ✅ Returns array
 
 if (!profiles || profiles.length === 0) {
-  throw new UnauthorizedException('User profile not found');
+  throw new UnauthorizedException("User profile not found");
 }
 
 const profile = profiles[0]; // ✅ Get first result
 ```
 
 **Why this works:**
+
 - ✅ Returns an array (even if empty)
 - ✅ No error if 0 results (we handle it)
 - ✅ No error if multiple results (we take first)
@@ -58,6 +62,7 @@ const profile = profiles[0]; // ✅ Get first result
 The backend is running with `--watch`, so it should automatically reload with the fix.
 
 **Check terminal 2 for:**
+
 ```
 File change detected. Starting incremental compilation...
 Found 0 errors. Watching for file changes.
@@ -76,6 +81,7 @@ Found 0 errors. Watching for file changes.
 3. **Click "Profiel Voltooien"**
 
 4. **Expected:**
+
    ```
    🔑 AuthGuard: Token received, verifying...
    ✅ AuthGuard: Token valid for user: 9e024594...
@@ -91,6 +97,7 @@ Found 0 errors. Watching for file changes.
 ### Issue 1: User Not Found in Database
 
 **Error:**
+
 ```
 ❌ AuthGuard: No profile found for user: 9e024594...
 ```
@@ -98,6 +105,7 @@ Found 0 errors. Watching for file changes.
 **Meaning:** User exists in `auth.users` but not in `public.users`
 
 **Fix:**
+
 ```sql
 -- Check if user exists in auth
 SELECT id, email FROM auth.users WHERE email = 'emji@yopmail.com';
@@ -108,7 +116,7 @@ SELECT id, email FROM users WHERE email = 'emji@yopmail.com';
 -- If missing from public.users, create it:
 INSERT INTO users (id, email, first_name, last_name, role)
 SELECT id, email, 'Emji', 'User', 'worker'
-FROM auth.users 
+FROM auth.users
 WHERE email = 'emji@yopmail.com'
 ON CONFLICT (id) DO NOTHING;
 ```
@@ -118,6 +126,7 @@ ON CONFLICT (id) DO NOTHING;
 **Error:** Would still work, but takes first result
 
 **Check:**
+
 ```sql
 -- Should return only 1 row
 SELECT COUNT(*) FROM users WHERE id = '9e024594-5a44-4278-b796-64077eaf2d69';
@@ -158,12 +167,14 @@ If more than 1, you have duplicate users (database issue).
 **File:** `src/auth/auth.guard.ts`
 
 **Changes:**
+
 1. ✅ Removed `.single()` call
 2. ✅ Changed `data: profile` to `data: profiles` (array)
 3. ✅ Added check for empty array
 4. ✅ Extract first result: `const profile = profiles[0]`
 
 **Benefits:**
+
 - ✅ More robust error handling
 - ✅ Better error messages
 - ✅ No "Cannot coerce" errors
@@ -178,6 +189,7 @@ If more than 1, you have duplicate users (database issue).
 When you try onboarding, you should see:
 
 **Success:**
+
 ```
 🔑 AuthGuard: Token received, verifying...
 ✅ AuthGuard: Token valid for user: 9e024594-5a44-4278-b796-64077eaf2d69
@@ -185,6 +197,7 @@ When you try onboarding, you should see:
 ```
 
 **No more:**
+
 ```
 ❌ AuthGuard: Profile fetch failed: Cannot coerce the result to a single JSON object
 ```
@@ -192,11 +205,13 @@ When you try onboarding, you should see:
 ### Check Frontend
 
 **Success:**
+
 ```
 📥 Response status: 200
 ```
 
 **Then:**
+
 - ✅ Green success toast
 - ✅ Redirect to dashboard
 - ✅ Profile picture displays
@@ -207,7 +222,7 @@ When you try onboarding, you should see:
 
 **Problem:** `.single()` throws error if 0 or multiple results  
 **Solution:** Use array and take first result  
-**Status:** ✅ **FIXED!**  
+**Status:** ✅ **FIXED!**
 
 **Test now - should work perfectly!** 🎉
 
