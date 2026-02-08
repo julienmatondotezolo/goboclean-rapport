@@ -129,6 +129,11 @@ export default function OnboardingPage() {
       return;
     }
 
+    if (!profilePicture && !profilePicturePreview) {
+      handleError(new Error('Please upload a profile picture'), { title: 'Profile picture required' });
+      return;
+    }
+
     if (!userId) return;
 
     setIsLoading(true);
@@ -136,21 +141,21 @@ export default function OnboardingPage() {
     try {
       const supabase = createClient();
 
-      // Upload profile picture if provided
-      let profilePictureUrl = null;
+      // Upload profile picture if new one provided
+      let profilePictureUrl = profilePicturePreview; // Keep existing if no new upload
       if (profilePicture) {
         profilePictureUrl = await uploadProfilePicture();
+        if (!profilePictureUrl) {
+          throw new Error('Failed to upload profile picture');
+        }
       }
 
       // Update user profile
       const updateData: any = {
         first_name: firstName.trim(),
         last_name: lastName.trim(),
+        profile_picture_url: profilePictureUrl,
       };
-
-      if (profilePictureUrl) {
-        updateData.profile_picture_url = profilePictureUrl;
-      }
 
       const { error: updateError } = await supabase
         .from('users')
@@ -179,15 +184,11 @@ export default function OnboardingPage() {
   };
 
   const handleSkip = async () => {
-    if (!userId) return;
-
-    try {
-      // Just mark as onboarded without updating profile
-      await markUserAsOnboarded(userId);
-      router.push('/dashboard');
-    } catch (error) {
-      handleError(error, { title: 'Failed to skip onboarding' });
-    }
+    // Don't allow skip if profile picture is required
+    handleError(
+      new Error('Profile picture is required. Please upload a picture to continue.'), 
+      { title: 'Cannot skip' }
+    );
   };
 
   return (
@@ -245,7 +246,7 @@ export default function OnboardingPage() {
               />
             </div>
             <p className="text-xs text-slate-500 text-center">
-              {t('profilePictureHint') || 'Optional - Add a profile picture'}
+              <span className="text-red-500 font-bold">* Required</span> - {t('profilePictureHint') || 'Add a profile picture'}
             </p>
           </div>
 

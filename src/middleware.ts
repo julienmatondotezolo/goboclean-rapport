@@ -12,8 +12,16 @@ export default async function middleware(request: NextRequest) {
   // Define public routes that don't require authentication
   const publicRoutes = ['/login', '/signup', '/reset-password', '/set-password', '/auth'];
   
+  // Define routes that don't need onboarding check
+  const onboardingExemptRoutes = ['/login', '/signup', '/reset-password', '/set-password', '/auth', '/onboarding'];
+  
   // Check if the current path is a public route
   const isPublicRoute = publicRoutes.some((route) => 
+    pathname.includes(route)
+  );
+  
+  // Check if the current path is exempt from onboarding check
+  const isOnboardingExempt = onboardingExemptRoutes.some((route) => 
     pathname.includes(route)
   );
   
@@ -95,6 +103,27 @@ export default async function middleware(request: NextRequest) {
       loginUrl.searchParams.set('redirect', pathname);
       
       return NextResponse.redirect(loginUrl);
+    }
+
+    // Check if user needs onboarding (only for authenticated users not on exempt routes)
+    if (!isOnboardingExempt && session) {
+      try {
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('is_onboarded, profile_picture_url')
+          .eq('id', session.user.id)
+          .single();
+
+        // If user is not onboarded OR has no profile picture, redirect to onboarding
+        if (!error && userData && (!userData.is_onboarded || !userData.profile_picture_url)) {
+          const locale = getLocaleFromPathname(pathname);
+          const onboardingUrl = new URL(`/${locale}/onboarding`, request.url);
+          return NextResponse.redirect(onboardingUrl);
+        }
+      } catch (error) {
+        // If there's an error checking onboarding status, continue anyway
+        console.error('Error checking onboarding status:', error);
+      }
     }
 
     return response;
