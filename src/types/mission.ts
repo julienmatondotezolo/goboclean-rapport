@@ -1,7 +1,6 @@
 // Mission types matching the backend schema
 
 export type MissionStatus =
-  | 'created'
   | 'assigned'
   | 'in_progress'
   | 'waiting_completion'
@@ -139,7 +138,7 @@ export interface AppNotification {
   body: string;
   type: string;
   mission_id?: string;
-  read: boolean;
+  is_read: boolean;
   created_at: string;
 }
 

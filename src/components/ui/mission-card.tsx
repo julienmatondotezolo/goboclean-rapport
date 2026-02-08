@@ -23,7 +23,6 @@ interface MissionCardProps {
 }
 
 const statusColorMap: Record<MissionStatus, string> = {
-  created: 'bg-[#f1f5f9] text-[#64748b]',
   assigned: 'bg-blue-50 text-blue-700',
   in_progress: 'bg-[#f0f9e1] text-[#4d7c0f]',
   waiting_completion: 'bg-orange-50 text-orange-700',

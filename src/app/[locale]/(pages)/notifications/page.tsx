@@ -48,7 +48,7 @@ export default function NotificationsPage() {
   }, [data]);
 
   const handleNotificationClick = (notification: AppNotification) => {
-    if (!notification.read) {
+    if (!notification.is_read) {
       markRead.mutate(notification.id);
     }
     if (notification.mission_id) {
@@ -125,7 +125,7 @@ export default function NotificationsPage() {
                 <div
                   key={notification.id}
                   className={`w-full text-left flex items-start gap-4 p-4 rounded-2xl transition-all active:scale-[0.98] relative group ${
-                    notification.read
+                    notification.is_read
                       ? 'bg-[#f8fafc]'
                       : 'bg-[#f0fdf4] border border-[#a3e635]/20'
                   }`}
@@ -136,12 +136,12 @@ export default function NotificationsPage() {
                   >
                     <div
                       className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                        notification.read ? 'bg-gray-100' : 'bg-[#064e3b]'
+                        notification.is_read ? 'bg-gray-100' : 'bg-[#064e3b]'
                       }`}
                     >
                       <Bell
                         className={`w-5 h-5 ${
-                          notification.read ? 'text-gray-400' : 'text-[#a3e635]'
+                          notification.is_read ? 'text-gray-400' : 'text-[#a3e635]'
                         }`}
                       />
                     </div>
@@ -149,7 +149,7 @@ export default function NotificationsPage() {
                     <div className="flex-1 min-w-0">
                       <h4
                         className={`text-[15px] leading-tight mb-1 ${
-                          notification.read
+                          notification.is_read
                             ? 'font-medium text-gray-600'
                             : 'font-bold text-[#1e293b]'
                         }`}
@@ -164,7 +164,7 @@ export default function NotificationsPage() {
                       </span>
                     </div>
 
-                    {!notification.read && (
+                    {!notification.is_read && (
                       <div className="w-2.5 h-2.5 rounded-full bg-[#a3e635] shrink-0 mt-1.5" />
                     )}
                   </button>

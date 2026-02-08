@@ -235,7 +235,7 @@ export async function getCachedReports(): Promise<OfflineReport[]> {
 export async function cacheNotifications(notifications: AppNotification[]): Promise<void> {
   const offlineNotifications: OfflineNotification[] = notifications.map(notif => ({
     ...notif,
-    offline_read_at: notif.read ? new Date().toISOString() : undefined,
+    offline_read_at: notif.is_read ? new Date().toISOString() : undefined,
   }));
   
   await offlineDB.notifications.bulkPut(offlineNotifications);

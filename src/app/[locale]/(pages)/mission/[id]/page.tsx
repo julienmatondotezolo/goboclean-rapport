@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -23,7 +23,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ToastAction } from '@/components/ui/toast';
+// ToastAction removed — delete executes immediately
 import { useToast } from '@/components/ui/use-toast';
 import { AddressAutocomplete } from '@/components/address-autocomplete';
 import Image from 'next/image';
@@ -60,7 +60,7 @@ export default function MissionDetailPage() {
   const [showWorkerPicker, setShowWorkerPicker] = useState(false);
 
   // Delete undo refs
-  const deleteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // deleteTimeoutRef removed — delete executes immediately
 
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -168,14 +168,7 @@ export default function MissionDetailPage() {
     }
   }, [showOptionsMenu]);
 
-  // Cleanup delete timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (deleteTimeoutRef.current) {
-        clearTimeout(deleteTimeoutRef.current);
-      }
-    };
-  }, []);
+  // No cleanup needed — delete executes before navigation
 
   // Change 3: Check if mission is in the future
   const isFutureMission = mission
@@ -197,7 +190,7 @@ export default function MissionDetailPage() {
 
     switch (mission.status) {
       case 'assigned':
-      case 'created':
+      // 'created' status removed
         handleStartMission();
         break;
       case 'in_progress':
@@ -216,7 +209,7 @@ export default function MissionDetailPage() {
   const getActionLabel = (): string => {
     if (!mission) return '';
     switch (mission.status) {
-      case 'created':
+      // 'created' status removed
       case 'assigned':
         return t('startMission');
       case 'in_progress':
@@ -234,7 +227,7 @@ export default function MissionDetailPage() {
     if (!mission) return true;
     if (startMission.isPending) return true;
     // Change 3: disable if future mission and status is assigned/created
-    if (isFutureMission && (mission.status === 'assigned' || mission.status === 'created')) return true;
+    if (isFutureMission && (mission.status === 'assigned')) return true;
     if (mission.status === 'waiting_completion' && !completionUnlocked) return true;
     if (mission.status === 'completed' || mission.status === 'cancelled') return true;
     return false;
@@ -311,43 +304,18 @@ export default function MissionDetailPage() {
     }
   };
 
-  // Change 5: Delete mission with undo toast
-  const handleDeleteMission = () => {
+  // Change 5: Delete mission — execute then navigate
+  const handleDeleteMission = async () => {
     setShowDeleteConfirm(false);
     setShowEditModal(false);
 
-    // Navigate away immediately
-    router.push(`/${locale}/dashboard`);
-
-    // Show toast with undo
-    toast({
-      title: td('missionDeleted'),
-      description: td('undoDescription'),
-      action: (
-        <ToastAction altText={td('undo')} onClick={() => handleUndoDelete()}>
-          {td('undo')}
-        </ToastAction>
-      ),
-    });
-
-    // Schedule actual delete after 5 seconds
-    deleteTimeoutRef.current = setTimeout(async () => {
-      deleteTimeoutRef.current = null;
-      try {
-        await deleteMission.mutateAsync(id);
-      } catch (error) {
-        handleError(error, { title: td('deleteFailed') });
-      }
-    }, 5000);
-  };
-
-  const handleUndoDelete = () => {
-    if (deleteTimeoutRef.current) {
-      clearTimeout(deleteTimeoutRef.current);
-      deleteTimeoutRef.current = null;
+    try {
+      await deleteMission.mutateAsync(id);
+      showSuccess(td('missionDeleted'));
+      router.push(`/${locale}/dashboard`);
+    } catch (error) {
+      handleError(error, { title: td('deleteFailed') });
     }
-    // Navigate back to the mission
-    router.push(`/${locale}/mission/${id}`);
   };
 
   // Change 7: Worker management helpers
@@ -576,7 +544,7 @@ export default function MissionDetailPage() {
         </div>
 
         {/* Change 3: Future mission warning */}
-        {isFutureMission && (mission.status === 'assigned' || mission.status === 'created') && (
+        {isFutureMission && (mission.status === 'assigned') && (
           <div className="rounded-2xl p-4 flex items-center gap-3 bg-amber-50 border-2 border-amber-200">
             <Calendar className="w-6 h-6 text-amber-600 flex-shrink-0" />
             <p className="text-[13px] font-bold text-amber-800">

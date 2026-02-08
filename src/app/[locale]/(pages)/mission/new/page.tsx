@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { MapPin, Phone, Mail, Calendar, Clock, FileText, Home, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
+import { MapPin, Phone, Mail, Calendar, Clock, FileText, Home, CheckCircle2, ArrowRight, Loader2, ShieldAlert } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { AddressAutocomplete } from '@/components/address-autocomplete';
 import { useWorkersList } from '@/hooks/useWorkers';
 import { useCreateMission } from '@/hooks/useMissions';
+import { useAuth } from '@/hooks/useAuth';
 import { showSuccess, handleError } from '@/lib/error-handler';
 import type { CreateMissionPayload, MissionSubtype } from '@/types/mission';
 
@@ -54,12 +55,29 @@ export default function MissionCreatePage() {
   const router = useRouter();
   const params = useParams();
   const t = useTranslations('MissionCreate');
+  const { isAdmin, isLoading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedWorkers, setSelectedWorkers] = useState<string[]>([]);
   
+  // Redirect workers away — admin only page
+  useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.replace(`/${params.locale}/dashboard`);
+    }
+  }, [authLoading, isAdmin, router, params.locale]);
+
   // Real API hooks
   const { data: workers, isLoading: workersLoading } = useWorkersList();
   const createMission = useCreateMission();
+
+  // Block render for non-admins
+  if (authLoading || !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-[#064e3b]" />
+      </div>
+    );
+  }
 
   const progressValue = (currentStep / TOTAL_STEPS) * 100;
 
