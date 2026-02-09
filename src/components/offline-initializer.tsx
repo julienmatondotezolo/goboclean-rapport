@@ -27,50 +27,28 @@ export function OfflineInitializer() {
         // Initialize sync manager with event listeners
         cleanupSync = initializeSyncManager();
         
-        // Register service worker if supported
-        if ('serviceWorker' in navigator && 'caches' in window) {
-          try {
-            const registration = await navigator.serviceWorker.register('/sw.js', {
-              scope: '/',
-            });
+        // Service worker is automatically registered by Next.js PWA
+        // Listen for service worker messages if available
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.addEventListener('message', (event) => {
+            const { type } = event.data || {};
             
-            // Handle service worker updates
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-              if (newWorker) {
-                newWorker.addEventListener('statechange', () => {
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    // New service worker is available
-                    // Could show update notification here
-                  }
-                });
-              }
-            });
+            if (type === 'BACKGROUND_SYNC') {
+              // Service worker triggered background sync
+              // Sync manager will handle this automatically
+            }
+          });
 
-            // Listen for service worker messages
-            navigator.serviceWorker.addEventListener('message', (event) => {
-              const { type } = event.data || {};
-              
-              if (type === 'BACKGROUND_SYNC') {
-                // Service worker triggered background sync
-                // Sync manager will handle this automatically
-              }
-            });
-
-            // Register for background sync if supported
-            if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+          // Register for background sync when service worker is ready
+          navigator.serviceWorker.ready.then(async (registration) => {
+            if ('sync' in window.ServiceWorkerRegistration.prototype) {
               try {
-                // Type assertion because TypeScript doesn't know about the sync property
-                const syncRegistration = registration as any;
-                await syncRegistration.sync?.register('background-sync');
+                await (registration as any).sync?.register('background-sync');
               } catch (error) {
                 // Background sync not available, sync manager will handle periodic sync
               }
             }
-
-          } catch (error) {
-            // Service worker registration failed, app will work without offline features
-          }
+          });
         }
         
       } catch (error) {
