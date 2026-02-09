@@ -7,7 +7,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageInitializer } from "@/components/language-initializer";
 import { OfflineInitializer } from "@/components/offline-initializer";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
-import { PWAUpdateNotification } from "@/components/pwa-update-notification";
 import { AppErrorBoundary } from "@/components/app-error-boundary";
 import { PageLogger } from "@/components/page-logger";
 
@@ -84,7 +83,6 @@ export default function Providers({ children, locale }: Props): JSX.Element {
               <OfflineInitializer />
               {children}
               <PWAInstallPrompt />
-              <PWAUpdateNotification />
             </PageLogger>
           </NextIntlClientProvider>
         </ThemeProvider>
