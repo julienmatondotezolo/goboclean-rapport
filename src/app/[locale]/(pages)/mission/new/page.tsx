@@ -14,6 +14,7 @@ import { useWorkersList } from '@/hooks/useWorkers';
 import { useCreateMission } from '@/hooks/useMissions';
 import { useAuth } from '@/hooks/useAuth';
 import { showSuccess, handleError } from '@/lib/error-handler';
+import { LoadingBanner } from '@/components/loading-banner';
 import type { CreateMissionPayload, MissionSubtype } from '@/types/mission';
 
 interface ClientInfo {
@@ -71,10 +72,28 @@ export default function MissionCreatePage() {
   const createMission = useCreateMission();
 
   // Block render for non-admins
-  if (authLoading || !isAdmin) {
+  if (!user && authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-[#064e3b]" />
+      <div className="min-h-screen bg-white">
+        <LoadingBanner 
+          isLoading={true} 
+          message="Loading..." 
+        />
+        <div className="pt-16">
+          <PageHeader title="New Mission" />
+        </div>
+      </div>
+    );
+  }
+
+  if (user && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-white">
+        <PageHeader title="Access Denied" />
+        <div className="p-6 text-center">
+          <ShieldAlert className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-600">You don't have permission to create missions.</p>
+        </div>
       </div>
     );
   }

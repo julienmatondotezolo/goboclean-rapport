@@ -16,6 +16,7 @@ import { Logo } from '@/components/ui/logo';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, ArrowRight, Check, Eye, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { LoadingBanner } from '@/components/loading-banner';
 
 type LoginForm = {
   email: string;
@@ -127,8 +128,14 @@ export default function LoginPage() {
   // Show loading state while checking authentication
   if (isCheckingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1a2e1a]" />
+      <div className="min-h-screen bg-[#f8fafc]">
+        <LoadingBanner 
+          isLoading={true} 
+          message="Checking authentication..." 
+        />
+        <div className="pt-16 flex items-center justify-center min-h-[calc(100vh-4rem)]">
+          <Loader2 className="h-8 w-8 animate-spin text-[#064e3b]" />
+        </div>
       </div>
     );
   }

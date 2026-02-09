@@ -17,6 +17,7 @@ import { useRouter } from '@/i18n/routing';
 import { useAuth } from '@/hooks/useAuth';
 import { useCalendarMissions, useRescheduleMission } from '@/hooks/useMissions';
 import { showSuccess, handleError } from '@/lib/error-handler';
+import { LoadingBanner } from '@/components/loading-banner';
 import type { Mission } from '@/types/mission';
 import {
   format,
@@ -308,22 +309,18 @@ export default function SchedulePage() {
   );
 
   // ─── Loading / Error states ────────────────────────────────
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white pb-32 font-sans">
-        <PageHeader title={t('title')} />
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-[#064e3b]" />
-          <span className="ml-3 text-[14px] text-gray-500">{t('loading')}</span>
-        </div>
-      </div>
-    );
-  }
+  // Loading handled by banner instead of full page block
 
   return (
     <div className="min-h-screen bg-white pb-32 font-sans">
+      {/* Loading Banner */}
+      <LoadingBanner 
+        isLoading={isLoading} 
+        message="Loading schedule..." 
+      />
+      
       {/* Page Header */}
-      <PageHeader title={t('title')} />
+      <PageHeader title={t('title')} className={isLoading ? 'pt-16' : ''} />
 
       {/* View Switcher */}
       <div className="bg-white border-b border-gray-100 sticky top-[73px] z-10">

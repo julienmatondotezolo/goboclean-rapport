@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { LoadingBanner } from '@/components/loading-banner';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -78,27 +79,34 @@ export default function AuthCallbackPage() {
     handleCallback();
   }, [router]);
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
-        <div className="text-center max-w-md mx-auto px-6">
-          <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-            <span className="text-red-600 text-2xl">✕</span>
-          </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Authentication Error</h2>
-          <p className="text-red-600 mb-4">{error}</p>
-          <p className="text-slate-600 text-sm">Redirecting to login page...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
-      <div className="text-center">
-        <Loader2 className="w-12 h-12 animate-spin text-brand-emerald mx-auto mb-4" />
-        <p className="text-slate-600 font-medium">{status}</p>
-        <p className="text-slate-400 text-sm mt-2">Please wait...</p>
+    <div className="min-h-screen bg-[#f8fafc]">
+      {/* Loading or Error Banner */}
+      <LoadingBanner 
+        isLoading={!error} 
+        message={error ? 'Authentication failed' : status} 
+        type={error ? 'error' : 'loading'}
+      />
+      
+      <div className="pt-16 flex items-center justify-center min-h-[calc(100vh-4rem)]">
+        <div className="text-center max-w-md mx-auto px-6">
+          {error ? (
+            <>
+              <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <span className="text-red-600 text-2xl">✕</span>
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">Authentication Error</h2>
+              <p className="text-red-600 mb-4">{error}</p>
+              <p className="text-slate-600 text-sm">Redirecting to login page...</p>
+            </>
+          ) : (
+            <>
+              <Loader2 className="w-12 h-12 animate-spin text-[#064e3b] mx-auto mb-4" />
+              <p className="text-slate-600 font-medium">{status}</p>
+              <p className="text-slate-400 text-sm mt-2">Please wait...</p>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ import { Logo } from '@/components/ui/logo';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { LoadingBanner } from '@/components/loading-banner';
 
 type SetPasswordForm = {
   password: string;
@@ -126,10 +127,16 @@ export default function SetPasswordPage() {
 
   if (!isValidSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-brand-emerald mx-auto mb-4" />
-          <p className="text-slate-600">Verifying invitation link...</p>
+      <div className="min-h-screen bg-[#f8fafc]">
+        <LoadingBanner 
+          isLoading={true} 
+          message="Verifying invitation link..." 
+        />
+        <div className="pt-16 flex items-center justify-center min-h-[calc(100vh-4rem)]">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-[#064e3b] mx-auto mb-4" />
+            <p className="text-slate-600">Verifying invitation link...</p>
+          </div>
         </div>
       </div>
     );
