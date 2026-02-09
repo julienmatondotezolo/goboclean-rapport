@@ -32,12 +32,14 @@ export const createClient = (): SupabaseClient<Database> => {
             return null;
           }
           
-          // Use document.cookie instead of trying to parse
-          const cookies = document.cookie.split(';');
-          for (const cookie of cookies) {
-            const [key, value] = cookie.trim().split('=');
-            if (key === name) {
-              return decodeURIComponent(value);
+          try {
+            // Use document.cookie instead of trying to parse
+            const cookies = document.cookie.split(';');
+            for (const cookie of cookies) {
+              const [key, value] = cookie.trim().split('=');
+              if (key === name) {
+                return decodeURIComponent(value);
+              }
             }
             return null;
           } catch (error) {
@@ -51,18 +53,32 @@ export const createClient = (): SupabaseClient<Database> => {
             return;
           }
           
-          let cookie = `${name}=${encodeURIComponent(value)}`;
-          
-          if (options.maxAge) {
-            cookie += `; max-age=${options.maxAge}`;
+          try {
+            let cookie = `${name}=${encodeURIComponent(value)}`;
+            
+            if (options.maxAge) {
+              cookie += `; max-age=${options.maxAge}`;
+            }
+            if (options.path) {
+              cookie += `; path=${options.path}`;
+            }
+            if (options.domain) {
+              cookie += `; domain=${options.domain}`;
+            }
+            if (options.sameSite) {
+              cookie += `; samesite=${options.sameSite}`;
+            }
+            if (options.secure) {
+              cookie += '; secure';
+            }
+            
+            document.cookie = cookie;
+          } catch (error) {
+            console.warn('Cookie set error:', error);
           }
         },
         remove(name: string, options: any = {}) {
-          try {
-            this.set(name, '', { ...options, maxAge: 0 });
-          } catch (error) {
-            console.warn('Cookie remove error:', error);
-          }
+          this.set(name, '', { ...options, maxAge: 0 });
         },
       },
     }
