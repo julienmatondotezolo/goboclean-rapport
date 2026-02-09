@@ -9,6 +9,7 @@ import { OfflineInitializer } from "@/components/offline-initializer";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { PWAUpdateNotification } from "@/components/pwa-update-notification";
 import { AppErrorBoundary } from "@/components/app-error-boundary";
+import { PageLogger } from "@/components/page-logger";
 
 // Manually import messages for each locale
 import enMessages from "../../../messages/en.json";
@@ -45,11 +46,13 @@ export default function Providers({ children, locale }: Props): JSX.Element {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <NextIntlClientProvider locale={locale} messages={messages} timeZone={timeZone}>
-            <LanguageInitializer />
-            <OfflineInitializer />
-            {children}
-            <PWAInstallPrompt />
-            <PWAUpdateNotification />
+            <PageLogger>
+              <LanguageInitializer />
+              <OfflineInitializer />
+              {children}
+              <PWAInstallPrompt />
+              <PWAUpdateNotification />
+            </PageLogger>
           </NextIntlClientProvider>
         </ThemeProvider>
       </QueryClientProvider>

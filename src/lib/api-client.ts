@@ -1,4 +1,5 @@
 import { createClient } from './supabase/client';
+import logger from './logger';
 
 /**
  * API Client for making authenticated requests to the backend
@@ -26,28 +27,78 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const token = await this.getAccessToken();
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string>),
-    };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers,
+    const method = options.method || 'GET';
+    const startTime = Date.now();
+    
+    // Log API call start
+    logger.apiCall(method, endpoint, {
+      hasAuth: !!(await this.getAccessToken()),
+      bodySize: options.body ? JSON.stringify(options.body).length : 0,
     });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new Error(error.message || `HTTP ${response.status}`);
-    }
+    try {
+      const token = await this.getAccessToken();
 
-    return response.json();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(options.headers as Record<string, string>),
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...options,
+        headers,
+      });
+
+      const responseTime = Date.now() - startTime;
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || 'Request failed' };
+        }
+        
+        const error = new Error(errorData.message || `HTTP ${response.status}`);
+        
+        // Log API error
+        logger.apiError(method, endpoint, error, {
+          status: response.status,
+          statusText: response.statusText,
+          responseTime,
+          errorData,
+        });
+        
+        throw error;
+      }
+
+      const result = await response.json();
+      
+      // Log API success
+      logger.apiSuccess(method, endpoint, responseTime, {
+        status: response.status,
+        responseSize: JSON.stringify(result).length,
+      });
+
+      return result;
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
+      
+      if (error instanceof Error && !error.message.includes('HTTP')) {
+        // This is a network/fetch error, not an HTTP error
+        logger.apiError(method, endpoint, error, {
+          responseTime,
+          errorType: 'network',
+        });
+      }
+      
+      throw error;
+    }
   }
 
   /**
@@ -103,66 +154,187 @@ class ApiClient {
     formData: FormData,
     onProgress?: (percent: number) => void
   ): Promise<T> {
-    const token = await this.getAccessToken();
+    const startTime = Date.now();
+    const fileCount = Array.from(formData.entries()).filter(([key, value]) => value instanceof File).length;
+    
+    // Log upload start
+    logger.apiCall('POST', endpoint, {
+      uploadType: 'multipart/form-data',
+      fileCount,
+      hasProgress: !!onProgress,
+    });
 
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+    try {
+      const token = await this.getAccessToken();
 
-    // If caller doesn't need progress we can use fetch directly
-    if (!onProgress) {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
-        method: 'POST',
-        headers,
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Upload failed' }));
-        throw new Error(error.message || `HTTP ${response.status}`);
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
-      return response.json();
+      // If caller doesn't need progress we can use fetch directly
+      if (!onProgress) {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+          method: 'POST',
+          headers,
+          body: formData,
+        });
+
+        const responseTime = Date.now() - startTime;
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { message: errorText || 'Upload failed' };
+          }
+          
+          const error = new Error(errorData.message || `HTTP ${response.status}`);
+          
+          // Log upload error
+          logger.apiError('POST', endpoint, error, {
+            status: response.status,
+            statusText: response.statusText,
+            responseTime,
+            uploadType: 'fetch',
+            fileCount,
+          });
+          
+          throw error;
+        }
+
+        const result = await response.json();
+        
+        // Log upload success
+        logger.apiSuccess('POST', endpoint, responseTime, {
+          status: response.status,
+          uploadType: 'fetch',
+          fileCount,
+        });
+
+        return result;
+      }
+
+      // Use XMLHttpRequest for progress tracking
+      return new Promise<T>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${this.baseUrl}${endpoint}`);
+
+        Object.entries(headers).forEach(([key, value]) => {
+          xhr.setRequestHeader(key, value);
+        });
+
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            onProgress(percent);
+            
+            // Log progress milestones
+            if (percent === 25 || percent === 50 || percent === 75) {
+              logger.debug(`Upload progress: ${percent}%`, {
+                action: 'upload_progress',
+                endpoint,
+                percent,
+                loaded: e.loaded,
+                total: e.total,
+              });
+            }
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          const responseTime = Date.now() - startTime;
+          
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const result = JSON.parse(xhr.responseText);
+              
+              // Log upload success
+              logger.apiSuccess('POST', endpoint, responseTime, {
+                status: xhr.status,
+                uploadType: 'xhr',
+                fileCount,
+                responseSize: xhr.responseText.length,
+              });
+              
+              resolve(result);
+            } catch {
+              const result = xhr.responseText as unknown as T;
+              
+              // Log upload success (non-JSON response)
+              logger.apiSuccess('POST', endpoint, responseTime, {
+                status: xhr.status,
+                uploadType: 'xhr',
+                fileCount,
+                responseType: 'text',
+              });
+              
+              resolve(result);
+            }
+          } else {
+            let errorData;
+            try {
+              errorData = JSON.parse(xhr.responseText);
+            } catch {
+              errorData = { message: `HTTP ${xhr.status}` };
+            }
+            
+            const error = new Error(errorData.message || `HTTP ${xhr.status}`);
+            
+            // Log upload error
+            logger.apiError('POST', endpoint, error, {
+              status: xhr.status,
+              statusText: xhr.statusText,
+              responseTime,
+              uploadType: 'xhr',
+              fileCount,
+              errorData,
+            });
+            
+            reject(error);
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          const error = new Error('Network error');
+          logger.apiError('POST', endpoint, error, {
+            responseTime: Date.now() - startTime,
+            uploadType: 'xhr',
+            fileCount,
+            errorType: 'network',
+          });
+          reject(error);
+        });
+        
+        xhr.addEventListener('abort', () => {
+          const error = new Error('Upload aborted');
+          logger.apiError('POST', endpoint, error, {
+            responseTime: Date.now() - startTime,
+            uploadType: 'xhr',
+            fileCount,
+            errorType: 'abort',
+          });
+          reject(error);
+        });
+
+        xhr.send(formData);
+      });
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
+      
+      if (error instanceof Error) {
+        logger.apiError('POST', endpoint, error, {
+          responseTime,
+          uploadType: onProgress ? 'xhr' : 'fetch',
+          fileCount,
+          errorType: 'setup',
+        });
+      }
+      
+      throw error;
     }
-
-    // Use XMLHttpRequest for progress tracking
-    return new Promise<T>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', `${this.baseUrl}${endpoint}`);
-
-      Object.entries(headers).forEach(([key, value]) => {
-        xhr.setRequestHeader(key, value);
-      });
-
-      xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable) {
-          onProgress(Math.round((e.loaded / e.total) * 100));
-        }
-      });
-
-      xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            resolve(JSON.parse(xhr.responseText));
-          } catch {
-            resolve(xhr.responseText as unknown as T);
-          }
-        } else {
-          try {
-            const err = JSON.parse(xhr.responseText);
-            reject(new Error(err.message || `HTTP ${xhr.status}`));
-          } catch {
-            reject(new Error(`HTTP ${xhr.status}`));
-          }
-        }
-      });
-
-      xhr.addEventListener('error', () => reject(new Error('Network error')));
-      xhr.addEventListener('abort', () => reject(new Error('Upload aborted')));
-
-      xhr.send(formData);
-    });
   }
 }
 

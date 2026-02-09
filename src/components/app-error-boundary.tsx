@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import logger from '@/lib/logger';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -23,21 +24,41 @@ export function AppErrorBoundary({ children }: ErrorBoundaryProps) {
   useEffect(() => {
     // Global error handler
     const handleError = (event: ErrorEvent) => {
-      setError({
+      const errorInfo = {
         message: event.message,
         stack: event.error?.stack,
         timestamp: new Date(),
         url: window.location.href,
+      };
+      
+      // Log the error
+      logger.error('Global JavaScript Error', event.error || new Error(event.message), {
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        url: event.target ? window.location.href : undefined,
+        errorType: 'javascript',
       });
+      
+      setError(errorInfo);
     };
 
     // Unhandled promise rejection handler
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      setError({
+      const errorInfo = {
         message: `Unhandled promise rejection: ${event.reason}`,
         timestamp: new Date(),
         url: window.location.href,
+      };
+      
+      // Log the promise rejection
+      logger.error('Unhandled Promise Rejection', 
+        event.reason instanceof Error ? event.reason : new Error(String(event.reason)), {
+        reason: event.reason,
+        errorType: 'promise_rejection',
       });
+      
+      setError(errorInfo);
     };
 
     window.addEventListener('error', handleError);
@@ -51,6 +72,11 @@ export function AppErrorBoundary({ children }: ErrorBoundaryProps) {
 
   const handleRetry = async () => {
     setIsRetrying(true);
+    logger.userAction('retry_after_error', 'app_error_boundary', {
+      originalError: error?.message,
+      errorTimestamp: error?.timestamp,
+    });
+    
     try {
       // Clear any stuck states
       if ('serviceWorker' in navigator) {
@@ -58,23 +84,31 @@ export function AppErrorBoundary({ children }: ErrorBoundaryProps) {
         for (const registration of registrations) {
           await registration.unregister();
         }
+        logger.info('Service workers cleared during retry');
       }
       
       // Reload the page
       window.location.reload();
     } catch (err) {
-      console.error('Retry failed:', err);
+      logger.error('Retry failed', err instanceof Error ? err : new Error(String(err)));
       setIsRetrying(false);
     }
   };
 
   const handleClearData = async () => {
+    logger.userAction('clear_data_after_error', 'app_error_boundary', {
+      originalError: error?.message,
+      errorTimestamp: error?.timestamp,
+    });
+    
     try {
       // Clear localStorage
       localStorage.clear();
+      logger.info('localStorage cleared');
       
       // Clear sessionStorage
       sessionStorage.clear();
+      logger.info('sessionStorage cleared');
       
       // Clear IndexedDB
       if ('indexedDB' in window) {
@@ -84,8 +118,9 @@ export function AppErrorBoundary({ children }: ErrorBoundaryProps) {
             deleteReq.onsuccess = () => resolve();
             deleteReq.onerror = () => reject(deleteReq.error);
           });
+          logger.info('IndexedDB cleared successfully');
         } catch (err) {
-          console.log('IndexedDB clear failed (might not exist):', err);
+          logger.warn('IndexedDB clear failed (might not exist)', err instanceof Error ? err : new Error(String(err)));
         }
       }
       
@@ -93,12 +128,13 @@ export function AppErrorBoundary({ children }: ErrorBoundaryProps) {
       if ('caches' in window) {
         const cacheNames = await caches.keys();
         await Promise.all(cacheNames.map(name => caches.delete(name)));
+        logger.info('Service worker caches cleared', { cacheCount: cacheNames.length });
       }
       
       // Reload
       window.location.reload();
     } catch (err) {
-      console.error('Clear data failed:', err);
+      logger.error('Clear data failed', err instanceof Error ? err : new Error(String(err)));
       alert('Clear data failed. Please manually clear your browser cache and reload.');
     }
   };
