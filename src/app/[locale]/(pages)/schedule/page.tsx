@@ -320,7 +320,9 @@ export default function SchedulePage() {
       />
       
       {/* Page Header */}
-      <PageHeader title={t('title')} className={isLoading ? 'pt-16' : ''} />
+      <div className={isLoading ? 'pt-16' : ''}>
+        <PageHeader title={t('title')} />
+      </div>
 
       {/* View Switcher */}
       <div className="bg-white border-b border-gray-100 sticky top-[73px] z-10">

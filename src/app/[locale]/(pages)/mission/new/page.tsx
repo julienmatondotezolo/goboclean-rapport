@@ -56,7 +56,7 @@ export default function MissionCreatePage() {
   const router = useRouter();
   const params = useParams();
   const t = useTranslations('MissionCreate');
-  const { isAdmin, isLoading: authLoading } = useAuth();
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedWorkers, setSelectedWorkers] = useState<string[]>([]);
   

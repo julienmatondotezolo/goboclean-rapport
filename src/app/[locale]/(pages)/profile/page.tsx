@@ -229,7 +229,9 @@ export default function ProfilePage() {
       />
       
       {/* Header */}
-      <PageHeader title={t('profile')} className={isLoading ? 'pt-16' : ''} />
+      <div className={isLoading ? 'pt-16' : ''}>
+        <PageHeader title={t('profile')} />
+      </div>
       
       {/* Profile Section */}
       <div className="pt-8 pb-10 px-8 flex flex-col items-center">
