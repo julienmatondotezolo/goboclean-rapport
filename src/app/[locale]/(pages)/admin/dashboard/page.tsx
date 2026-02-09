@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RequireAuth } from '@/components/require-auth';
 import { apiClient } from '@/lib/api-client';
+import { useAuth } from '@/hooks/useAuth';
 import { FileText, Users, CheckCircle, Clock } from 'lucide-react';
 
 interface Statistics {
@@ -29,10 +30,14 @@ function AdminDashboardContent() {
   const [stats, setStats] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    fetchStatistics();
-  }, []);
+    // Only fetch statistics if user is authenticated
+    if (!authLoading && isAuthenticated && user) {
+      fetchStatistics();
+    }
+  }, [authLoading, isAuthenticated, user]);
 
   const fetchStatistics = async () => {
     try {

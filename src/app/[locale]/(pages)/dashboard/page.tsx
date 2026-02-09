@@ -14,19 +14,18 @@ import { useMyMissions, useAllMissions } from '@/hooks/useMissions';
 import { useAdminStats } from '@/hooks/useAdminStats';
 import { useNotifications } from '@/hooks/useNotifications';
 import { OfflineStatusBadge } from '@/components/offline-indicator';
-import type { Mission } from '@/types/mission';
 
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
   const router = useRouter();
-  const { user, isAdmin, isLoading: authLoading } = useAuth();
+  const { user, isAdmin, isLoading: authLoading, isAuthenticated } = useAuth();
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
   // Role-based mission fetching: admin sees all, worker sees own
-  // Guard all queries with !!user to prevent 401 on login page
-  const adminMissionsQuery = useAllMissions({ enabled: !!user && isAdmin });
-  const workerMissionsQuery = useMyMissions({ enabled: !!user && !isAdmin });
+  // Guard all queries with authentication state to prevent 401 on login page
+  const adminMissionsQuery = useAllMissions({ enabled: !authLoading && isAuthenticated && !!user && isAdmin });
+  const workerMissionsQuery = useMyMissions({ enabled: !authLoading && isAuthenticated && !!user && !isAdmin });
   const missionsQuery = isAdmin ? adminMissionsQuery : workerMissionsQuery;
 
   const {
@@ -39,10 +38,10 @@ export default function DashboardPage() {
   // Admin stats (only fetched for admins)
   const {
     data: adminStats,
-  } = useAdminStats({ enabled: !!user && isAdmin });
+  } = useAdminStats({ enabled: !authLoading && isAuthenticated && !!user && isAdmin });
 
   // Notification count
-  const { data: notifData } = useNotifications({ enabled: !!user });
+  const { data: notifData } = useNotifications({ enabled: !authLoading && isAuthenticated && !!user });
   const unreadCount = notifData?.unreadCount ?? 0;
 
   // Fetch profile picture

@@ -55,7 +55,7 @@ export default function MissionCreatePage() {
   const router = useRouter();
   const params = useParams();
   const t = useTranslations('MissionCreate');
-  const { isAdmin, isLoading: authLoading } = useAuth();
+  const { isAdmin, user, isLoading: authLoading, isAuthenticated } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedWorkers, setSelectedWorkers] = useState<string[]>([]);
   
@@ -67,7 +67,9 @@ export default function MissionCreatePage() {
   }, [authLoading, isAdmin, router, params.locale]);
 
   // Real API hooks
-  const { data: workers, isLoading: workersLoading } = useWorkersList();
+  const { data: workers, isLoading: workersLoading } = useWorkersList({ 
+    enabled: !authLoading && isAuthenticated && !!user && isAdmin 
+  });
   const createMission = useCreateMission();
 
   // Block render for non-admins
