@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { initializeOfflineDB } from '@/lib/offline-store';
 import { initializeSyncManager } from '@/lib/sync-manager';
+import { initializeServiceWorkerUpdater } from '@/lib/sw-updater';
 
 /**
  * Component that initializes offline functionality
@@ -11,9 +12,13 @@ import { initializeSyncManager } from '@/lib/sync-manager';
 export function OfflineInitializer() {
   useEffect(() => {
     let cleanupSync: (() => void) | undefined;
+    let cleanupSWUpdater: (() => void) | undefined;
 
     const initializeOffline = async () => {
       try {
+        // Initialize service worker updater first to fix Safari issues
+        cleanupSWUpdater = initializeServiceWorkerUpdater();
+        console.log('✓ Service worker updater initialized');
         // Initialize IndexedDB with timeout
         await Promise.race([
           initializeOfflineDB(),
@@ -65,6 +70,7 @@ export function OfflineInitializer() {
     // Cleanup function
     return () => {
       cleanupSync?.();
+      cleanupSWUpdater?.();
     };
   }, []); // Run once on mount
 
