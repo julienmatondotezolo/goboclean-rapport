@@ -43,9 +43,11 @@ export default function MissionDetailPage() {
   const { toast } = useToast();
   const id = params.id as string;
   const locale = params.locale as string;
-  const { isAdmin } = useAuth();
+  const { isAdmin, user, isLoading: authLoading, isAuthenticated } = useAuth();
 
-  const { data: mission, isLoading, isError, refetch } = useMission(id);
+  const { data: mission, isLoading, isError, refetch } = useMission(id, { 
+    enabled: !authLoading && isAuthenticated && !!user && !!id 
+  });
   const startMission = useStartMission();
   const updateMission = useUpdateMission();
   const deleteMission = useDeleteMission();

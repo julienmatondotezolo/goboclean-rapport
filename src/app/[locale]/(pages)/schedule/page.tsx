@@ -42,7 +42,7 @@ type ViewMode = 'day' | 'week' | 'month';
 export default function SchedulePage() {
   const t = useTranslations('Schedule');
   const router = useRouter();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isLoading: authLoading, isAuthenticated } = useAuth();
   const locale = useLocale();
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -81,7 +81,7 @@ export default function SchedulePage() {
     isLoading,
     isError,
     refetch,
-  } = useCalendarMissions(dateRange, { enabled: !!user });
+  } = useCalendarMissions(dateRange, { enabled: !authLoading && isAuthenticated && !!user });
 
   // Change 5: Worker sees only own missions
   const missions = useMemo(() => {

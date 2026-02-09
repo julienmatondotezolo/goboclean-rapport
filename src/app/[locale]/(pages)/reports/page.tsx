@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/ui/page-header';
 import { useReports } from '@/hooks/useReports';
+import { useAuth } from '@/hooks/useAuth';
 import type { MissionReport } from '@/types/mission';
 
 export default function ReportsPage() {
@@ -26,11 +27,17 @@ export default function ReportsPage() {
   const t = useTranslations('Reports');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
 
-  const { data: reports, isLoading, isError, refetch } = useReports({
-    search: searchQuery || undefined,
-    status: statusFilter || undefined,
-  });
+  const { data: reports, isLoading, isError, refetch } = useReports(
+    {
+      search: searchQuery || undefined,
+      status: statusFilter || undefined,
+    },
+    {
+      enabled: !authLoading && isAuthenticated && !!user,
+    }
+  );
 
   // Client-side search filter for instant feedback
   const filteredReports = useMemo(() => {

@@ -8,6 +8,11 @@ export const createClient = () => {
     {
       cookies: {
         get(name: string) {
+          // Check if we're in the browser
+          if (typeof document === 'undefined') {
+            return null;
+          }
+          
           // Use document.cookie instead of trying to parse
           const cookies = document.cookie.split(';');
           for (const cookie of cookies) {
@@ -19,6 +24,11 @@ export const createClient = () => {
           return null;
         },
         set(name: string, value: string, options: any) {
+          // Check if we're in the browser
+          if (typeof document === 'undefined') {
+            return;
+          }
+          
           let cookie = `${name}=${encodeURIComponent(value)}`;
           
           if (options.maxAge) {

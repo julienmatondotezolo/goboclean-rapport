@@ -33,8 +33,8 @@ function formatRelativeTime(isoDate: string): string {
 export default function NotificationsPage() {
   const t = useTranslations('Notifications');
   const router = useRouter();
-  const { user } = useAuth();
-  const { data, isLoading, isError, refetch } = useNotifications({ enabled: !!user });
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
+  const { data, isLoading, isError, refetch } = useNotifications({ enabled: !authLoading && isAuthenticated && !!user });
   const markRead = useMarkNotificationRead();
   const deleteNotification = useDeleteNotification();
   const clearAll = useClearAllNotifications();

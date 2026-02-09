@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
+import { useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
 import { handleError, showSuccess } from '@/lib/error-handler';
 import { PageHeader } from '@/components/ui/page-header';
@@ -22,6 +23,7 @@ import { LoadingBanner } from '@/components/loading-banner';
 export default function ProfilePage() {
   const router = useRouter();
   const t = useTranslations('Profile');
+  const queryClient = useQueryClient();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
@@ -219,6 +221,9 @@ export default function ProfilePage() {
       const { error } = await supabase.auth.signOut();
       
       if (error) throw error;
+      
+      // Clear all React Query caches to prevent stale queries
+      queryClient.clear();
       
       showSuccess(
         t('logoutSuccess') || 'Logged out',

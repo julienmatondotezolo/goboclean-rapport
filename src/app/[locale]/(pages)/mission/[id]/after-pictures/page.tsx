@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { useCompleteMission, useMission } from '@/hooks/useMissions';
 import { showSuccess, handleError } from '@/lib/error-handler';
+import { useAuth } from '@/hooks/useAuth';
 
 const STEPS = {
   PHOTOS: 1,
@@ -26,8 +27,11 @@ export default function AfterPicturesPage() {
   const t = useTranslations('AfterPictures');
   const id = params.id as string;
   const locale = params.locale as string;
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
 
-  const { data: mission } = useMission(id);
+  const { data: mission } = useMission(id, { 
+    enabled: !authLoading && isAuthenticated && !!user && !!id 
+  });
   const completeMutation = useCompleteMission();
 
   const [currentStep, setCurrentStep] = useState(STEPS.PHOTOS);
