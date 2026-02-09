@@ -12,6 +12,8 @@ export default function AuthCallbackPage() {
   const [status, setStatus] = useState<string>('Processing...');
 
   useEffect(() => {
+    let cancelled = false;
+
     const handleCallback = async () => {
       try {
         const supabase = createClient();
@@ -48,8 +50,12 @@ export default function AuthCallbackPage() {
           throw new Error(errorDescription || errorParam);
         }
 
+        if (cancelled) return;
+
         if (type === 'invite' || type === 'recovery' || type === 'signup') {
-          setStatus('Setting up your session...');
+          if (!cancelled) {
+            setStatus('Setting up your session...');
+          }
           
           if (accessToken && refreshToken) {
             // Set the session first
@@ -57,6 +63,8 @@ export default function AuthCallbackPage() {
               access_token: accessToken,
               refresh_token: refreshToken,
             });
+
+            if (cancelled) return;
 
             if (sessionError) {
               console.error('🚨 AUTH CALLBACK ERROR (Invite/Recovery Session):', {
@@ -70,19 +78,25 @@ export default function AuthCallbackPage() {
             }
           }
           
-          setStatus('Redirecting to password setup...');
-          
-          // Redirect to password setup page with hash params preserved
-          window.location.href = `/set-password${window.location.hash}`;
+          if (!cancelled) {
+            setStatus('Redirecting to password setup...');
+            
+            // Redirect to password setup page with hash params preserved
+            window.location.href = `/set-password${window.location.hash}`;
+          }
           
         } else if (accessToken && refreshToken) {
-          setStatus('Completing authentication...');
+          if (!cancelled) {
+            setStatus('Completing authentication...');
+          }
           
           // Set the session
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
+
+          if (cancelled) return;
 
           if (sessionError) {
             console.error('🚨 AUTH CALLBACK ERROR (Normal Auth Session):', {
@@ -95,13 +109,17 @@ export default function AuthCallbackPage() {
             throw sessionError;
           }
 
-          setStatus('Redirecting to dashboard...');
-          
-          // Redirect to dashboard
-          router.push('/dashboard');
+          if (!cancelled) {
+            setStatus('Redirecting to dashboard...');
+            
+            // Redirect to dashboard
+            router.push('/dashboard');
+          }
         } else {
-          setStatus('No valid session found...');
-          setTimeout(() => router.push('/login'), 1000);
+          if (!cancelled) {
+            setStatus('No valid session found...');
+            setTimeout(() => !cancelled && router.push('/login'), 1000);
+          }
         }
       } catch (err: any) {
         console.error('🚨 AUTH CALLBACK ERROR (Catch Block):', {
@@ -113,12 +131,19 @@ export default function AuthCallbackPage() {
           search: window.location.search,
           timestamp: new Date().toISOString()
         });
-        setError(err.message);
-        setTimeout(() => router.push('/login'), 3000);
+        
+        if (!cancelled) {
+          setError(err.message);
+          setTimeout(() => !cancelled && router.push('/login'), 3000);
+        }
       }
     };
 
     handleCallback();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   return (

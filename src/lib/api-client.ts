@@ -48,10 +48,25 @@ class ApiClient {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
-        ...options,
-        headers,
-      });
+      // Add timeout to prevent infinite hangs
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+      let response: Response;
+      try {
+        response = await fetch(`${this.baseUrl}${endpoint}`, {
+          ...options,
+          headers,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        if ((fetchError as Error).name === 'AbortError') {
+          throw new Error('Request timeout - please try again');
+        }
+        throw fetchError;
+      }
 
       const responseTime = Date.now() - startTime;
 

@@ -48,26 +48,43 @@ export default function DashboardPage() {
 
   // Fetch profile picture
   useEffect(() => {
+    let cancelled = false;
+
     const fetchProfile = async () => {
       try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
+        
+        if (cancelled) return;
+        
         if (session) {
           const { data: profile, error } = await supabase
             .from('users')
             .select('profile_picture_url')
             .eq('id', session.user.id)
             .single() as { data: any; error: any };
+          
+          if (cancelled) return;
+          
           if (error) handleSupabaseError(error, 'Failed to load profile');
           else if (profile) setProfilePicture((profile as any).profile_picture_url);
         }
       } catch (error) {
-        handleSupabaseError(error, 'Dashboard');
+        if (!cancelled) {
+          handleSupabaseError(error, 'Dashboard');
+        }
       } finally {
-        setProfileLoading(false);
+        if (!cancelled) {
+          setProfileLoading(false);
+        }
       }
     };
+
     fetchProfile();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Derive today's missions sorted by appointment time

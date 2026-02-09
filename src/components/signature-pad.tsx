@@ -27,12 +27,15 @@ export function SignaturePad({
   const sigCanvas = useRef<SignatureCanvas | null>(null);
   const [isEmpty, setIsEmpty] = useState(true);
   const [isSaved, setIsSaved] = useState(!!value);
+  const loadedValueRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (value && sigCanvas.current) {
+    // Prevent double-loading in React 18 Strict Mode
+    if (value && sigCanvas.current && loadedValueRef.current !== value) {
       sigCanvas.current.fromDataURL(value);
       setIsEmpty(false);
       setIsSaved(true);
+      loadedValueRef.current = value;
     }
   }, [value]);
 

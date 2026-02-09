@@ -31,20 +31,33 @@ function AdminDashboardContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchStatistics();
-  }, []);
+    let cancelled = false;
 
-  const fetchStatistics = async () => {
-    try {
-      setError(null);
-      const data = await apiClient.get<Statistics>('/admin/stats');
-      setStats(data);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Erreur lors du chargement des statistiques');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchStatistics = async () => {
+      try {
+        setError(null);
+        const data = await apiClient.get<Statistics>('/admin/stats');
+        
+        if (cancelled) return;
+        
+        setStats(data);
+      } catch (error) {
+        if (!cancelled) {
+          setError(error instanceof Error ? error.message : 'Erreur lors du chargement des statistiques');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchStatistics();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (loading) {
     return (

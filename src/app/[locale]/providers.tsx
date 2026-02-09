@@ -21,7 +21,40 @@ type Props = {
   locale: string;
 };
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Network timeouts and retries
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (was cacheTime)
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors (client errors)
+        if (error instanceof Error && error.message.includes('HTTP 4')) {
+          return false;
+        }
+        // Retry max 3 times for network/5xx errors
+        return failureCount < 3;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Prevent fetch hanging indefinitely
+      networkMode: 'online', 
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      retry: (failureCount, error) => {
+        // Don't retry mutations on 4xx errors
+        if (error instanceof Error && error.message.includes('HTTP 4')) {
+          return false;
+        }
+        // Retry max 2 times for network/5xx errors
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+      networkMode: 'online',
+    },
+  },
+});
 
 // Function to select the correct messages based on the locale
 function selectMessages(locale: string) {
