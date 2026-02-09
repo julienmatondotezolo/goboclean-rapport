@@ -24,8 +24,27 @@ export default function AuthCallbackPage() {
         const errorParam = hashParams.get('error');
         const errorDescription = hashParams.get('error_description');
 
+        // Log all auth callback data for debugging
+        console.log('🔐 AUTH CALLBACK STARTED:', {
+          fullUrl: window.location.href,
+          hash: window.location.hash,
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken,
+          type,
+          errorParam,
+          errorDescription,
+          allHashParams: Object.fromEntries(hashParams.entries()),
+          timestamp: new Date().toISOString()
+        });
+
         // Check for error in URL
         if (errorParam) {
+          console.error('🚨 AUTH CALLBACK ERROR (URL):', {
+            error: errorParam,
+            description: errorDescription,
+            fullHash: window.location.hash,
+            fullUrl: window.location.href
+          });
           throw new Error(errorDescription || errorParam);
         }
 
@@ -40,6 +59,13 @@ export default function AuthCallbackPage() {
             });
 
             if (sessionError) {
+              console.error('🚨 AUTH CALLBACK ERROR (Invite/Recovery Session):', {
+                error: sessionError,
+                accessToken: accessToken?.substring(0, 20) + '...',
+                refreshToken: refreshToken?.substring(0, 20) + '...',
+                type,
+                fullUrl: window.location.href
+              });
               throw sessionError;
             }
           }
@@ -59,6 +85,13 @@ export default function AuthCallbackPage() {
           });
 
           if (sessionError) {
+            console.error('🚨 AUTH CALLBACK ERROR (Normal Auth Session):', {
+              error: sessionError,
+              accessToken: accessToken?.substring(0, 20) + '...',
+              refreshToken: refreshToken?.substring(0, 20) + '...',
+              type,
+              fullUrl: window.location.href
+            });
             throw sessionError;
           }
 
@@ -71,6 +104,15 @@ export default function AuthCallbackPage() {
           setTimeout(() => router.push('/login'), 1000);
         }
       } catch (err: any) {
+        console.error('🚨 AUTH CALLBACK ERROR (Catch Block):', {
+          error: err,
+          message: err.message,
+          stack: err.stack,
+          fullUrl: window.location.href,
+          hash: window.location.hash,
+          search: window.location.search,
+          timestamp: new Date().toISOString()
+        });
         setError(err.message);
         setTimeout(() => router.push('/login'), 3000);
       }
