@@ -1,11 +1,11 @@
 /**
- * GoBoclean Service Worker - Safari Compatible
- * Version 1.1.0 - Forces update for existing installations
+ * GoBoclean Service Worker - Safari Compatible  
+ * Version 1.2.0 - Supabase PWA fix for dashboard loading
  */
 
 /* eslint-disable no-restricted-globals */
 
-const CACHE_VERSION = 'v1.1.0'; // Incremented to force update
+const CACHE_VERSION = 'v1.2.0'; // Incremented to force update - Supabase fix
 const STATIC_CACHE = `goboclean-static-${CACHE_VERSION}`;
 const API_CACHE = `goboclean-api-${CACHE_VERSION}`;
 
@@ -20,7 +20,7 @@ const STATIC_ASSETS = [
  * Install event - force immediate activation
  */
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing v1.1.0');
+  console.log('[SW] Installing v1.2.0 - Supabase PWA fix');
   
   event.waitUntil(
     caches.open(STATIC_CACHE)
@@ -33,7 +33,7 @@ self.addEventListener('install', (event) => {
  * Activate event - clean old caches and take control
  */
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating v1.1.0');
+  console.log('[SW] Activating v1.2.0 - Supabase PWA fix');
   
   event.waitUntil(
     Promise.all([
@@ -56,7 +56,7 @@ self.addEventListener('activate', (event) => {
       // Take control immediately
       self.clients.claim()
     ]).then(() => {
-      console.log('[SW] v1.1.0 activated and controlling all clients');
+      console.log('[SW] v1.2.0 activated and controlling all clients');
     })
   );
 });
@@ -93,13 +93,25 @@ self.addEventListener('fetch', (event) => {
  * Determine if we should handle this request
  */
 function shouldHandle(url) {
+  // NEVER handle Supabase requests - let them pass through directly
+  if (url.hostname.includes('supabase.co')) {
+    return false;
+  }
+  
+  // NEVER handle authentication or database requests
+  if (url.pathname.includes('/auth/') || 
+      url.pathname.includes('/rest/') ||
+      url.pathname.includes('/realtime/')) {
+    return false;
+  }
+
   // Handle our static assets
   if (url.pathname.includes('/icons/') || 
       url.pathname === '/manifest.json') {
     return true;
   }
 
-  // Handle API requests from same origin only
+  // Handle API requests from same origin only  
   if (url.pathname.startsWith('/api/') && url.hostname === self.location.hostname) {
     return true;
   }
@@ -240,4 +252,4 @@ self.addEventListener('message', (event) => {
 });
 
 // Log that the service worker is loaded
-console.log('[SW] GoBoclean Service Worker v1.1.0 loaded');
+console.log('[SW] GoBoclean Service Worker v1.2.0 loaded - Supabase PWA fix');
