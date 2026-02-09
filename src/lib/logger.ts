@@ -52,7 +52,7 @@ class Logger {
       debug: '🐛'
     };
 
-    const logData = {
+    const logData: any = {
       level: entry.level,
       message: entry.message,
       timestamp: new Date().toISOString(),

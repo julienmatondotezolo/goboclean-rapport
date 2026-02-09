@@ -23,9 +23,13 @@ export default function OnboardingPage() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const checkAuth = async () => {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
+      
+      if (cancelled) return;
       
       if (!session) {
         router.push('/login');
@@ -40,6 +44,8 @@ export default function OnboardingPage() {
         .select('first_name, last_name, profile_picture_url, is_onboarded')
         .eq('id', session.user.id)
         .single() as { data: any };
+
+      if (cancelled) return;
 
       if (userData) {
         // If already onboarded, redirect to dashboard
@@ -56,6 +62,10 @@ export default function OnboardingPage() {
     };
 
     checkAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

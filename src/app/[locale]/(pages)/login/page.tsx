@@ -40,10 +40,14 @@ export default function LoginPage() {
 
   // Check if user is already logged in
   useEffect(() => {
+    let cancelled = false;
+
     const checkAuth = async () => {
       try {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
+        
+        if (cancelled) return;
         
         if (session) {
           // User is already logged in, redirect to dashboard
@@ -54,13 +58,21 @@ export default function LoginPage() {
           }
         }
       } catch (error) {
-        console.error('Auth check error:', error);
+        if (!cancelled) {
+          console.error('Auth check error:', error);
+        }
       } finally {
-        setIsCheckingAuth(false);
+        if (!cancelled) {
+          setIsCheckingAuth(false);
+        }
       }
     };
 
     checkAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router, i18nRouter, redirectUrl]);
 
   const loginSchema = z.object({

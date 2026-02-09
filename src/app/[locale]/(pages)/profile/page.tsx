@@ -34,10 +34,14 @@ export default function ProfilePage() {
 
   // Fetch user data
   useEffect(() => {
+    let cancelled = false;
+
     const fetchUserData = async () => {
       try {
         const supabase = createClient();
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (cancelled) return; // Exit if cancelled
         
         if (sessionError) {
           throw sessionError;
@@ -54,6 +58,8 @@ export default function ProfilePage() {
           .eq('id', session.user.id)
           .single() as { data: any; error: any };
 
+        if (cancelled) return; // Exit if cancelled
+
         if (error) {
           throw error;
         }
@@ -65,13 +71,22 @@ export default function ProfilePage() {
           setPushNotifications(profile.push_notifications_enabled ?? true);
         }
       } catch (error) {
-        handleError(error, { title: 'Failed to load profile' });
+        if (!cancelled) {
+          handleError(error, { title: 'Failed to load profile' });
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchUserData();
+
+    // Cleanup function to cancel request if component unmounts
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handlePushNotificationsToggle = async () => {
