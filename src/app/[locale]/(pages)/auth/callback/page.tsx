@@ -123,31 +123,82 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
-      {/* Loading or Error Banner */}
+      {/* Small Loading Banner at Top */}
       <LoadingBanner 
         isLoading={!error} 
         message={error ? 'Authentication failed' : status} 
         type={error ? 'error' : 'loading'}
+        dismissible={false}
       />
       
-      <div className="pt-16 flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <div className="text-center max-w-md mx-auto px-6">
-          {error ? (
-            <>
-              <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <span className="text-red-600 text-2xl">✕</span>
-              </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Authentication Error</h2>
-              <p className="text-red-600 mb-4">{error}</p>
-              <p className="text-slate-600 text-sm">Redirecting to login page...</p>
-            </>
-          ) : (
-            <>
-              <Loader2 className="w-12 h-12 animate-spin text-[#064e3b] mx-auto mb-4" />
-              <p className="text-slate-600 font-medium">{status}</p>
-              <p className="text-slate-400 text-sm mt-2">Please wait...</p>
-            </>
+      {/* Always Show Content Area */}
+      <div className="pt-20 px-6">
+        <div className="max-w-md mx-auto">
+          
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-[#064e3b] rounded-2xl mx-auto mb-4 flex items-center justify-center">
+              <span className="text-2xl">🔐</span>
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">Authentication</h1>
+            <p className="text-slate-600 text-sm">Processing your login request</p>
+          </div>
+
+          {/* Status Card */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
+            {error ? (
+              <>
+                <div className="flex items-center mb-4">
+                  <div className="bg-red-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                    <span className="text-red-600 text-xl">✕</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Authentication Error</h3>
+                    <p className="text-slate-500 text-sm">Something went wrong</p>
+                  </div>
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-red-700 text-sm font-medium">{error}</p>
+                </div>
+                <div className="flex items-center justify-center text-slate-500 text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Redirecting to login page in 3 seconds...
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center mb-4">
+                  <div className="bg-[#064e3b]/10 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-[#064e3b]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Processing</h3>
+                    <p className="text-slate-500 text-sm">Setting up your account</p>
+                  </div>
+                </div>
+                <div className="bg-[#064e3b]/5 border border-[#064e3b]/20 rounded-lg p-4 mb-4">
+                  <p className="text-[#064e3b] text-sm font-medium">{status}</p>
+                </div>
+                <div className="flex items-center justify-center text-slate-500 text-sm">
+                  <span className="w-2 h-2 bg-[#064e3b] rounded-full animate-pulse mr-2"></span>
+                  Please wait while we complete the setup...
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Debug Info (only in development) */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="bg-gray-100 rounded-lg p-3">
+              <p className="text-xs font-mono text-gray-600">
+                URL: {window.location.href.split('?')[0]}...
+              </p>
+              <p className="text-xs font-mono text-gray-600 mt-1">
+                Check console for detailed logs
+              </p>
+            </div>
           )}
+
         </div>
       </div>
     </div>
