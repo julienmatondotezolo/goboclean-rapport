@@ -31,6 +31,7 @@ export function useAuth(options: UseAuthOptions = {}) {
 
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const supabaseRef = useRef(createClient());
+  const componentIdRef = useRef(`auth-${Math.random().toString(36).slice(2, 9)}`); // Unique ID for this hook instance
 
   // Clear any existing refresh timeout
   const clearRefreshTimeout = useCallback(() => {
@@ -51,22 +52,22 @@ export function useAuth(options: UseAuthOptions = {}) {
     const now = Math.floor(Date.now() / 1000);
     const refreshIn = Math.max((expiresAt - now - 300) * 1000, 60000); // Min 1 minute
 
-    console.log(`🔄 Scheduling token refresh in ${Math.floor(refreshIn / 1000)}s`);
+    console.log(`🔄 [${componentIdRef.current}] Scheduling token refresh in ${Math.floor(refreshIn / 1000)}s`);
 
     refreshTimeoutRef.current = setTimeout(async () => {
       try {
-        console.log('🔄 Refreshing token...');
+        console.log(`🔄 [${componentIdRef.current}] Refreshing token...`);
         const { data, error } = await supabaseRef.current.auth.refreshSession();
         
         if (error) {
-          console.error('❌ Token refresh failed:', error.message);
+          console.error(`❌ [${componentIdRef.current}] Token refresh failed:`, error.message);
           // Force logout on refresh failure
           await supabaseRef.current.auth.signOut();
           return;
         }
 
         if (data.session) {
-          console.log('✅ Token refreshed successfully');
+          console.log(`✅ [${componentIdRef.current}] Token refreshed successfully`);
           setState(prev => ({ 
             ...prev, 
             session: data.session,
@@ -77,7 +78,7 @@ export function useAuth(options: UseAuthOptions = {}) {
           scheduleTokenRefresh(data.session);
         }
       } catch (error) {
-        console.error('❌ Token refresh error:', error);
+        console.error(`❌ [${componentIdRef.current}] Token refresh error:`, error);
         await supabaseRef.current.auth.signOut();
       }
     }, refreshIn);
@@ -176,10 +177,11 @@ export function useAuth(options: UseAuthOptions = {}) {
       async (event, session) => {
         if (cancelled) return;
 
-        console.log(`🔐 Auth event: ${event}`);
+        console.log(`🔐 [${componentIdRef.current}] Auth event: ${event}`, session?.user?.email || 'no-user');
         
         switch (event) {
           case 'SIGNED_OUT':
+            console.log(`🚪 [${componentIdRef.current}] User signed out`);
             setState({
               user: null,
               isAuthenticated: false,
@@ -192,12 +194,17 @@ export function useAuth(options: UseAuthOptions = {}) {
             break;
             
           case 'SIGNED_IN':
+            console.log(`🔑 [${componentIdRef.current}] User signed in:`, session?.user?.email);
+            await updateAuthState(session);
+            break;
+            
           case 'TOKEN_REFRESHED':
+            console.log(`🔄 [${componentIdRef.current}] Token refreshed for:`, session?.user?.email);
             await updateAuthState(session);
             break;
             
           default:
-            // Handle other events if needed
+            console.log(`🔍 [${componentIdRef.current}] Unhandled auth event: ${event}`);
             break;
         }
       }
