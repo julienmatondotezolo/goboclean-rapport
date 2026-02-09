@@ -117,7 +117,7 @@ Dans le dashboard Vercel (**Settings > Environment Variables**):
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
-NEXT_PUBLIC_API_URL=https://votre-backend.railway.app
+NEXT_PUBLIC_BACKEND_URL=https://votre-backend.railway.app
 NEXT_PUBLIC_APP_URL=https://votre-app.vercel.app
 ```
 
@@ -262,7 +262,7 @@ SMTP_FROM=votre-email@gmail.com
 
 ### Frontend ne se connecte pas au Backend
 
-- Vérifiez `NEXT_PUBLIC_API_URL` dans Vercel
+- Vérifiez `NEXT_PUBLIC_BACKEND_URL` dans Vercel
 - Vérifiez les CORS dans le backend
 - Ouvrez la console du navigateur pour voir les erreurs
 
