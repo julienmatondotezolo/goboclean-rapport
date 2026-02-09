@@ -95,10 +95,10 @@ export function initializeServiceWorkerUpdater(): () => void {
     forceServiceWorkerUpdate();
   }, 1000);
 
-  // Check for updates periodically
+  // Check for updates very frequently for critical fixes
   updateCheckInterval = setInterval(() => {
     forceServiceWorkerUpdate();
-  }, 30 * 60 * 1000); // Check every 30 minutes
+  }, 5 * 60 * 1000); // Check every 5 minutes for faster updates
 
   // Listen for page visibility changes to check for updates
   const handleVisibilityChange = () => {
@@ -108,6 +108,22 @@ export function initializeServiceWorkerUpdater(): () => void {
   };
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
+
+  // Listen for service worker updates and force reload when ready
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      console.log('[SW Updater] New service worker activated, reloading page...');
+      window.location.reload();
+    });
+
+    // Also listen for messages from service worker
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'SW_UPDATED') {
+        console.log('[SW Updater] Service worker updated, forcing reload...');
+        window.location.reload();
+      }
+    });
+  }
 
   // Cleanup function
   return () => {

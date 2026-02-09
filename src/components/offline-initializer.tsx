@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { initializeOfflineDB } from '@/lib/offline-store';
 import { initializeSyncManager } from '@/lib/sync-manager';
 import { initializeServiceWorkerUpdater } from '@/lib/sw-updater';
+import { initializeForcePWAUpdate } from '@/lib/force-pwa-update';
 
 /**
  * Component that initializes offline functionality
@@ -16,7 +17,11 @@ export function OfflineInitializer() {
 
     const initializeOffline = async () => {
       try {
-        // Initialize service worker updater first to fix Safari issues
+        // CRITICAL: Force PWA update for existing installations FIRST
+        initializeForcePWAUpdate();
+        console.log('✓ Force PWA update initialized');
+
+        // Initialize service worker updater to fix Safari issues
         cleanupSWUpdater = initializeServiceWorkerUpdater();
         console.log('✓ Service worker updater initialized');
         // Initialize IndexedDB with timeout

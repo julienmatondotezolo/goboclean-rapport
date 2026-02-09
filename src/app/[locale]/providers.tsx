@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageInitializer } from "@/components/language-initializer";
 import { OfflineInitializer } from "@/components/offline-initializer";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { PWAUpdateNotification } from "@/components/pwa-update-notification";
 
 // Manually import messages for each locale
 import enMessages from "../../../messages/en.json";
@@ -46,6 +47,7 @@ export default function Providers({ children, locale }: Props): JSX.Element {
           <OfflineInitializer />
           {children}
           <PWAInstallPrompt />
+          <PWAUpdateNotification />
         </NextIntlClientProvider>
       </ThemeProvider>
     </QueryClientProvider>

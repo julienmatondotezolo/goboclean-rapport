@@ -57,6 +57,13 @@ self.addEventListener('activate', (event) => {
       self.clients.claim()
     ]).then(() => {
       console.log('[SW] v1.2.0 activated and controlling all clients');
+      
+      // Notify all clients that service worker has updated
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({ type: 'SW_UPDATED', version: 'v1.2.0' });
+        });
+      });
     })
   );
 });
