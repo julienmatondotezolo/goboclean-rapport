@@ -18,6 +18,7 @@ import {
   Pencil
 } from 'lucide-react';
 import { OfflineIndicator, SyncStatusBar } from '@/components/offline-indicator';
+import { LoadingBanner } from '@/components/loading-banner';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -224,18 +225,16 @@ export default function ProfilePage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-[#064e3b]" />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-white pb-32">
+      {/* Loading Banner */}
+      <LoadingBanner 
+        isLoading={isLoading} 
+        message="Loading profile..." 
+      />
+      
       {/* Header */}
-      <PageHeader title={t('profile')} />
+      <PageHeader title={t('profile')} className={isLoading ? 'pt-16' : ''} />
       
       {/* Profile Section */}
       <div className="pt-8 pb-10 px-8 flex flex-col items-center">

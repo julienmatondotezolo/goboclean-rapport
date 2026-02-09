@@ -14,18 +14,20 @@ import { useMyMissions, useAllMissions } from '@/hooks/useMissions';
 import { useAdminStats } from '@/hooks/useAdminStats';
 import { useNotifications } from '@/hooks/useNotifications';
 import { OfflineStatusBadge } from '@/components/offline-indicator';
+import { LoadingBanner } from '@/components/loading-banner';
+import type { Mission } from '@/types/mission';
 
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
   const router = useRouter();
-  const { user, isAdmin, isLoading: authLoading, isAuthenticated } = useAuth();
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
   // Role-based mission fetching: admin sees all, worker sees own
-  // Guard all queries with authentication state to prevent 401 on login page
-  const adminMissionsQuery = useAllMissions({ enabled: !authLoading && isAuthenticated && !!user && isAdmin });
-  const workerMissionsQuery = useMyMissions({ enabled: !authLoading && isAuthenticated && !!user && !isAdmin });
+  // Guard all queries with !!user to prevent 401 on login page
+  const adminMissionsQuery = useAllMissions({ enabled: !!user && isAdmin });
+  const workerMissionsQuery = useMyMissions({ enabled: !!user && !isAdmin });
   const missionsQuery = isAdmin ? adminMissionsQuery : workerMissionsQuery;
 
   const {
@@ -38,10 +40,10 @@ export default function DashboardPage() {
   // Admin stats (only fetched for admins)
   const {
     data: adminStats,
-  } = useAdminStats({ enabled: !authLoading && isAuthenticated && !!user && isAdmin });
+  } = useAdminStats({ enabled: !!user && isAdmin });
 
   // Notification count
-  const { data: notifData } = useNotifications({ enabled: !authLoading && isAuthenticated && !!user });
+  const { data: notifData } = useNotifications({ enabled: !!user });
   const unreadCount = notifData?.unreadCount ?? 0;
 
   // Fetch profile picture
@@ -118,17 +120,6 @@ export default function DashboardPage() {
 
   const isLoading = authLoading || profileLoading;
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#064e3b]">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-[#a3e635] mx-auto" />
-          <p className="text-white font-bold tracking-widest uppercase text-xs">Loading</p>
-        </div>
-      </div>
-    );
-  }
-
   const userName = user?.first_name ?? 'User';
 
   // Helper to format mission time
@@ -148,8 +139,14 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-32 font-sans selection:bg-lime-200">
+      {/* Loading Banner */}
+      <LoadingBanner 
+        isLoading={isLoading} 
+        message="Loading dashboard..." 
+      />
+      
       {/* Dark Green Header with Curved Bottom */}
-      <div className="relative bg-[#064e3b] text-white pt-2 pb-24 rounded-b-[40px] shadow-lg overflow-hidden z-0">
+      <div className={`relative bg-[#064e3b] text-white pt-2 pb-24 rounded-b-[40px] shadow-lg overflow-hidden z-0 ${isLoading ? 'pt-16' : ''}`}>
         {/* Mobile Status Bar */}
         <div className="px-8 flex items-center justify-between mb-8">
         </div>
@@ -244,9 +241,9 @@ export default function DashboardPage() {
 
         {/* Loading State */}
         {missionsLoading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-[#064e3b]" />
-            <span className="ml-3 text-[14px] text-gray-500">{t('loading')}</span>
+          <div className="bg-gray-50 rounded-2xl p-4 flex items-center justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-[#064e3b]" />
+            <span className="ml-2 text-[13px] text-gray-600">{t('loading')}</span>
           </div>
         )}
 

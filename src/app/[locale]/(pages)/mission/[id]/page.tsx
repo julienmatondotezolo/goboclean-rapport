@@ -31,6 +31,7 @@ import { useMission, useStartMission, useUpdateMission, useDeleteMission } from 
 import { useWorkersList } from '@/hooks/useWorkers';
 import { useAuth } from '@/hooks/useAuth';
 import { handleError, showSuccess } from '@/lib/error-handler';
+import { LoadingBanner } from '@/components/loading-banner';
 import type { Mission, MissionStatus, MissionFeatures, WorkerSummary } from '@/types/mission';
 
 export default function MissionDetailPage() {
@@ -350,17 +351,8 @@ export default function MissionDetailPage() {
     (w) => !editForm.assigned_workers.includes(w.id)
   ) ?? [];
 
-  // Loading
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white pb-32 font-sans">
-        <PageHeader title={t('loading')} />
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-[#064e3b]" />
-        </div>
-      </div>
-    );
-  }
+  // Show loading banner instead of full page loading
+  const missionTitle = mission ? `${mission.client_first_name} ${mission.client_last_name}` : 'Mission Detail';
 
   // Error
   if (isError || !mission) {
@@ -410,8 +402,14 @@ export default function MissionDetailPage() {
 
   return (
     <div className="min-h-screen bg-white pb-32 font-sans">
+      {/* Loading Banner */}
+      <LoadingBanner 
+        isLoading={isLoading} 
+        message="Loading mission details..." 
+      />
+      
       {/* Custom header with options button */}
-      <header className="px-6 py-4 flex items-center justify-between border-b border-gray-100 sticky top-0 bg-white z-10">
+      <header className={`px-6 py-4 flex items-center justify-between border-b border-gray-100 sticky bg-white z-10 ${isLoading ? 'top-16' : 'top-0'}`}>
         <button
           onClick={() => router.back()}
           className="p-2 -ml-2 hover:bg-gray-50 rounded-full transition-colors"
