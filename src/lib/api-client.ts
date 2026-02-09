@@ -12,12 +12,46 @@ class ApiClient {
   }
 
   /**
-   * Get the current user's access token
+   * Get the current user's access token with automatic refresh
    */
   private async getAccessToken(): Promise<string | null> {
     const supabase = createClient();
+    
+    // Get current session
     const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token || null;
+    
+    if (!session) {
+      return null;
+    }
+
+    // Check if token is about to expire (within 5 minutes)
+    const expiresAt = session.expires_at || 0;
+    const now = Math.floor(Date.now() / 1000);
+    const timeUntilExpiry = expiresAt - now;
+
+    if (timeUntilExpiry < 300) { // Less than 5 minutes
+      console.log('🔄 Token expiring soon, refreshing...');
+      
+      try {
+        const { data, error } = await supabase.auth.refreshSession();
+        
+        if (error) {
+          console.error('❌ Token refresh failed:', error.message);
+          // Return the existing token, might still be valid briefly
+          return session.access_token;
+        }
+        
+        if (data.session) {
+          console.log('✅ Token refreshed in API client');
+          return data.session.access_token;
+        }
+      } catch (error) {
+        console.error('❌ Token refresh error:', error);
+        return session.access_token;
+      }
+    }
+
+    return session.access_token;
   }
 
   /**
