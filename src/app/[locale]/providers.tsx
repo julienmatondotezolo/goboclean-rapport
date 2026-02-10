@@ -27,7 +27,19 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // 10 minutes (was cacheTime)
       retry: (failureCount, error) => {
-        // Don't retry on 4xx errors (client errors)
+        // Reset on auth errors to allow recovery
+        if (error instanceof Error && 
+            (error.message.includes('401') || 
+             error.message.includes('Token') ||
+             error.message.includes('Unauthorized'))) {
+          // Clear auth-related queries on token issues
+          console.warn('Auth error detected, clearing auth queries');
+          queryClient.invalidateQueries({ queryKey: ['missions'] });
+          queryClient.invalidateQueries({ queryKey: ['auth'] });
+          queryClient.invalidateQueries({ queryKey: ['profile'] });
+          return false; // Don't retry, let user refresh manually
+        }
+        // Don't retry on other 4xx errors (client errors)
         if (error instanceof Error && error.message.includes('HTTP 4')) {
           return false;
         }
@@ -39,10 +51,28 @@ const queryClient = new QueryClient({
       networkMode: 'online', 
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
+      // Add recovery mechanism for auth errors
+      onError: (error) => {
+        if (error instanceof Error && 
+            (error.message.includes('Token') || error.message.includes('401'))) {
+          console.warn('Token error detected, scheduling recovery');
+          // Schedule query cache recovery after token refresh
+          setTimeout(() => {
+            queryClient.invalidateQueries();
+          }, 1000);
+        }
+      },
     },
     mutations: {
       retry: (failureCount, error) => {
-        // Don't retry mutations on 4xx errors
+        // Don't retry mutations on auth errors
+        if (error instanceof Error && 
+            (error.message.includes('401') || 
+             error.message.includes('Token') ||
+             error.message.includes('Unauthorized'))) {
+          return false;
+        }
+        // Don't retry mutations on other 4xx errors
         if (error instanceof Error && error.message.includes('HTTP 4')) {
           return false;
         }

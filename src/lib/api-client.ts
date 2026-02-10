@@ -6,6 +6,8 @@ import logger from './logger';
  */
 class ApiClient {
   private baseUrl: string;
+  private refreshPromise: Promise<string | null> | null = null;
+  private activeRequests = new Map<string, AbortController>();
 
   constructor() {
     this.baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
@@ -13,8 +15,15 @@ class ApiClient {
 
   /**
    * Get the current user's access token with automatic refresh
+   * Prevents race conditions with concurrent refresh attempts
    */
   private async getAccessToken(): Promise<string | null> {
+    // If refresh is already in progress, wait for it
+    if (this.refreshPromise) {
+      console.log('🔄 Token refresh in progress, waiting...');
+      return await this.refreshPromise;
+    }
+
     const supabase = createClient();
     
     // Get current session
@@ -32,30 +41,40 @@ class ApiClient {
     if (timeUntilExpiry < 300) { // Less than 5 minutes
       console.log('🔄 Token expiring soon, refreshing...');
       
-      try {
-        const { data, error } = await supabase.auth.refreshSession();
-        
-        if (error) {
-          console.error('❌ Token refresh failed:', error.message);
-          // Return the existing token, might still be valid briefly
-          return session.access_token;
-        }
-        
-        if (data.session) {
-          console.log('✅ Token refreshed in API client');
-          return data.session.access_token;
-        }
-      } catch (error) {
-        console.error('❌ Token refresh error:', error);
-        return session.access_token;
-      }
+      // Create single shared refresh promise to prevent race conditions
+      this.refreshPromise = this.performTokenRefresh();
+      const result = await this.refreshPromise;
+      this.refreshPromise = null; // Reset after completion
+      return result;
     }
 
     return session.access_token;
   }
 
   /**
+   * Perform token refresh with proper error handling
+   */
+  private async performTokenRefresh(): Promise<string | null> {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error || !data.session) {
+        console.error('❌ Token refresh failed:', error?.message || 'No session returned');
+        throw new Error('Token refresh failed');
+      }
+      
+      console.log('✅ Token refreshed successfully in API client');
+      return data.session.access_token;
+    } catch (error) {
+      console.error('❌ Token refresh error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Make an authenticated request to the backend
+   * Prevents AbortController conflicts between multiple requests
    */
   async request<T>(
     endpoint: string,
@@ -63,6 +82,7 @@ class ApiClient {
   ): Promise<T> {
     const method = options.method || 'GET';
     const startTime = Date.now();
+    const requestId = `${method}-${endpoint}-${Date.now()}`;
     
     // Log API call start
     logger.apiCall(method, endpoint, {
@@ -82,9 +102,15 @@ class ApiClient {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      // Add timeout to prevent infinite hangs
+      // Create request-specific AbortController to prevent conflicts
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      this.activeRequests.set(requestId, controller);
+      
+      const timeoutId = setTimeout(() => {
+        if (this.activeRequests.has(requestId)) {
+          controller.abort();
+        }
+      }, 30000); // 30s timeout
 
       let response: Response;
       try {
@@ -93,9 +119,13 @@ class ApiClient {
           headers,
           signal: controller.signal,
         });
+        
         clearTimeout(timeoutId);
+        this.activeRequests.delete(requestId);
       } catch (fetchError) {
         clearTimeout(timeoutId);
+        this.activeRequests.delete(requestId);
+        
         if ((fetchError as Error).name === 'AbortError') {
           throw new Error('Request timeout - please try again');
         }
