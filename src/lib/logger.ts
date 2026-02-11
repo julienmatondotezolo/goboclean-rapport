@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 interface LogContext {
   userId?: string;
@@ -13,7 +13,7 @@ interface LogContext {
 }
 
 interface LogEntry {
-  level: 'info' | 'warn' | 'error' | 'debug';
+  level: "info" | "warn" | "error" | "debug";
   message: string;
   context?: LogContext;
   error?: Error;
@@ -34,7 +34,7 @@ class Logger {
   }
 
   private setupGlobalContext(): void {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       this.context = {
         sessionId: this.sessionId,
         userAgent: navigator.userAgent,
@@ -46,10 +46,10 @@ class Logger {
 
   private formatLog(entry: LogEntry): void {
     const emoji = {
-      info: '💬',
-      warn: '⚠️',
-      error: '🚨',
-      debug: '🐛'
+      info: "💬",
+      warn: "⚠️",
+      error: "🚨",
+      debug: "🐛",
     };
 
     const logData: any = {
@@ -70,23 +70,23 @@ class Logger {
 
     // Build enhanced prefix with caller info for API errors
     let prefix = `${emoji[entry.level]} [${entry.level.toUpperCase()}]`;
-    if (entry.context?.action === 'api_error') {
-      const hook = entry.context.hook ? `${entry.context.hook}` : '';
-      const component = entry.context.component ? `${entry.context.component}` : '';
-      const caller = entry.context.caller || 'unknown';
-      
-      const callerInfo = [hook, component].filter(Boolean).join(' → ') || caller;
+    if (entry.context?.action === "api_error") {
+      const hook = entry.context.hook ? `${entry.context.hook}` : "";
+      const component = entry.context.component ? `${entry.context.component}` : "";
+      const caller = entry.context.caller || "unknown";
+
+      const callerInfo = [hook, component].filter(Boolean).join(" → ") || caller;
       prefix = `${emoji[entry.level]} [${entry.level.toUpperCase()}] 📍 ${callerInfo}`;
     }
-    
+
     switch (entry.level) {
-      case 'error':
+      case "error":
         console.error(prefix, entry.message, logData);
         break;
-      case 'warn':
+      case "warn":
         console.warn(prefix, entry.message, logData);
         break;
-      case 'debug':
+      case "debug":
         console.debug(prefix, entry.message, logData);
         break;
       default:
@@ -94,7 +94,7 @@ class Logger {
     }
 
     // Send to external logging service in production
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       this.sendToLoggingService(logData);
     }
   }
@@ -103,17 +103,17 @@ class Logger {
     try {
       // Could send to Sentry, LogRocket, or custom endpoint
       // For now just store locally
-      const logs = JSON.parse(localStorage.getItem('app_logs') || '[]');
+      const logs = JSON.parse(localStorage.getItem("app_logs") || "[]");
       logs.push(logData);
-      
+
       // Keep only last 100 logs
       if (logs.length > 100) {
         logs.splice(0, logs.length - 100);
       }
-      
-      localStorage.setItem('app_logs', JSON.stringify(logs));
+
+      localStorage.setItem("app_logs", JSON.stringify(logs));
     } catch (err) {
-      console.error('Failed to store log:', err);
+      console.error("Failed to store log:", err);
     }
   }
 
@@ -126,52 +126,52 @@ class Logger {
 
   setPage(page: string): void {
     this.context.page = page;
-    this.context.url = typeof window !== 'undefined' ? window.location.href : undefined;
+    this.context.url = typeof window !== "undefined" ? window.location.href : undefined;
   }
 
   info(message: string, context?: LogContext): void {
-    this.formatLog({ level: 'info', message, context });
+    this.formatLog({ level: "info", message, context });
   }
 
   warn(message: string, context?: LogContext): void {
-    this.formatLog({ level: 'warn', message, context });
+    this.formatLog({ level: "warn", message, context });
   }
 
   error(message: string, error?: Error, context?: LogContext): void {
-    this.formatLog({ level: 'error', message, error, context });
+    this.formatLog({ level: "error", message, error, context });
   }
 
   debug(message: string, context?: LogContext): void {
-    this.formatLog({ level: 'debug', message, context });
+    this.formatLog({ level: "debug", message, context });
   }
 
   // Page-specific logging methods
   pageLoad(page: string, context?: LogContext): void {
     this.setPage(page);
-    this.info(`Page loaded: ${page}`, { action: 'page_load', ...context });
+    this.info(`Page loaded: ${page}`, { action: "page_load", ...context });
   }
 
   pageError(page: string, error: Error, context?: LogContext): void {
-    this.error(`Page error: ${page}`, error, { action: 'page_error', page, ...context });
+    this.error(`Page error: ${page}`, error, { action: "page_error", page, ...context });
   }
 
   // CRUD operation logging
   apiCall(method: string, endpoint: string, context?: LogContext): void {
-    this.info(`API ${method} ${endpoint}`, { 
-      action: 'api_call', 
-      method, 
-      endpoint, 
-      ...context 
+    this.info(`API ${method} ${endpoint}`, {
+      action: "api_call",
+      method,
+      endpoint,
+      ...context,
     });
   }
 
   apiSuccess(method: string, endpoint: string, responseTime?: number, context?: LogContext): void {
-    this.info(`API ${method} ${endpoint} - SUCCESS`, { 
-      action: 'api_success', 
-      method, 
-      endpoint, 
+    this.info(`API ${method} ${endpoint} - SUCCESS`, {
+      action: "api_success",
+      method,
+      endpoint,
       responseTime,
-      ...context 
+      ...context,
     });
   }
 
@@ -179,81 +179,79 @@ class Logger {
     // Capture call stack to trace where the request originated
     const stack = new Error().stack;
     const callerInfo = this.extractCallerInfo(stack);
-    
-    this.error(`API ${method} ${endpoint} - FAILED`, error, { 
-      action: 'api_error', 
-      method, 
+
+    this.error(`API ${method} ${endpoint} - FAILED`, error, {
+      action: "api_error",
+      method,
       endpoint,
       caller: callerInfo,
       stackTrace: stack,
-      ...context 
+      ...context,
     });
   }
 
   private extractCallerInfo(stack?: string): string {
-    if (!stack) return 'unknown';
-    
+    if (!stack) return "unknown";
+
     // Parse stack trace to find the first non-logger, non-api-client call
-    const lines = stack.split('\n');
+    const lines = stack.split("\n");
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       // Skip logger.ts, api-client.ts, and Error construction lines
       if (
-        !line.includes('logger.ts') &&
-        !line.includes('api-client.ts') &&
-        !line.includes('Error.') &&
-        line.includes('at ')
+        !line.includes("logger.ts") &&
+        !line.includes("api-client.ts") &&
+        !line.includes("Error.") &&
+        line.includes("at ")
       ) {
         // Extract file name and line number
         const match = line.match(/at\s+(?:(\w+)\s+)?\(?([^)]+):(\d+):(\d+)\)?/);
         if (match) {
           const [, functionName, filePath, lineNum] = match;
-          const fileName = filePath.split('/').pop() || filePath;
-          return functionName 
-            ? `${functionName} (${fileName}:${lineNum})`
-            : `${fileName}:${lineNum}`;
+          const fileName = filePath.split("/").pop() || filePath;
+          return functionName ? `${functionName} (${fileName}:${lineNum})` : `${fileName}:${lineNum}`;
         }
         return line.trim();
       }
     }
-    return 'unknown';
+    return "unknown";
   }
 
   // User action logging
   userAction(action: string, target?: string, context?: LogContext): void {
-    this.info(`User action: ${action}`, { 
-      action: 'user_action', 
-      userAction: action, 
-      target, 
-      ...context 
+    this.info(`User action: ${action}`, {
+      action: "user_action",
+      userAction: action,
+      target,
+      ...context,
     });
   }
 
   // Component error logging
   componentError(component: string, error: Error, context?: LogContext): void {
-    this.error(`Component error: ${component}`, error, { 
-      action: 'component_error', 
-      component, 
-      ...context 
+    this.error(`Component error: ${component}`, error, {
+      action: "component_error",
+      component,
+      ...context,
     });
   }
 
   // Form submission logging
   formSubmit(form: string, success: boolean, error?: Error, context?: LogContext): void {
     if (success) {
-      this.info(`Form submitted: ${form}`, { action: 'form_submit', form, success, ...context });
+      this.info(`Form submitted: ${form}`, { action: "form_submit", form, success, ...context });
     } else {
-      this.error(`Form submission failed: ${form}`, error, { action: 'form_submit', form, success, ...context });
+      this.error(`Form submission failed: ${form}`, error, { action: "form_submit", form, success, ...context });
     }
   }
 
   // Navigation logging
   navigation(from: string, to: string, context?: LogContext): void {
-    this.info(`Navigation: ${from} → ${to}`, { 
-      action: 'navigation', 
-      from, 
-      to, 
-      ...context 
+    this.info(`Navigation: ${from} → ${to}`, {
+      action: "navigation",
+      from,
+      to,
+      ...context,
     });
   }
 }
@@ -276,7 +274,7 @@ export function useLogger(component?: string) {
     error: errorWithComponent,
     warn: (message: string, context?: LogContext) => logger.warn(message, { component, ...context }),
     debug: (message: string, context?: LogContext) => logger.debug(message, { component, ...context }),
-    userAction: (action: string, target?: string, context?: LogContext) => 
+    userAction: (action: string, target?: string, context?: LogContext) =>
       logger.userAction(action, target, { component, ...context }),
   };
 }

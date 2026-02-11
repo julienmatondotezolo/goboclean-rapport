@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useRouter as useI18nRouter } from '@/i18n/routing';
+import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,9 +14,8 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Logo } from '@/components/ui/logo';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, ArrowRight, Check, Eye, EyeOff } from 'lucide-react';
+import { Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { LoadingBanner } from '@/components/loading-banner';
 
 type LoginForm = {
   email: string;
@@ -25,55 +24,16 @@ type LoginForm = {
 };
 
 export default function LoginPage() {
-  const router = useRouter();
-  const i18nRouter = useI18nRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
   const { toast } = useToast();
   const t = useTranslations('Login');
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   
   // Get redirect URL from query params
   const redirectUrl = searchParams.get('redirect');
-
-  // Check if user is already logged in
-  useEffect(() => {
-    let cancelled = false;
-
-    const checkAuth = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (cancelled) return;
-        
-        if (session) {
-          // User is already logged in, redirect to dashboard
-          if (redirectUrl && redirectUrl.startsWith('/')) {
-            router.push(redirectUrl);
-          } else {
-            i18nRouter.push('/dashboard');
-          }
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error('Auth check error:', error);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsCheckingAuth(false);
-        }
-      }
-    };
-
-    checkAuth();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [router, i18nRouter, redirectUrl]);
 
   const loginSchema = z.object({
     email: z.string().email(t('invalidEmail')),
@@ -118,13 +78,15 @@ export default function LoginPage() {
       // Small delay for toast
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Redirect to onboarding if first login, otherwise to dashboard or original page
+      // Use window.location for hard refresh to ensure cookies are set
+      // This allows the proxy to properly detect the authenticated session
+      // Preserve locale in the URL
       if (isFirst) {
-        i18nRouter.push('/onboarding');
+        window.location.href = `/${locale}/onboarding`;
       } else if (redirectUrl && redirectUrl.startsWith('/')) {
-        router.push(redirectUrl);
+        window.location.href = redirectUrl;
       } else {
-        i18nRouter.push('/dashboard');
+        window.location.href = `/${locale}/dashboard`;
       }
     } catch (error: any) {
       toast({
@@ -136,21 +98,6 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
-
-  // Show loading state while checking authentication
-  if (isCheckingAuth) {
-    return (
-      <div className="min-h-screen bg-[#f8fafc]">
-        <LoadingBanner 
-          isLoading={true} 
-          message="Checking authentication..." 
-        />
-        <div className="pt-16 flex items-center justify-center min-h-[calc(100vh-4rem)]">
-          <Loader2 className="h-8 w-8 animate-spin text-[#064e3b]" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-[#f8fafc]">
