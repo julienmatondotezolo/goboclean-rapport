@@ -226,6 +226,25 @@ export default function ProfilePage() {
       // Clear all React Query caches to prevent stale queries
       queryClient.clear();
       
+      // Clear all localStorage data (except language preference)
+      const savedLanguage = localStorage.getItem('preferred-language');
+      localStorage.clear();
+      if (savedLanguage) {
+        localStorage.setItem('preferred-language', savedLanguage);
+      }
+      
+      // Clear sessionStorage
+      sessionStorage.clear();
+      
+      // Clear IndexedDB if it exists (from old offline implementation)
+      if (typeof window !== 'undefined' && 'indexedDB' in window) {
+        try {
+          indexedDB.deleteDatabase('GobocleanOfflineDB');
+        } catch (e) {
+          console.log('IndexedDB cleanup skipped:', e);
+        }
+      }
+      
       showSuccess(
         t('logoutSuccess') || 'Logged out',
         t('logoutSuccessDescription') || 'You have been logged out successfully'

@@ -199,6 +199,19 @@ export function useAuth(options: UseAuthOptions = {}) {
             lastTokenRefresh: null,
           });
           clearRefreshTimeout();
+          
+          // Clear all browser storage on sign out
+          if (typeof window !== 'undefined') {
+            // Clear localStorage (except language preference)
+            const savedLanguage = localStorage.getItem('preferred-language');
+            localStorage.clear();
+            if (savedLanguage) {
+              localStorage.setItem('preferred-language', savedLanguage);
+            }
+            
+            // Clear sessionStorage
+            sessionStorage.clear();
+          }
           break;
 
         case "SIGNED_IN":
