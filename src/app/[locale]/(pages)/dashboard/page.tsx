@@ -13,9 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useMyMissions, useAllMissions } from '@/hooks/useMissions';
 import { useAdminStats } from '@/hooks/useAdminStats';
 import { useNotifications } from '@/hooks/useNotifications';
-import { OfflineStatusBadge } from '@/components/offline-indicator';
 import { LoadingBanner } from '@/components/loading-banner';
-import { useQueryDiagnostics } from '@/lib/query-diagnostics';
 import type { Mission } from '@/types/mission';
 
 export default function DashboardPage() {
@@ -24,9 +22,6 @@ export default function DashboardPage() {
   const { user, isAdmin, isLoading: authLoading } = useAuth();
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  
-  // Enable diagnostics in development
-  useQueryDiagnostics(process.env.NODE_ENV === 'development');
 
   // Role-based mission fetching: admin sees all, worker sees own
   // Guard all queries with !!user to prevent 401 on login page
@@ -181,7 +176,6 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <h1 className="text-[20px] font-bold leading-none">GoBoclean Rapport</h1>
-                <OfflineStatusBadge />
               </div>
               <p className="text-[#a3e635] text-[10px] font-bold tracking-widest uppercase">
                 Made with love

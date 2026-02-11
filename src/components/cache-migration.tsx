@@ -1,78 +1,67 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 /**
- * Cache Migration Component
+ * Cache Cleanup Component
  * 
- * Automatically clears old cache when app version changes
- * This ensures users don't have stale data from the old sync manager
+ * Clears old IndexedDB cache once (from removed offline functionality)
+ * After this runs once, it won't run again
  */
 export function CacheMigration() {
-  const [migrationStatus, setMigrationStatus] = useState<'idle' | 'migrating' | 'done'>('idle');
-  
   useEffect(() => {
-    const APP_VERSION = '2.0.1'; // Increment this when you need to clear cache
-    const VERSION_KEY = 'goboclean-app-version';
+    const CLEANUP_KEY = 'goboclean-indexeddb-cleaned';
     
-    const migrate = async () => {
+    const cleanup = async () => {
       try {
-        const currentVersion = localStorage.getItem(VERSION_KEY);
-        
-        // If version matches, no migration needed
-        if (currentVersion === APP_VERSION) {
-          setMigrationStatus('done');
+        // Check if already cleaned
+        if (localStorage.getItem(CLEANUP_KEY) === 'true') {
           return;
         }
         
-        console.log('🔄 Starting cache migration to v' + APP_VERSION + '...');
-        console.log('💡 This will clear old IndexedDB cache that was blocking queries');
-        setMigrationStatus('migrating');
+        console.log('🧹 Cleaning up old IndexedDB cache...');
         
         // Clear IndexedDB
         if (typeof indexedDB !== 'undefined') {
           try {
-            await new Promise<void>((resolve, reject) => {
+            await new Promise<void>((resolve) => {
               const request = indexedDB.deleteDatabase('GobocleanOfflineDB');
               request.onsuccess = () => {
-                console.log('✓ Old cache cleared');
+                console.log('✓ Old IndexedDB cache cleared');
                 resolve();
               };
               request.onerror = () => {
-                console.warn('⚠️ Could not clear cache:', request.error);
-                resolve(); // Continue anyway
+                console.warn('⚠️ Could not clear cache, continuing anyway');
+                resolve();
               };
               request.onblocked = () => {
-                console.warn('⚠️ Cache clearing blocked - will clear on next reload');
+                console.warn('⚠️ Cache clearing blocked, will try on next reload');
                 resolve();
               };
               
-              // Timeout after 5 seconds
+              // Timeout after 3 seconds
               setTimeout(() => {
-                console.warn('⚠️ Cache clearing timeout');
                 resolve();
-              }, 5000);
+              }, 3000);
             });
           } catch (error) {
             console.warn('Cache clearing failed:', error);
           }
         }
         
-        // Update version
-        localStorage.setItem(VERSION_KEY, APP_VERSION);
-        console.log(`✅ Migrated to version ${APP_VERSION}`);
-        setMigrationStatus('done');
+        // Mark as cleaned
+        localStorage.setItem(CLEANUP_KEY, 'true');
+        console.log('✅ Cache cleanup complete');
         
       } catch (error) {
-        console.error('Migration failed:', error);
-        setMigrationStatus('done'); // Continue anyway
+        console.error('Cleanup failed:', error);
+        // Mark as cleaned anyway to avoid retrying
+        localStorage.setItem(CLEANUP_KEY, 'true');
       }
     };
     
-    migrate();
+    cleanup();
   }, []);
   
-  // Don't render anything - this is a background process
-  // You could show a loading indicator if migrationStatus === 'migrating'
   return null;
 }

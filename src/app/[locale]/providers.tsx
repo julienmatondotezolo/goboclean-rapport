@@ -5,17 +5,10 @@ import { ThemeProvider } from "next-themes";
 import React, { JSX, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageInitializer } from "@/components/language-initializer";
-import { OfflineInitializer } from "@/components/offline-initializer";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { AppErrorBoundary } from "@/components/app-error-boundary";
 import { PageLogger } from "@/components/page-logger";
 import { CacheMigration } from "@/components/cache-migration";
-
-// Load debug utilities in development
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  import('@/lib/reset-app');
-  import('@/lib/query-diagnostics');
-}
 
 // Manually import messages for each locale
 import enMessages from "../../../messages/en.json";
@@ -92,10 +85,6 @@ export default function Providers({ children, locale }: Props): JSX.Element {
             <PageLogger>
               <CacheMigration />
               <LanguageInitializer />
-              {/* DISABLED: OfflineInitializer was blocking queries */}
-              {/* The app doesn't use offline features (uses useMissions, not useOfflineMissions) */}
-              {/* Keeping IndexedDB initialization disabled prevents query blocking */}
-              {/* <OfflineInitializer /> */}
               {children}
               <PWAInstallPrompt />
             </PageLogger>

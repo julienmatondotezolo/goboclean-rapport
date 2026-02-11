@@ -18,7 +18,6 @@ import {
   LogOut,
   Pencil
 } from 'lucide-react';
-import { OfflineIndicator, SyncStatusBar } from '@/components/offline-indicator';
 import { LoadingBanner } from '@/components/loading-banner';
 
 export default function ProfilePage() {
@@ -392,10 +391,6 @@ export default function ProfilePage() {
         isOpen={isLanguageModalOpen}
         onClose={() => setIsLanguageModalOpen(false)}
       />
-
-      {/* Sync/Offline Indicators — only visible on profile page */}
-      <SyncStatusBar />
-      <OfflineIndicator />
     </div>
   );
 }
