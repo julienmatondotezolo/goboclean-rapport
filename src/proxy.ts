@@ -66,11 +66,21 @@ export default async function proxy(request: NextRequest) {
     const { data } = await supabase.auth.getClaims();
     const user = data?.claims;
 
+    console.log('🔍 [PROXY] Login page check:', { 
+      pathname, 
+      hasUser: !!user, 
+      userId: user?.sub,
+      cookies: request.cookies.getAll().map(c => c.name)
+    });
+
     // If user is logged in and on login page, redirect to dashboard
     if (user) {
+      console.log('✅ [PROXY] User authenticated on login page, redirecting to dashboard');
       const locale = getLocaleFromPathname(pathname);
       const dashboardUrl = new URL(`/${locale}/dashboard`, request.url);
       return NextResponse.redirect(dashboardUrl);
+    } else {
+      console.log('👤 [PROXY] No user found on login page, allowing access');
     }
   }
 

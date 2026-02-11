@@ -1,4 +1,5 @@
-import { createBrowserClient, SupabaseClient } from '@supabase/ssr';
+import { createBrowserClient } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase';
 
 // 🔐 Singleton pattern to prevent session conflicts between multiple users
@@ -10,82 +11,29 @@ export const createClient = (): SupabaseClient<Database> => {
     return supabaseInstance;
   }
 
+  // 🧹 Migration: Clear old localStorage-based session
+  // This ensures users with old sessions will need to re-login with the new cookie-based system
+  if (typeof window !== 'undefined') {
+    try {
+      const oldStorageKey = 'goboclean-auth-token';
+      if (localStorage.getItem(oldStorageKey)) {
+        console.log('🔄 Migrating from localStorage to cookie-based auth');
+        localStorage.removeItem(oldStorageKey);
+      }
+    } catch (error) {
+      console.warn('Failed to clear old auth storage:', error);
+    }
+  }
+
   // Create new instance with proper session isolation
+  // Use default cookie storage so middleware can read the session
   supabaseInstance = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        // 🎯 Enable automatic session refresh
-        autoRefreshToken: true,
-        // 🔒 Persist session across page reloads
-        persistSession: true,
-        // 🏠 Detect session changes across tabs
-        detectSessionInUrl: true,
-        // 📱 Storage key for session isolation
-        storageKey: 'goboclean-auth-token',
-      },
-      cookies: {
-        get(name: string) {
-          // Check if we're in the browser
-          if (typeof document === 'undefined') {
-            return null;
-          }
-          
-          try {
-            // Use document.cookie instead of trying to parse
-            const cookies = document.cookie.split(';');
-            for (const cookie of cookies) {
-              const [key, value] = cookie.trim().split('=');
-              if (key === name) {
-                return decodeURIComponent(value);
-              }
-            }
-            return null;
-          } catch (error) {
-            console.warn('Cookie parse error:', error);
-            return null;
-          }
-        },
-        set(name: string, value: string, options: any) {
-          // Check if we're in the browser
-          if (typeof document === 'undefined') {
-            return;
-          }
-          
-          try {
-            let cookie = `${name}=${encodeURIComponent(value)}`;
-            
-            if (options.maxAge) {
-              cookie += `; max-age=${options.maxAge}`;
-            }
-            if (options.path) {
-              cookie += `; path=${options.path}`;
-            }
-            if (options.domain) {
-              cookie += `; domain=${options.domain}`;
-            }
-            if (options.sameSite) {
-              cookie += `; samesite=${options.sameSite}`;
-            }
-            if (options.secure) {
-              cookie += '; secure';
-            }
-            
-            document.cookie = cookie;
-          } catch (error) {
-            console.warn('Cookie set error:', error);
-          }
-        },
-        remove(name: string, options: any = {}) {
-          this.set(name, '', { ...options, maxAge: 0 });
-        },
-      },
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
   // 🔄 Global error handling for session issues
-  supabaseInstance.auth.onAuthStateChange((event, session) => {
+  supabaseInstance.auth.onAuthStateChange((event: string, session: any) => {
     if (event === 'SIGNED_OUT' && !session) {
       console.log('🔐 Session ended globally');
     }
