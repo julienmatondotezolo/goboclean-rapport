@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
 import { handleError, showSuccess } from '@/lib/error-handler';
@@ -22,6 +23,7 @@ import { LoadingBanner } from '@/components/loading-banner';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const locale = useLocale();
   const t = useTranslations('Profile');
   const queryClient = useQueryClient();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -230,9 +232,10 @@ export default function ProfilePage() {
         t('logoutSuccessDescription') || 'You have been logged out successfully'
       );
       
-      // Small delay for toast to show
+      // Use window.location.href for hard navigation to ensure cookies are cleared
+      // This allows the middleware to properly detect the logged out state
       setTimeout(() => {
-        router.push('/login');
+        window.location.href = `/${locale}/login`;
       }, 500);
     } catch (error: any) {
       handleError(error, { title: t('logoutError') || 'Logout failed' });

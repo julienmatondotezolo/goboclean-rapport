@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,7 @@ type SetPasswordForm = {
 
 export default function SetPasswordPage() {
   const router = useRouter();
+  const locale = useLocale();
   const { toast } = useToast();
   const t = useTranslations('Login');
   const [isLoading, setIsLoading] = useState(false);
@@ -110,8 +111,9 @@ export default function SetPasswordPage() {
       // Sign out and redirect to login
       await supabase.auth.signOut();
       
+      // Use window.location.href for hard navigation to ensure cookies are cleared
       setTimeout(() => {
-        router.push('/login');
+        window.location.href = `/${locale}/login`;
       }, 2000);
       
     } catch (error: any) {
