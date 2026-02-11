@@ -46,7 +46,7 @@ export default function MissionDetailPage() {
   const { isAdmin, user, isLoading: authLoading, isAuthenticated } = useAuth();
 
   const { data: mission, isLoading, isError, refetch } = useMission(id, { 
-    enabled: !authLoading && isAuthenticated && !!user && !!id 
+    enabled: isAuthenticated && !!id 
   });
   const startMission = useStartMission();
   const updateMission = useUpdateMission();

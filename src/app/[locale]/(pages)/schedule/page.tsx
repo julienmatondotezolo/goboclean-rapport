@@ -81,7 +81,7 @@ export default function SchedulePage() {
     isLoading,
     isError,
     refetch,
-  } = useCalendarMissions(dateRange, { enabled: !authLoading && isAuthenticated && !!user });
+  } = useCalendarMissions(dateRange, { enabled: isAuthenticated });
 
   // Change 5: Worker sees only own missions
   const missions = useMemo(() => {

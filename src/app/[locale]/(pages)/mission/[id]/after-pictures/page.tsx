@@ -30,7 +30,7 @@ export default function AfterPicturesPage() {
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
 
   const { data: mission } = useMission(id, { 
-    enabled: !authLoading && isAuthenticated && !!user && !!id 
+    enabled: isAuthenticated && !!id 
   });
   const completeMutation = useCompleteMission();
 

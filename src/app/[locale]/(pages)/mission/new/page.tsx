@@ -56,7 +56,7 @@ export default function MissionCreatePage() {
   const router = useRouter();
   const params = useParams();
   const t = useTranslations('MissionCreate');
-  const { user, isAdmin, isLoading: authLoading } = useAuth();
+  const { user, isAdmin, isAuthenticated, isLoading: authLoading } = useAuth();
   
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   const [currentStep, setCurrentStep] = useState(1);
@@ -97,7 +97,7 @@ export default function MissionCreatePage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Real API hooks - must be called before any conditional returns
-  const { data: workers, isLoading: workersLoading } = useWorkersList();
+  const { data: workers, isLoading: workersLoading } = useWorkersList({ enabled: isAuthenticated && isAdmin });
   const createMission = useCreateMission();
 
   // Redirect workers away — admin only page

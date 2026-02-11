@@ -34,7 +34,7 @@ export default function NotificationsPage() {
   const t = useTranslations('Notifications');
   const router = useRouter();
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
-  const { data, isLoading, isError, refetch } = useNotifications({ enabled: !authLoading && isAuthenticated && !!user });
+  const { data, isLoading, isError, refetch } = useNotifications({ enabled: isAuthenticated });
   const markRead = useMarkNotificationRead();
   const deleteNotification = useDeleteNotification();
   const clearAll = useClearAllNotifications();

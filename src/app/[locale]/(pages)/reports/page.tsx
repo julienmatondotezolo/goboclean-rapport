@@ -35,7 +35,7 @@ export default function ReportsPage() {
       status: statusFilter || undefined,
     },
     {
-      enabled: !authLoading && isAuthenticated && !!user,
+      enabled: isAuthenticated,
     }
   );
 
