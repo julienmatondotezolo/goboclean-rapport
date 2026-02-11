@@ -19,14 +19,14 @@ import type { Mission } from '@/types/mission';
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
   const router = useRouter();
-  const { user, isAdmin, isLoading: authLoading } = useAuth();
+  const { user, isAdmin, isAuthenticated, isLoading: authLoading } = useAuth();
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
   // Role-based mission fetching: admin sees all, worker sees own
-  // Guard all queries with !!user to prevent 401 on login page
-  const adminMissionsQuery = useAllMissions({ enabled: !!user && isAdmin });
-  const workerMissionsQuery = useMyMissions({ enabled: !!user && !isAdmin });
+  // Use isAuthenticated instead of !!user to handle cases where profile fetch fails
+  const adminMissionsQuery = useAllMissions({ enabled: isAuthenticated && isAdmin });
+  const workerMissionsQuery = useMyMissions({ enabled: isAuthenticated && !isAdmin });
   const missionsQuery = isAdmin ? adminMissionsQuery : workerMissionsQuery;
 
   const {
@@ -39,10 +39,10 @@ export default function DashboardPage() {
   // Admin stats (only fetched for admins)
   const {
     data: adminStats,
-  } = useAdminStats({ enabled: !!user && isAdmin });
+  } = useAdminStats({ enabled: isAuthenticated && isAdmin });
 
   // Notification count
-  const { data: notifData } = useNotifications({ enabled: !!user });
+  const { data: notifData } = useNotifications({ enabled: isAuthenticated });
   const unreadCount = notifData?.unreadCount ?? 0;
 
   // Fetch profile picture

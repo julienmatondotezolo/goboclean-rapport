@@ -212,7 +212,10 @@ export function useAuth(options: UseAuthOptions = {}) {
           break;
 
         default:
-          console.log(`🔍 [${componentIdRef.current}] Unhandled auth event: ${event}`);
+          // Handle INITIAL_SESSION and other events
+          if (event === "INITIAL_SESSION") {
+            await updateAuthState(session);
+          }
           break;
       }
     });

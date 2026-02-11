@@ -4,11 +4,11 @@ import { NextIntlClientProvider } from "next-intl";
 import { ThemeProvider } from "next-themes";
 import React, { JSX, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { LanguageInitializer } from "@/components/language-initializer";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { AppErrorBoundary } from "@/components/app-error-boundary";
 import { PageLogger } from "@/components/page-logger";
-import { CacheMigration } from "@/components/cache-migration";
 
 // Manually import messages for each locale
 import enMessages from "../../../messages/en.json";
@@ -77,19 +77,28 @@ export default function Providers({ children, locale }: Props): JSX.Element {
   const timeZone = "Europe/Brussels";
   const messages = selectMessages(locale);
 
+  // Expose QueryClient to window for debugging
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__REACT_QUERY_CLIENT__ = queryClient;
+    }
+  }, []);
+
   return (
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <NextIntlClientProvider locale={locale} messages={messages} timeZone={timeZone}>
             <PageLogger>
-              <CacheMigration />
               <LanguageInitializer />
               {children}
               <PWAInstallPrompt />
             </PageLogger>
           </NextIntlClientProvider>
         </ThemeProvider>
+        {process.env.NODE_ENV === 'development' && (
+          <ReactQueryDevtools initialIsOpen={false} />
+        )}
       </QueryClientProvider>
     </AppErrorBoundary>
   );

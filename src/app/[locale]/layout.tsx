@@ -63,6 +63,12 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Rapport" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="format-detection" content="telephone=no" />
+        {process.env.NODE_ENV === 'development' && (
+          <>
+            <script src="/debug-queries.js" defer></script>
+            <script src="/clear-cache.js" defer></script>
+          </>
+        )}
       </head>
       <body className={`${dmSans.className}`}>
         <Providers locale={locale}>{children}</Providers>
