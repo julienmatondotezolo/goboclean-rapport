@@ -385,6 +385,7 @@ export default function MissionDetailPage() {
     minute: '2-digit',
   });
   const hasBeforePictures = mission.before_pictures && mission.before_pictures.length > 0;
+  const hasAfterPictures = mission.after_pictures && mission.after_pictures.length > 0;
   const assignedWorkers = mission.assigned_workers_details ?? [];
 
   const featuresList: { key: keyof MissionFeatures; label: string }[] = [
@@ -657,6 +658,36 @@ export default function MissionDetailPage() {
                   />
                   <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded">
                     {index + 1}/{mission.before_pictures!.length}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* After Pictures Section */}
+        {hasAfterPictures && (
+          <div className="bg-[#f8fafc] rounded-2xl p-5">
+            <div className="text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+              {t('afterPictures')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {mission.after_pictures!.map((photo: string, index: number) => (
+                <div
+                  key={index}
+                  onClick={() => setFullScreenImage(photo)}
+                  className="relative rounded-xl overflow-hidden border-2 border-gray-200 bg-white cursor-pointer hover:border-[#a3e635] transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ aspectRatio: '3/2' }}
+                >
+                  <Image
+                    src={photo}
+                    alt={`After photo ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                  />
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded">
+                    {index + 1}/{mission.after_pictures!.length}
                   </div>
                 </div>
               ))}
@@ -1123,15 +1154,15 @@ export default function MissionDetailPage() {
               </div>
 
               {/* Delete Mission Button (Change 5: with undo) */}
-              <div className="pt-2 pb-6">
+              <div className="pt-2 mb-24">
                 {!showDeleteConfirm ? (
-                  <button
+                  <Button
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="w-full py-3.5 rounded-2xl bg-red-600 text-white font-bold text-[15px] hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-red-600 text-white"
                   >
                     <XCircle className="w-5 h-5" />
                     {td('deleteMission')}
-                  </button>
+                  </Button>
                 ) : (
                   <div className="bg-red-50 rounded-2xl p-4 border-2 border-red-200">
                     <p className="text-[14px] font-bold text-red-700 mb-3 text-center">
@@ -1154,6 +1185,7 @@ export default function MissionDetailPage() {
                   </div>
                 )}
               </div>
+
             </div>
           </div>
         </div>

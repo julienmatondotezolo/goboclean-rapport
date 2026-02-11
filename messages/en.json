@@ -278,6 +278,7 @@
     "confirmMission": "Confirm Mission",
     "completeMission": "Complete Mission",
     "beforePictures": "Before Pictures",
+    "afterPictures": "After Pictures",
     "viewFullScreen": "View Full Screen",
     "loading": "Loading mission...",
     "errorLoading": "Failed to load mission",
