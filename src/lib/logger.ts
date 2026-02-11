@@ -68,7 +68,16 @@ class Logger {
       };
     }
 
-    const prefix = `${emoji[entry.level]} [${entry.level.toUpperCase()}]`;
+    // Build enhanced prefix with caller info for API errors
+    let prefix = `${emoji[entry.level]} [${entry.level.toUpperCase()}]`;
+    if (entry.context?.action === 'api_error') {
+      const hook = entry.context.hook ? `${entry.context.hook}` : '';
+      const component = entry.context.component ? `${entry.context.component}` : '';
+      const caller = entry.context.caller || 'unknown';
+      
+      const callerInfo = [hook, component].filter(Boolean).join(' → ') || caller;
+      prefix = `${emoji[entry.level]} [${entry.level.toUpperCase()}] 📍 ${callerInfo}`;
+    }
     
     switch (entry.level) {
       case 'error':
@@ -167,12 +176,47 @@ class Logger {
   }
 
   apiError(method: string, endpoint: string, error: Error, context?: LogContext): void {
+    // Capture call stack to trace where the request originated
+    const stack = new Error().stack;
+    const callerInfo = this.extractCallerInfo(stack);
+    
     this.error(`API ${method} ${endpoint} - FAILED`, error, { 
       action: 'api_error', 
       method, 
-      endpoint, 
+      endpoint,
+      caller: callerInfo,
+      stackTrace: stack,
       ...context 
     });
+  }
+
+  private extractCallerInfo(stack?: string): string {
+    if (!stack) return 'unknown';
+    
+    // Parse stack trace to find the first non-logger, non-api-client call
+    const lines = stack.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // Skip logger.ts, api-client.ts, and Error construction lines
+      if (
+        !line.includes('logger.ts') &&
+        !line.includes('api-client.ts') &&
+        !line.includes('Error.') &&
+        line.includes('at ')
+      ) {
+        // Extract file name and line number
+        const match = line.match(/at\s+(?:(\w+)\s+)?\(?([^)]+):(\d+):(\d+)\)?/);
+        if (match) {
+          const [, functionName, filePath, lineNum] = match;
+          const fileName = filePath.split('/').pop() || filePath;
+          return functionName 
+            ? `${functionName} (${fileName}:${lineNum})`
+            : `${fileName}:${lineNum}`;
+        }
+        return line.trim();
+      }
+    }
+    return 'unknown';
   }
 
   // User action logging

@@ -56,6 +56,13 @@ export class SyncManager {
       return { status: 'error', syncedCount: 0, errorCount: 1, errors: ['No internet connection'] };
     }
 
+    // Check authentication before syncing
+    const isAuth = await this.isAuthenticated();
+    if (!isAuth) {
+      console.log('⏭️ Skipping sync: User not authenticated');
+      return { status: 'idle', syncedCount: 0, errorCount: 0, errors: [] };
+    }
+
     this.syncInProgress = true;
     this.onStatusChange?.('syncing');
 
@@ -228,9 +235,30 @@ export class SyncManager {
   }
 
   /**
+   * Check if user is authenticated
+   */
+  private async isAuthenticated(): Promise<boolean> {
+    try {
+      const { createClient } = await import('./supabase/client');
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      return !!session?.access_token;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Sync down fresh data from server
    */
   private async syncDownData(): Promise<void> {
+    // Check authentication before syncing
+    const isAuth = await this.isAuthenticated();
+    if (!isAuth) {
+      console.log('⏭️ Skipping sync: User not authenticated');
+      return;
+    }
+
     try {
       // Fetch fresh missions
       const missionsResponse = await apiClient.get<{ missions: Report[] }>('/missions');

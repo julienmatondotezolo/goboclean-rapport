@@ -55,6 +55,50 @@ class ApiClient {
   }
 
   /**
+   * Capture the caller information from stack trace
+   */
+  private getCallerContext(): { caller: string; hook?: string; component?: string } {
+    const stack = new Error().stack || '';
+    const lines = stack.split('\n');
+    
+    let caller = 'unknown';
+    let hook: string | undefined;
+    let component: string | undefined;
+    
+    // Look for hook or component in stack trace
+    for (const line of lines) {
+      // Skip api-client.ts and internal calls
+      if (line.includes('api-client.ts') || line.includes('ApiClient')) continue;
+      
+      // Check for hooks (useMissions, useAuth, etc.)
+      const hookMatch = line.match(/use[A-Z]\w+/);
+      if (hookMatch && !hook) {
+        hook = hookMatch[0];
+      }
+      
+      // Check for component files
+      const componentMatch = line.match(/([A-Z]\w+(?:Page|Component|Card|Modal|Form|Layout))\.tsx?/);
+      if (componentMatch && !component) {
+        component = componentMatch[1];
+      }
+      
+      // Extract file and line number for caller
+      if (!caller || caller === 'unknown') {
+        const fileMatch = line.match(/([^/]+\.tsx?):(\d+):(\d+)/);
+        if (fileMatch) {
+          const [, fileName, lineNum] = fileMatch;
+          caller = `${fileName}:${lineNum}`;
+        }
+      }
+      
+      // If we found both hook and component, we're done
+      if (hook && component) break;
+    }
+    
+    return { caller, hook, component };
+  }
+
+  /**
    * Make an authenticated request to the backend
    */
   async request<T>(
@@ -63,11 +107,13 @@ class ApiClient {
   ): Promise<T> {
     const method = options.method || 'GET';
     const startTime = Date.now();
+    const callerContext = this.getCallerContext();
     
     // Log API call start
     logger.apiCall(method, endpoint, {
       hasAuth: !!(await this.getAccessToken()),
       bodySize: options.body ? JSON.stringify(options.body).length : 0,
+      ...callerContext,
     });
 
     try {
@@ -121,6 +167,7 @@ class ApiClient {
           statusText: response.statusText,
           responseTime,
           errorData,
+          ...callerContext,
         });
         
         throw error;
@@ -143,6 +190,7 @@ class ApiClient {
         logger.apiError(method, endpoint, error, {
           responseTime,
           errorType: 'network',
+          ...callerContext,
         });
       }
       
@@ -205,12 +253,14 @@ class ApiClient {
   ): Promise<T> {
     const startTime = Date.now();
     const fileCount = Array.from(formData.entries()).filter(([key, value]) => value instanceof File).length;
+    const callerContext = this.getCallerContext();
     
     // Log upload start
     logger.apiCall('POST', endpoint, {
       uploadType: 'multipart/form-data',
       fileCount,
       hasProgress: !!onProgress,
+      ...callerContext,
     });
 
     try {
@@ -249,6 +299,7 @@ class ApiClient {
             responseTime,
             uploadType: 'fetch',
             fileCount,
+            ...callerContext,
           });
           
           throw error;
@@ -340,6 +391,7 @@ class ApiClient {
               uploadType: 'xhr',
               fileCount,
               errorData,
+              ...callerContext,
             });
             
             reject(error);
@@ -353,6 +405,7 @@ class ApiClient {
             uploadType: 'xhr',
             fileCount,
             errorType: 'network',
+            ...callerContext,
           });
           reject(error);
         });
@@ -364,6 +417,7 @@ class ApiClient {
             uploadType: 'xhr',
             fileCount,
             errorType: 'abort',
+            ...callerContext,
           });
           reject(error);
         });
@@ -379,6 +433,7 @@ class ApiClient {
           uploadType: onProgress ? 'xhr' : 'fetch',
           fileCount,
           errorType: 'setup',
+          ...callerContext,
         });
       }
       

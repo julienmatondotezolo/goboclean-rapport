@@ -10,7 +10,7 @@ const dmSans = DM_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Rapport by GoBoclean",
-  description: "Application de rapports de nettoyage de toiture - Field Services & Reports",
+  description: "Reporting application - Field Services & Reports",
   applicationName: "Rapport by GoBoclean",
   appleWebApp: {
     capable: true,
