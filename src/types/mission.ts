@@ -1,15 +1,10 @@
 // Mission types matching the backend schema
 
-export type MissionStatus =
-  | 'assigned'
-  | 'in_progress'
-  | 'waiting_completion'
-  | 'completed'
-  | 'cancelled';
+export type MissionStatus = "assigned" | "in_progress" | "waiting_completion" | "completed" | "cancelled";
 
-export type MissionType = 'roof';
+export type MissionType = "roof";
 
-export type MissionSubtype = 'cleaning' | 'coating';
+export type MissionSubtype = "cleaning" | "coating";
 
 export interface MissionFeatures {
   frontParking?: boolean;
@@ -105,7 +100,7 @@ export interface RescheduleMissionPayload {
 
 export interface CalendarMissionsParams {
   start: string; // ISO date YYYY-MM-DD
-  end: string;   // ISO date YYYY-MM-DD
+  end: string; // ISO date YYYY-MM-DD
 }
 
 export interface MissionReport {
@@ -123,6 +118,10 @@ export interface MissionReport {
   updated_at: string;
   completed_at?: string;
   mission?: Mission;
+  worker_signature_url?: string | null;
+  worker_signature_date?: string | null;
+  client_signature_url?: string | null;
+  client_signature_date?: string | null;
 }
 
 export interface PushSubscriptionPayload {
