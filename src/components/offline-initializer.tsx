@@ -21,20 +21,32 @@ export function OfflineInitializer() {
       setInitStatus('loading');
       
       try {
-        console.log('🚀 Initializing offline functionality...');
+        console.log('🚀 Initializing offline functionality (non-blocking)...');
         
-        // Initialize IndexedDB with timeout
-        await Promise.race([
+        // Initialize IndexedDB with timeout - but don't block the app
+        // This runs in the background and doesn't affect normal operation
+        Promise.race([
           initializeOfflineDB(),
           new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Database initialization timeout')), 10000)
           )
-        ]);
+        ]).then(() => {
+          if (isMounted) {
+            console.log('✓ Offline database initialized successfully');
+            setInitStatus('success');
+          }
+        }).catch((error) => {
+          if (isMounted) {
+            console.warn('⚠️ Offline database initialization failed:', error);
+            console.log('💡 App will continue to work without offline features');
+            setInitStatus('error');
+          }
+        });
         
+        // Don't wait for DB initialization - continue immediately
         if (!isMounted) return;
-        console.log('✓ Offline database initialized successfully');
         
-        // Initialize sync manager with event listeners
+        // Initialize sync manager with event listeners (also non-blocking)
         cleanupSync = initializeSyncManager();
         
         // Basic service worker handling (no aggressive updates)

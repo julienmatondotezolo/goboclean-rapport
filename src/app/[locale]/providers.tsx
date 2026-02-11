@@ -9,6 +9,13 @@ import { OfflineInitializer } from "@/components/offline-initializer";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { AppErrorBoundary } from "@/components/app-error-boundary";
 import { PageLogger } from "@/components/page-logger";
+import { CacheMigration } from "@/components/cache-migration";
+
+// Load debug utilities in development
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  import('@/lib/reset-app');
+  import('@/lib/query-diagnostics');
+}
 
 // Manually import messages for each locale
 import enMessages from "../../../messages/en.json";
@@ -35,10 +42,13 @@ const queryClient = new QueryClient({
         return failureCount < 3;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      // Prevent fetch hanging indefinitely
-      networkMode: 'online', 
+      // IMPORTANT: Use 'always' to allow queries even when navigator.onLine is false
+      // This prevents queries from being blocked when the browser incorrectly reports offline status
+      networkMode: 'always', 
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
+      // Refetch stale queries in the background
+      refetchOnMount: true,
     },
     mutations: {
       retry: (failureCount, error) => {
@@ -50,6 +60,7 @@ const queryClient = new QueryClient({
         return failureCount < 2;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+      // Mutations should respect online status more strictly
       networkMode: 'online',
     },
   },
@@ -79,8 +90,12 @@ export default function Providers({ children, locale }: Props): JSX.Element {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <NextIntlClientProvider locale={locale} messages={messages} timeZone={timeZone}>
             <PageLogger>
+              <CacheMigration />
               <LanguageInitializer />
-              <OfflineInitializer />
+              {/* DISABLED: OfflineInitializer was blocking queries */}
+              {/* The app doesn't use offline features (uses useMissions, not useOfflineMissions) */}
+              {/* Keeping IndexedDB initialization disabled prevents query blocking */}
+              {/* <OfflineInitializer /> */}
               {children}
               <PWAInstallPrompt />
             </PageLogger>

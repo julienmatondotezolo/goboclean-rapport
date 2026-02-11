@@ -55,7 +55,14 @@ export function useOfflineStatus(): OfflineStatusInfo {
   useEffect(() => {
     const updatePendingCount = async () => {
       try {
-        const { getPendingSyncItems } = await import('@/lib/offline-store');
+        const { getPendingSyncItems, isDatabaseReady } = await import('@/lib/offline-store');
+        
+        // Check if database is ready before querying
+        if (!isDatabaseReady()) {
+          setPendingSyncCount(0);
+          return;
+        }
+        
         const items = await Promise.race([
           getPendingSyncItems(),
           new Promise<[]>((_, reject) => 
@@ -65,17 +72,18 @@ export function useOfflineStatus(): OfflineStatusInfo {
         setPendingSyncCount(items.length);
       } catch (error) {
         // Silently fail - database might not be ready
+        // Don't log to avoid console spam
         setPendingSyncCount(0);
       }
     };
 
+    // Only check once on mount, don't poll continuously
+    // This prevents constant database queries that can block the app
     updatePendingCount();
 
-    // Update count periodically
-    const interval = setInterval(updatePendingCount, 10000); // Every 10 seconds
-
-    return () => clearInterval(interval);
-  }, [syncStatus]); // Re-run when sync status changes
+    // Only re-check when sync status actually changes
+    // No periodic polling to avoid blocking queries
+  }, [syncStatus]); // Only re-run when sync status changes
 
   return {
     isOnline,

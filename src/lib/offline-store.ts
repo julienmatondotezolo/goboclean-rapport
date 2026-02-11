@@ -282,13 +282,13 @@ export async function getPendingSyncItems(): Promise<SyncQueueItem[]> {
       return [];
     }
 
-    // Add timeout to prevent hanging
+    // Add timeout to prevent hanging - increased to 5 seconds
     const result = await Promise.race([
       offlineDB.syncQueue
         .orderBy(["priority", "created_at"])
         .reverse() // Higher priority first, then newer items
         .toArray(),
-      new Promise<SyncQueueItem[]>((_, reject) => setTimeout(() => reject(new Error("Database query timeout")), 3000)),
+      new Promise<SyncQueueItem[]>((_, reject) => setTimeout(() => reject(new Error("Database query timeout")), 5000)),
     ]);
     return result;
   } catch (error) {

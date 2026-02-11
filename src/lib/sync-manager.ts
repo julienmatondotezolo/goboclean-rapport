@@ -46,13 +46,17 @@ export class SyncManager {
 
   /**
    * Sync all pending changes to the server
+   * NOTE: This only syncs UP (pending uploads), not DOWN (data fetching)
+   * React Query handles all data fetching automatically
    */
   async sync(): Promise<SyncResult> {
     if (this.syncInProgress) {
+      console.log("⏭️ Sync already in progress, skipping");
       return { status: "syncing", syncedCount: 0, errorCount: 0, errors: [] };
     }
 
     if (!this.isOnline()) {
+      console.log("⏭️ Offline, skipping sync");
       return { status: "error", syncedCount: 0, errorCount: 1, errors: ["No internet connection"] };
     }
 
@@ -70,6 +74,20 @@ export class SyncManager {
       await updateSettings({ sync_in_progress: true });
 
       const pendingItems = await getPendingSyncItems();
+      
+      // If no pending items, exit early
+      if (pendingItems.length === 0) {
+        console.log("✓ No pending items to sync");
+        await updateSettings({ 
+          sync_in_progress: false,
+          last_sync_at: new Date().toISOString(),
+        });
+        this.syncInProgress = false;
+        this.onStatusChange?.("completed", { status: "completed", syncedCount: 0, errorCount: 0, errors: [] });
+        return { status: "completed", syncedCount: 0, errorCount: 0, errors: [] };
+      }
+
+      console.log(`🔄 Syncing ${pendingItems.length} pending items...`);
       let syncedCount = 0;
       let errorCount = 0;
       const errors: string[] = [];
@@ -95,13 +113,12 @@ export class SyncManager {
         }
       }
 
-      // Sync down fresh data from server
-      try {
-        await this.syncDownData();
-      } catch (error) {
-        errors.push("Failed to sync down data: " + (error instanceof Error ? error.message : "Unknown error"));
-        errorCount++;
-      }
+      // Note: We no longer sync down data here
+      // React Query handles all data fetching with its built-in mechanisms:
+      // - refetchOnWindowFocus
+      // - refetchOnReconnect
+      // - stale-while-revalidate
+      // This prevents duplicate API calls and interference with React Query
 
       const result: SyncResult = {
         status: errorCount > 0 ? "error" : "completed",
@@ -251,36 +268,29 @@ export class SyncManager {
 
   /**
    * Sync down fresh data from server
+   * NOTE: This should be called sparingly as React Query already handles refetching
    */
   private async syncDownData(): Promise<void> {
     // Check authentication before syncing
     const isAuth = await this.isAuthenticated();
     if (!isAuth) {
-      console.log("⏭️ Skipping sync: User not authenticated");
+      console.log("⏭️ Skipping sync down: User not authenticated");
       return;
     }
 
-    try {
-      // Fetch fresh missions
-      const missionsResponse = await apiClient.get<{ missions: Report[] }>("/missions");
+    // Skip sync down if there are no pending uploads
+    // React Query will handle refetching data automatically
+    console.log("⏭️ Skipping sync down: React Query handles data fetching");
+    return;
 
-      if (missionsResponse.missions) {
-        // Cache each mission
-        for (const mission of missionsResponse.missions) {
-          await cacheReport(mission, mission.photos);
-        }
-      }
-
-      // Fetch fresh notifications
-      const notificationsResponse = await apiClient.get<{ notifications: AppNotification[] }>("/notifications");
-
-      if (notificationsResponse.notifications) {
-        await cacheNotifications(notificationsResponse.notifications);
-      }
-    } catch (error) {
-      // Don't fail the entire sync if download fails
-      throw new Error("Failed to download fresh data");
-    }
+    // DISABLED: This was causing unnecessary API calls and interfering with React Query
+    // React Query already handles:
+    // - Automatic refetching on window focus
+    // - Refetching on reconnect
+    // - Stale-while-revalidate pattern
+    // - Query deduplication
+    //
+    // We only need to sync UP (pending changes), not DOWN (fresh data)
   }
 
   /**
@@ -289,12 +299,19 @@ export class SyncManager {
   setupOnlineListener(): (() => void) | void {
     if (typeof window === "undefined") return;
 
-    const handleOnline = () => {
-      // Automatically sync when coming back online
-      setTimeout(() => this.sync(), 1000);
+    const handleOnline = async () => {
+      // Only sync when coming back online if there are pending items
+      const pendingItems = await getPendingSyncItems();
+      if (pendingItems.length > 0) {
+        console.log(`🌐 Back online: syncing ${pendingItems.length} pending items`);
+        setTimeout(() => this.sync(), 1000);
+      } else {
+        console.log("🌐 Back online: no pending items to sync");
+      }
     };
 
     const handleOffline = () => {
+      console.log("📴 Gone offline");
       this.onStatusChange?.("idle");
     };
 
@@ -310,11 +327,17 @@ export class SyncManager {
 
   /**
    * Auto-sync at regular intervals when online
+   * Only syncs pending uploads, not downloads (React Query handles that)
    */
-  setupPeriodicSync(intervalMs: number = 5 * 60 * 1000): () => void {
-    const interval = setInterval(() => {
+  setupPeriodicSync(intervalMs: number = 10 * 60 * 1000): () => void {
+    const interval = setInterval(async () => {
       if (this.isOnline() && !this.syncInProgress) {
-        this.sync();
+        // Only sync if there are pending items
+        const pendingItems = await getPendingSyncItems();
+        if (pendingItems.length > 0) {
+          console.log(`🔄 Periodic sync: ${pendingItems.length} pending items`);
+          this.sync();
+        }
       }
     }, intervalMs);
 
@@ -356,9 +379,17 @@ export function initializeSyncManager(): () => void {
   const cleanupOnline = syncManager.setupOnlineListener();
   const cleanupPeriodic = syncManager.setupPeriodicSync();
 
-  // Initial sync if online
+  // Initial sync if online - but only if there are pending items
   if (navigator.onLine) {
-    setTimeout(() => syncManager.sync(), 2000);
+    setTimeout(async () => {
+      const pendingItems = await getPendingSyncItems();
+      if (pendingItems.length > 0) {
+        console.log(`🔄 Initial sync: ${pendingItems.length} pending items`);
+        syncManager.sync();
+      } else {
+        console.log("✓ No pending sync items on startup");
+      }
+    }, 2000);
   }
 
   return () => {
