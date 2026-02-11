@@ -1,6 +1,6 @@
-import Dexie, { type Table } from 'dexie';
-import type { Report, Photo, User } from '@/types/report';
-import type { AppNotification } from '@/types/mission';
+import Dexie, { type Table } from "dexie";
+import type { Report, Photo, User } from "@/types/report";
+import type { AppNotification } from "@/types/mission";
 
 // Extended interfaces for offline storage
 export interface OfflineReport extends Report {
@@ -23,7 +23,7 @@ export interface OfflineNotification extends AppNotification {
 
 export interface SyncQueueItem {
   id?: number;
-  type: 'mission_start' | 'mission_complete' | 'photo_upload' | 'notification_read';
+  type: "mission_start" | "mission_complete" | "photo_upload" | "notification_read";
   entity_id: string; // mission ID, photo ID, etc.
   data: any; // The data to sync
   created_at: string;
@@ -33,7 +33,7 @@ export interface SyncQueueItem {
 }
 
 export interface AppSettings {
-  id: 'main';
+  id: "main";
   last_sync_at?: string;
   sync_in_progress: boolean;
   sync_error_count: number;
@@ -51,16 +51,16 @@ export class OfflineDatabase extends Dexie {
   settings!: Table<AppSettings>;
 
   constructor() {
-    super('GobocleanOfflineDB');
-    
+    super("GobocleanOfflineDB");
+
     // Use a high version number to ensure we're always upgrading, not downgrading
     // Version 21: Current schema with compound index for syncQueue
     this.version(21).stores({
-      reports: 'id, worker_id, status, sync_status, created_at, updated_at, offline_updated_at, has_pending_changes',
-      photos: 'id, report_id, type, order, storage_path, blob_size, offline_updated_at',
-      notifications: 'id, user_id, type, created_at, read_at, offline_read_at, has_pending_read',
-      syncQueue: '++id, type, entity_id, created_at, retry_count, priority, [priority+created_at]',
-      settings: 'id',
+      reports: "id, worker_id, status, sync_status, created_at, updated_at, offline_updated_at, has_pending_changes",
+      photos: "id, report_id, type, order, storage_path, blob_size, offline_updated_at",
+      notifications: "id, user_id, type, created_at, read_at, offline_read_at, has_pending_read",
+      syncQueue: "++id, type, entity_id, created_at, retry_count, priority, [priority+created_at]",
+      settings: "id",
     });
 
     // Hooks
@@ -88,38 +88,38 @@ export function isDatabaseReady(): boolean {
 export async function initializeOfflineDB(): Promise<void> {
   try {
     await offlineDB.open();
-    
+
     // Initialize settings if not exists
-    const settings = await offlineDB.settings.get('main');
+    const settings = await offlineDB.settings.get("main");
     if (!settings) {
       await offlineDB.settings.put({
-        id: 'main',
+        id: "main",
         sync_in_progress: false,
         sync_error_count: 0,
       });
     }
   } catch (error: any) {
     // If there's a version error, delete the database and try again
-    if (error.name === 'VersionError' || error.message?.includes('version')) {
-      console.warn('IndexedDB version conflict detected. Recreating database...');
+    if (error.name === "VersionError" || error.message?.includes("version")) {
+      console.warn("IndexedDB version conflict detected. Recreating database...");
       try {
         await offlineDB.delete();
         await offlineDB.open();
-        
+
         // Initialize settings
         await offlineDB.settings.put({
-          id: 'main',
+          id: "main",
           sync_in_progress: false,
           sync_error_count: 0,
         });
-        console.log('Database recreated successfully');
+        console.log("Database recreated successfully");
       } catch (retryError) {
-        console.error('Failed to recreate database:', retryError);
-        throw new Error('Failed to initialize offline database after version conflict');
+        console.error("Failed to recreate database:", retryError);
+        throw new Error("Failed to initialize offline database after version conflict");
       }
     } else {
-      console.error('Failed to initialize offline database:', error);
-      throw new Error('Failed to initialize offline database');
+      console.error("Failed to initialize offline database:", error);
+      throw new Error("Failed to initialize offline database");
     }
   }
 }
@@ -128,12 +128,16 @@ export async function initializeOfflineDB(): Promise<void> {
  * Clear all offline data (useful for logout)
  */
 export async function clearOfflineData(): Promise<void> {
-  await offlineDB.transaction('rw', [offlineDB.reports, offlineDB.photos, offlineDB.notifications, offlineDB.syncQueue], async () => {
-    await offlineDB.reports.clear();
-    await offlineDB.photos.clear();
-    await offlineDB.notifications.clear();
-    await offlineDB.syncQueue.clear();
-  });
+  await offlineDB.transaction(
+    "rw",
+    [offlineDB.reports, offlineDB.photos, offlineDB.notifications, offlineDB.syncQueue],
+    async () => {
+      await offlineDB.reports.clear();
+      await offlineDB.photos.clear();
+      await offlineDB.notifications.clear();
+      await offlineDB.syncQueue.clear();
+    },
+  );
 }
 
 /**
@@ -152,7 +156,7 @@ export async function getOfflineStats(): Promise<{
     offlineDB.photos.count(),
     offlineDB.notifications.count(),
     offlineDB.syncQueue.count(),
-    offlineDB.settings.get('main'),
+    offlineDB.settings.get("main"),
   ]);
 
   // Calculate total cache size (approximate)
@@ -173,7 +177,7 @@ export async function getOfflineStats(): Promise<{
  * Store a report in offline cache
  */
 export async function cacheReport(report: Report, photos?: Photo[]): Promise<void> {
-  await offlineDB.transaction('rw', [offlineDB.reports, offlineDB.photos], async () => {
+  await offlineDB.transaction("rw", [offlineDB.reports, offlineDB.photos], async () => {
     // Store report
     await offlineDB.reports.put({
       ...report,
@@ -211,11 +215,11 @@ export async function getCachedReport(reportId: string): Promise<OfflineReport |
   if (!report) return null;
 
   // Get associated photos
-  const photos = await offlineDB.photos.where('report_id').equals(reportId).toArray();
-  
+  const photos = await offlineDB.photos.where("report_id").equals(reportId).toArray();
+
   return {
     ...report,
-    photos: photos.map(photo => ({
+    photos: photos.map((photo) => ({
       ...photo,
       preview: photo.blob ? URL.createObjectURL(photo.blob) : undefined,
     })),
@@ -226,18 +230,18 @@ export async function getCachedReport(reportId: string): Promise<OfflineReport |
  * Get all cached reports
  */
 export async function getCachedReports(): Promise<OfflineReport[]> {
-  return offlineDB.reports.orderBy('created_at').reverse().toArray();
+  return offlineDB.reports.orderBy("created_at").reverse().toArray();
 }
 
 /**
  * Cache notifications
  */
 export async function cacheNotifications(notifications: AppNotification[]): Promise<void> {
-  const offlineNotifications: OfflineNotification[] = notifications.map(notif => ({
+  const offlineNotifications: OfflineNotification[] = notifications.map((notif) => ({
     ...notif,
     offline_read_at: notif.is_read ? new Date().toISOString() : undefined,
   }));
-  
+
   await offlineDB.notifications.bulkPut(offlineNotifications);
 }
 
@@ -245,14 +249,14 @@ export async function cacheNotifications(notifications: AppNotification[]): Prom
  * Get cached notifications
  */
 export async function getCachedNotifications(): Promise<OfflineNotification[]> {
-  return offlineDB.notifications.orderBy('created_at').reverse().toArray();
+  return offlineDB.notifications.orderBy("created_at").reverse().toArray();
 }
 
 /**
  * Add an item to the sync queue
  */
 export async function addToSyncQueue(
-  type: SyncQueueItem['type'],
+  type: SyncQueueItem["type"],
   entityId: string,
   data: any,
   priority: number = 1,
@@ -274,23 +278,21 @@ export async function getPendingSyncItems(): Promise<SyncQueueItem[]> {
   try {
     // Check if database is ready
     if (!isDatabaseReady()) {
-      console.warn('Database not ready, returning empty sync queue');
+      console.warn("Database not ready, returning empty sync queue");
       return [];
     }
 
     // Add timeout to prevent hanging
     const result = await Promise.race([
       offlineDB.syncQueue
-        .orderBy(['priority', 'created_at'])
+        .orderBy(["priority", "created_at"])
         .reverse() // Higher priority first, then newer items
         .toArray(),
-      new Promise<SyncQueueItem[]>((_, reject) => 
-        setTimeout(() => reject(new Error('Database query timeout')), 3000)
-      )
+      new Promise<SyncQueueItem[]>((_, reject) => setTimeout(() => reject(new Error("Database query timeout")), 3000)),
     ]);
     return result;
   } catch (error) {
-    console.error('Failed to get pending sync items:', error);
+    console.error("Failed to get pending sync items:", error);
     return []; // Return empty array on error to prevent app hanging
   }
 }
@@ -319,5 +321,5 @@ export async function updateSyncQueueItem(id: number, error?: string): Promise<v
  * Update settings
  */
 export async function updateSettings(updates: Partial<AppSettings>): Promise<void> {
-  await offlineDB.settings.update('main', updates);
+  await offlineDB.settings.update("main", updates);
 }

@@ -1,5 +1,5 @@
-import { createClient } from './supabase/client';
-import { User } from '@/types/report';
+import { createClient } from "./supabase/client";
+import { User } from "@/types/report";
 
 export interface LoginCredentials {
   email: string;
@@ -10,13 +10,13 @@ export interface SignupData extends LoginCredentials {
   first_name: string;
   last_name: string;
   phone?: string;
-  role?: 'worker' | 'admin';
+  role?: "worker" | "admin";
 }
 
 export const authService = {
   async login(credentials: LoginCredentials) {
     const supabase = createClient();
-    
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
@@ -31,7 +31,7 @@ export const authService = {
 
   async signup(signupData: SignupData) {
     const supabase = createClient();
-    
+
     const { data, error } = await supabase.auth.signUp({
       email: signupData.email,
       password: signupData.password,
@@ -40,7 +40,7 @@ export const authService = {
           first_name: signupData.first_name,
           last_name: signupData.last_name,
           phone: signupData.phone,
-          role: signupData.role || 'worker',
+          role: signupData.role || "worker",
         },
       },
     });
@@ -58,16 +58,15 @@ export const authService = {
 
   async getCurrentUser(): Promise<User | null> {
     const supabase = createClient();
-    
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
     if (error || !user) return null;
 
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    const { data: profile, error: profileError } = await supabase.from("users").select("*").eq("id", user.id).single();
 
     if (profileError) return null;
 
