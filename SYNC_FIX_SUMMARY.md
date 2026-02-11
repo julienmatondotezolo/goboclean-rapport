@@ -1,6 +1,7 @@
 # Fix: App Stops Fetching After Being Idle
 
 ## Problem
+
 The app was stopping fetching data after being idle for a while. This was caused by the offline sync manager interfering with React Query's normal operation.
 
 ## Root Causes Identified
@@ -16,6 +17,7 @@ The app was stopping fetching data after being idle for a while. This was caused
 ## Changes Made
 
 ### 1. Disabled Sync Down Data (`src/lib/sync-manager.ts`)
+
 ```typescript
 private async syncDownData(): Promise<void> {
   // Skip sync down - React Query handles data fetching
@@ -25,6 +27,7 @@ private async syncDownData(): Promise<void> {
 ```
 
 **Reason**: React Query already handles:
+
 - Automatic refetching on window focus
 - Refetching on reconnect
 - Stale-while-revalidate pattern
@@ -33,6 +36,7 @@ private async syncDownData(): Promise<void> {
 The sync manager should only sync UP (pending changes), not DOWN (fresh data).
 
 ### 2. Changed Network Mode to 'always' (`src/app/[locale]/providers.tsx`)
+
 ```typescript
 queries: {
   networkMode: 'always', // Was: 'online'
@@ -43,16 +47,16 @@ queries: {
 **Reason**: This prevents queries from being blocked when the browser incorrectly reports offline status. Queries will attempt to fetch and fail gracefully if there's no connection.
 
 ### 3. Increased Database Timeout (`src/lib/offline-store.ts`)
+
 ```typescript
 // Increased from 3000ms to 5000ms
-new Promise<SyncQueueItem[]>((_, reject) => 
-  setTimeout(() => reject(new Error("Database query timeout")), 5000)
-)
+new Promise<SyncQueueItem[]>((_, reject) => setTimeout(() => reject(new Error("Database query timeout")), 5000));
 ```
 
 **Reason**: Gives the database more time to respond, reducing the chance of timeouts during normal operation.
 
 ### 4. Optimized Periodic Sync (`src/lib/sync-manager.ts`)
+
 ```typescript
 setupPeriodicSync(intervalMs: number = 10 * 60 * 1000): () => void {
   const interval = setInterval(async () => {
@@ -70,11 +74,13 @@ setupPeriodicSync(intervalMs: number = 10 * 60 * 1000): () => void {
 ```
 
 **Changes**:
+
 - Increased interval from 5 minutes to 10 minutes
 - Only syncs if there are pending items
 - Logs when syncing occurs
 
 ### 5. Optimized Online Listener (`src/lib/sync-manager.ts`)
+
 ```typescript
 const handleOnline = async () => {
   const pendingItems = await getPendingSyncItems();
@@ -90,6 +96,7 @@ const handleOnline = async () => {
 **Reason**: Only syncs when coming back online if there are actually pending items to upload.
 
 ### 6. Optimized Initial Sync (`src/lib/sync-manager.ts`)
+
 ```typescript
 if (navigator.onLine) {
   setTimeout(async () => {
@@ -109,12 +116,14 @@ if (navigator.onLine) {
 ## Impact
 
 ### Before
+
 - Sync manager was making API calls every 5 minutes
 - Queries could be blocked by `navigator.onLine` status
 - Database timeouts could hang the app
 - Redundant data fetching competing with React Query
 
 ### After
+
 - Sync manager only syncs when there are pending uploads
 - Queries always attempt to fetch (fail gracefully if offline)
 - Longer database timeout reduces hanging
@@ -132,6 +141,7 @@ if (navigator.onLine) {
 5. **Pending Uploads**: Create offline changes, verify they sync when online
 
 ### 7. Added Early Exit for Empty Sync Queue (`src/lib/sync-manager.ts`)
+
 ```typescript
 const pendingItems = await getPendingSyncItems();
 
@@ -146,7 +156,9 @@ if (pendingItems.length === 0) {
 **Reason**: Prevents unnecessary processing and database operations when there's nothing to sync.
 
 ### 8. Enhanced Logging (`src/lib/sync-manager.ts`)
+
 Added comprehensive console logs throughout the sync process:
+
 - `⏭️ Sync already in progress, skipping`
 - `⏭️ Offline, skipping sync`
 - `⏭️ Skipping sync: User not authenticated`

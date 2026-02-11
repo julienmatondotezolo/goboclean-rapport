@@ -1,7 +1,9 @@
 # Fix: Frontend Not Calling API
 
 ## Problem
+
 The frontend stops making API calls after being idle. This is caused by a combination of:
+
 1. Old cached data in IndexedDB from the sync manager
 2. Queries potentially being paused
 3. Token refresh issues
@@ -9,15 +11,18 @@ The frontend stops making API calls after being idle. This is caused by a combin
 ## Immediate Fix (For Users)
 
 ### Option 1: Clear Cache via Browser Console
+
 1. Open the app
 2. Press F12 to open DevTools
 3. Go to Console tab
 4. Run this command:
+
 ```javascript
-window.clearOfflineCache().then(() => location.reload())
+window.clearOfflineCache().then(() => location.reload());
 ```
 
 ### Option 2: Clear Cache via DevTools
+
 1. Open DevTools (F12)
 2. Go to Application tab
 3. Click "Storage" in left sidebar
@@ -25,6 +30,7 @@ window.clearOfflineCache().then(() => location.reload())
 5. Reload the page (Ctrl+R or Cmd+R)
 
 ### Option 3: Hard Reload
+
 1. Close all tabs with the app open
 2. Press Ctrl+Shift+Delete (or Cmd+Shift+Delete on Mac)
 3. Clear "Cached images and files" and "Cookies and site data"
@@ -52,6 +58,7 @@ window.clearOfflineCache().then(() => location.reload())
 ## Code Changes Made
 
 ### 1. Disabled Sync Down Data
+
 **File**: `src/lib/sync-manager.ts`
 
 ```typescript
@@ -65,6 +72,7 @@ private async syncDownData(): Promise<void> {
 **Why**: The sync manager should only UPLOAD pending changes, not DOWNLOAD data. React Query is much better at managing data fetching.
 
 ### 2. Changed Network Mode to 'always'
+
 **File**: `src/app/[locale]/providers.tsx`
 
 ```typescript
@@ -76,7 +84,9 @@ queries: {
 **Why**: `navigator.onLine` is unreliable. Setting to 'always' means queries will attempt to fetch regardless of the reported online status, and fail gracefully if there's no connection.
 
 ### 3. Added Diagnostic Tools
-**Files**: 
+
+**Files**:
+
 - `src/lib/query-diagnostics.ts` - Monitors query state
 - `src/lib/reset-app.ts` - Utilities to reset app state
 
@@ -85,18 +95,22 @@ queries: {
 ## Testing the Fix
 
 ### Step 1: Clear Old Cache
+
 ```javascript
 // In browser console:
-window.clearOfflineCache().then(() => location.reload())
+window.clearOfflineCache().then(() => location.reload());
 ```
 
 ### Step 2: Verify API Calls Are Working
+
 1. Open DevTools > Network tab
 2. Navigate around the app
 3. You should see API calls to your backend (e.g., `GET /missions`)
 
 ### Step 3: Check Console Logs
+
 Look for these logs:
+
 ```
 ✓ No pending items to sync
 ⏭️ Skipping sync down: React Query handles data fetching
@@ -105,6 +119,7 @@ Look for these logs:
 ```
 
 ### Step 4: Test Idle Behavior
+
 1. Leave the app open for 15 minutes
 2. Come back and click around
 3. Data should load normally
@@ -133,18 +148,20 @@ Look for these logs:
 ### For Users
 
 1. **Clear cache if app seems stuck**
+
    ```javascript
-   window.clearOfflineCache().then(() => location.reload())
+   window.clearOfflineCache().then(() => location.reload());
    ```
 
 2. **Check app health**
+
    ```javascript
-   window.printAppHealth()
+   window.printAppHealth();
    ```
 
 3. **If still not working, full reset**
    ```javascript
-   window.resetApp()
+   window.resetApp();
    ```
 
 ## Debugging Commands
@@ -152,37 +169,48 @@ Look for these logs:
 All these commands are available in the browser console:
 
 ### Check App Health
+
 ```javascript
-window.printAppHealth()
+window.printAppHealth();
 ```
+
 Shows:
+
 - Online status
 - Session status
 - IndexedDB status
 - Recent API calls
 
 ### Clear Offline Cache
+
 ```javascript
-window.clearOfflineCache()
+window.clearOfflineCache();
 ```
+
 Clears IndexedDB only, keeps login session
 
 ### Clear All Data
+
 ```javascript
-window.clearAllData()
+window.clearAllData();
 ```
+
 Clears everything except language preference
 
 ### Full Reset
+
 ```javascript
-window.resetApp()
+window.resetApp();
 ```
+
 Clears everything and reloads the page
 
 ### Run Diagnostics
+
 ```javascript
-window.runQueryDiagnostics()
+window.runQueryDiagnostics();
 ```
+
 Shows detailed query state information
 
 ## Migration Guide
@@ -194,17 +222,18 @@ Shows detailed query state information
 ```typescript
 // In your app initialization:
 useEffect(() => {
-  const version = localStorage.getItem('app-version');
-  if (version !== '2.0.0') {
+  const version = localStorage.getItem("app-version");
+  if (version !== "2.0.0") {
     // Clear old cache
-    indexedDB.deleteDatabase('GobocleanOfflineDB');
-    localStorage.setItem('app-version', '2.0.0');
-    console.log('✓ Migrated to v2.0.0 - cache cleared');
+    indexedDB.deleteDatabase("GobocleanOfflineDB");
+    localStorage.setItem("app-version", "2.0.0");
+    console.log("✓ Migrated to v2.0.0 - cache cleared");
   }
 }, []);
 ```
 
 2. **Show a notification** to users:
+
 ```
 "We've improved data loading! Please refresh the page if you experience any issues."
 ```
@@ -251,9 +280,10 @@ useEffect(() => {
 ### Still Not Working?
 
 1. **Collect diagnostics**:
+
 ```javascript
-window.printAppHealth()
-window.runQueryDiagnostics()
+window.printAppHealth();
+window.runQueryDiagnostics();
 ```
 
 2. **Copy console output** and share with team
@@ -261,6 +291,7 @@ window.runQueryDiagnostics()
 3. **Check Network tab** for failed requests
 
 4. **Try clean install**:
+
 ```bash
 rm -rf node_modules package-lock.json
 npm install
@@ -280,6 +311,7 @@ npm run dev
 ## Summary
 
 The fix involves:
+
 1. ✅ Disabled sync manager from fetching data
 2. ✅ Changed network mode to 'always'
 3. ✅ Added diagnostic tools

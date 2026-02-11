@@ -10,14 +10,18 @@
 ## What You'll See Now
 
 ### 1. React Query DevTools
+
 A floating button will appear in the bottom-right corner (in development mode):
+
 - Click it to open the DevTools panel
 - See all queries and their states
 - Check if queries are fetching, paused, or have errors
 - See query data and cache
 
 ### 2. Automatic Diagnostics
+
 After 2 seconds, console will show:
+
 ```
 🔍 Query Diagnostics
 ✅ React Query Client found
@@ -27,28 +31,34 @@ After 2 seconds, console will show:
 ```
 
 ### 3. Manual Commands
+
 In browser console:
+
 ```javascript
 // Clear IndexedDB and reload
-window.clearCache()
+window.clearCache();
 
-// Re-run diagnostics  
-window.debugQueries()
+// Re-run diagnostics
+window.debugQueries();
 
 // Access QueryClient directly
-window.__REACT_QUERY_CLIENT__
+window.__REACT_QUERY_CLIENT__;
 ```
 
 ## How to Debug
 
 ### Step 1: Reload the App
+
 The app should already be running with `npm run dev`. Just refresh the browser.
 
 ### Step 2: Open React Query DevTools
+
 Look for a floating React Query icon in the bottom-right corner. Click it to open.
 
 ### Step 3: Check Query Status
+
 In the DevTools panel, you'll see:
+
 - **Green** = Query has data (working!)
 - **Yellow** = Query is fetching
 - **Red** = Query has error
@@ -57,15 +67,18 @@ In the DevTools panel, you'll see:
 ### Step 4: Look for Issues
 
 #### If queries are disabled:
+
 - Check the "enabled" condition
 - Queries have `enabled: !!user`
 - User must be loaded first
 
 #### If queries are paused:
+
 - This shouldn't happen with `networkMode: 'always'`
 - But if it does, check providers.tsx
 
 #### If queries have errors:
+
 - Click on the query in DevTools
 - See the error message
 - Check Network tab for failed requests
@@ -73,6 +86,7 @@ In the DevTools panel, you'll see:
 ## Most Likely Issue
 
 Based on your logs, I see:
+
 ```
 🔑 [auth-3n8syh8] User signed in: admin@goboclean.be
 ```
@@ -94,6 +108,7 @@ So auth is working! The user is loaded. This means queries SHOULD be running now
 ## Expected Behavior
 
 ### Timeline
+
 ```
 0ms:     Page loads
 100ms:   React Query mounted
@@ -110,18 +125,22 @@ You're getting to step 4 (user loaded), but queries might not be starting at ste
 ## What to Check
 
 ### 1. React Query DevTools
+
 - Open it (bottom-right corner)
 - See if queries exist
 - Check their status
 
 ### 2. Network Tab
+
 - Open DevTools > Network
 - Filter by your backend URL
 - Should see API requests to `/missions`
 - If not, queries aren't fetching
 
 ### 3. Console Logs
+
 After 2 seconds, you should see:
+
 ```
 ✅ React Query Client found
 📊 Total queries: X
@@ -133,41 +152,46 @@ If X > 0, check their fetch status.
 ## Quick Fixes
 
 ### Fix 1: Clear Everything
+
 ```javascript
-window.clearCache()
+window.clearCache();
 ```
 
 ### Fix 2: Force Refetch
+
 ```javascript
 const qc = window.__REACT_QUERY_CLIENT__;
 qc.refetchQueries();
 ```
 
 ### Fix 3: Check Specific Query
+
 ```javascript
 const qc = window.__REACT_QUERY_CLIENT__;
 const queries = qc.getQueryCache().getAll();
-queries.forEach(q => {
-  console.log('Query:', q.queryKey);
-  console.log('Status:', q.state.status);
-  console.log('Fetch Status:', q.state.fetchStatus);
-  console.log('Enabled:', q.options.enabled);
-  console.log('---');
+queries.forEach((q) => {
+  console.log("Query:", q.queryKey);
+  console.log("Status:", q.state.status);
+  console.log("Fetch Status:", q.state.fetchStatus);
+  console.log("Enabled:", q.options.enabled);
+  console.log("---");
 });
 ```
 
 ## What Changed
 
 ### Before
+
 - No way to see query status
 - No debugging tools
 - Had to guess what was wrong
 
 ### After
+
 - ✅ React Query DevTools (visual inspector)
 - ✅ Automatic diagnostics (console logs)
 - ✅ Manual commands (window.clearCache, etc.)
-- ✅ QueryClient exposed (window.__REACT_QUERY_CLIENT__)
+- ✅ QueryClient exposed (window.**REACT_QUERY_CLIENT**)
 
 ## Next Steps
 

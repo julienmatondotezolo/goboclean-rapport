@@ -1,6 +1,7 @@
 # Sync Manager Architecture
 
 ## Overview
+
 This document explains the architecture of the sync manager and how it integrates with React Query for optimal performance.
 
 ## Architecture Diagram
@@ -59,9 +60,11 @@ This document explains the architecture of the sync manager and how it integrate
 ## Separation of Concerns
 
 ### React Query Responsibilities
+
 **Purpose**: Handle ALL data fetching and caching
 
 **What it does**:
+
 - Fetches data from API when needed
 - Caches responses in memory
 - Automatically refetches on:
@@ -74,6 +77,7 @@ This document explains the architecture of the sync manager and how it integrate
 - Handles retries with exponential backoff
 
 **Configuration**:
+
 ```typescript
 queries: {
   networkMode: 'always',      // Always attempt to fetch
@@ -86,9 +90,11 @@ queries: {
 ```
 
 ### Sync Manager Responsibilities
+
 **Purpose**: Handle ONLY pending uploads (offline changes)
 
 **What it does**:
+
 - Monitors sync queue in IndexedDB
 - Uploads pending changes when online
 - Retries failed uploads with exponential backoff
@@ -96,12 +102,14 @@ queries: {
 - Provides sync status to UI
 
 **What it does NOT do**:
+
 - ❌ Fetch data from API (React Query does this)
 - ❌ Cache API responses (React Query does this)
 - ❌ Refetch on window focus (React Query does this)
 - ❌ Run periodic syncs when queue is empty
 
 **When it runs**:
+
 1. **On reconnect**: Only if there are pending items
 2. **Periodic (10 min)**: Only if there are pending items
 3. **Manual trigger**: When user explicitly syncs
@@ -109,6 +117,7 @@ queries: {
 ## Data Flow
 
 ### Normal Operation (Online)
+
 ```
 User Action → React Query → API Client → Backend
                    ↓
@@ -118,11 +127,12 @@ User Action → React Query → API Client → Backend
 ```
 
 ### Offline Operation
+
 ```
 User Action → Sync Queue (IndexedDB)
                    ↓
               Optimistic UI Update
-                   
+
 (When back online)
 Sync Manager → API Client → Backend
                    ↓
@@ -132,6 +142,7 @@ Sync Manager → API Client → Backend
 ```
 
 ### Window Focus / Reconnect
+
 ```
 Event Trigger → React Query Refetch → API Client → Backend
                                           ↓
@@ -146,59 +157,71 @@ Event Trigger → Sync Manager → Upload Pending Items
 ## Key Design Decisions
 
 ### 1. Network Mode: 'always'
+
 **Decision**: Use `networkMode: 'always'` for queries
 
 **Reasoning**:
+
 - Browser's `navigator.onLine` is unreliable
 - Can report offline when connection is actually working
 - Better to attempt fetch and fail gracefully
 - Allows app to work even with incorrect online status
 
 **Impact**:
+
 - Queries always attempt to fetch
 - If network fails, React Query handles the error
 - No false negatives from incorrect online status
 
 ### 2. Disabled Sync Down
+
 **Decision**: Sync manager no longer fetches data from API
 
 **Reasoning**:
+
 - React Query already handles all data fetching
 - Duplicate fetching wastes bandwidth and CPU
 - Sync manager and React Query were competing
 - Caused race conditions and stale data
 
 **Impact**:
+
 - Sync manager only uploads pending changes
 - React Query has full control over data fetching
 - No more duplicate API calls
 - Better cache coherence
 
 ### 3. Conditional Periodic Sync
+
 **Decision**: Only run periodic sync if there are pending items
 
 **Reasoning**:
+
 - Most of the time, there are no pending items
 - Checking sync queue every 10 minutes is cheap
 - Uploading nothing is wasteful
 - Reduces unnecessary database queries
 
 **Impact**:
+
 - Less CPU usage when idle
 - Less database contention
 - Sync only runs when needed
 - Better battery life on mobile
 
 ### 4. Increased Database Timeout
+
 **Decision**: Increased timeout from 3s to 5s
 
 **Reasoning**:
+
 - IndexedDB can be slow on some devices
 - 3s was too aggressive, causing false timeouts
 - 5s provides more buffer without significant UX impact
 - Prevents app from hanging on slow devices
 
 **Impact**:
+
 - Fewer timeout errors
 - Better experience on slow devices
 - Still fails fast enough to not block UI
@@ -206,6 +229,7 @@ Event Trigger → Sync Manager → Upload Pending Items
 ## Performance Characteristics
 
 ### Before Fix
+
 ```
 Idle App (10 minutes):
 - Sync runs: 2 times (every 5 min)
@@ -216,6 +240,7 @@ Idle App (10 minutes):
 ```
 
 ### After Fix
+
 ```
 Idle App (10 minutes):
 - Sync runs: 0 times (no pending items)
@@ -226,6 +251,7 @@ Idle App (10 minutes):
 ```
 
 ### With Pending Items
+
 ```
 Idle App (10 minutes):
 - Sync runs: 1 time (at 10 min mark)
@@ -240,6 +266,7 @@ Idle App (10 minutes):
 ### Console Logs
 
 **Sync Manager Logs**:
+
 - `✓ No pending items to sync` - Normal, no work needed
 - `🔄 Syncing X pending items...` - Uploading changes
 - `⏭️ Sync already in progress, skipping` - Preventing duplicate sync
@@ -248,6 +275,7 @@ Idle App (10 minutes):
 - `📴 Gone offline` - Lost connection
 
 **React Query Logs** (via DevTools):
+
 - Query status: `fetching`, `success`, `error`
 - Cache status: `fresh`, `stale`
 - Refetch reason: `window-focus`, `reconnect`, `mount`
@@ -255,6 +283,7 @@ Idle App (10 minutes):
 ### Performance Metrics
 
 **Good Indicators**:
+
 - Low CPU usage when idle
 - No network activity when idle
 - Queries complete in < 1s
@@ -262,6 +291,7 @@ Idle App (10 minutes):
 - Memory usage stable
 
 **Bad Indicators**:
+
 - High CPU usage when idle
 - Continuous network activity
 - Queries taking > 5s
@@ -271,6 +301,7 @@ Idle App (10 minutes):
 ## Future Improvements
 
 ### Potential Optimizations
+
 1. **Smart Sync Scheduling**: Sync during idle periods using requestIdleCallback
 2. **Batch Uploads**: Combine multiple pending items into single request
 3. **Priority Queue**: Upload critical items first
@@ -278,6 +309,7 @@ Idle App (10 minutes):
 5. **Delta Sync**: Only upload changed fields, not entire objects
 
 ### Monitoring Enhancements
+
 1. **Metrics Dashboard**: Track sync success rate, latency, queue size
 2. **Error Reporting**: Automatic error reporting for failed syncs
 3. **Performance Tracking**: Monitor query performance over time
@@ -286,30 +318,38 @@ Idle App (10 minutes):
 ## Troubleshooting Guide
 
 ### App Stops Fetching
+
 **Symptoms**: Queries don't run after being idle
-**Check**: 
+**Check**:
+
 - Network mode should be 'always'
 - Check for database timeout errors
 - Verify sync manager isn't blocking queries
 
 ### Excessive API Calls
+
 **Symptoms**: Too many API calls, high network usage
 **Check**:
+
 - Sync manager should only run with pending items
 - React Query staleTime should be reasonable (5 min)
 - No duplicate query keys
 
 ### Sync Never Runs
+
 **Symptoms**: Pending items never upload
 **Check**:
+
 - Online status detection working
 - Authentication valid
 - Sync manager initialized
 - No errors in console
 
 ### Database Errors
+
 **Symptoms**: IndexedDB timeout or version errors
 **Solution**:
+
 - Clear site data in DevTools
 - Check for database version conflicts
 - Verify database initialization

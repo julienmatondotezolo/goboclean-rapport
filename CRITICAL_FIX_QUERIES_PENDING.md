@@ -1,9 +1,11 @@
 # CRITICAL FIX: Queries Stuck in Pending State
 
 ## Problem
+
 Queries get stuck in "pending" state when leaving and returning to the page. The only way to fix it was to run `window.clearOfflineCache().then(() => location.reload())`.
 
 ## Root Cause
+
 **The OfflineInitializer was blocking React Query!**
 
 1. `OfflineInitializer` runs on every page load
@@ -14,6 +16,7 @@ Queries get stuck in "pending" state when leaving and returning to the page. The
 6. Clearing the cache and reloading fixes it temporarily, but the issue returns
 
 ## The Real Issue
+
 **The app doesn't even use offline features!**
 
 - The app uses `useMissions` from `@/hooks/useMissions` (normal React Query)
@@ -22,9 +25,11 @@ Queries get stuck in "pending" state when leaving and returning to the page. The
 - It was just blocking queries for no benefit
 
 ## Solution
+
 **Disabled the OfflineInitializer entirely**
 
 ### Change 1: Disabled OfflineInitializer
+
 **File**: `src/app/[locale]/providers.tsx`
 
 ```typescript
@@ -39,6 +44,7 @@ Queries get stuck in "pending" state when leaving and returning to the page. The
 **Why**: Since the app doesn't use offline features, there's no reason to initialize IndexedDB. This was just causing blocking issues.
 
 ### Change 2: Made Initialization Non-Blocking
+
 **File**: `src/components/offline-initializer.tsx`
 
 Even though it's disabled, I made it non-blocking in case you want to re-enable it later:
@@ -52,6 +58,7 @@ cleanupSync = initializeSyncManager();
 ```
 
 ### Change 3: Removed Polling from useOfflineStatus
+
 **File**: `src/hooks/useOfflineStatus.ts`
 
 ```typescript
@@ -67,6 +74,7 @@ const interval = setInterval(updatePendingCount, 30000);
 ## Testing
 
 ### Before Fix
+
 ```
 1. Open app
 2. Navigate to dashboard
@@ -78,6 +86,7 @@ const interval = setInterval(updatePendingCount, 30000);
 ```
 
 ### After Fix
+
 ```
 1. Open app
 2. Navigate to dashboard
@@ -91,24 +100,29 @@ const interval = setInterval(updatePendingCount, 30000);
 ## Verification
 
 ### Step 1: Check Console
+
 After reloading, you should NOT see:
+
 ```
 🚀 Initializing offline functionality...
 ✓ Offline database initialized successfully
 ```
 
 You SHOULD see:
+
 ```
 ✅ Migrated to version 2.0.0
 ```
 
 ### Step 2: Check Network Tab
+
 1. Open DevTools > Network
 2. Navigate around
 3. Should see API calls immediately
 4. No delays or pending states
 
 ### Step 3: Test Leaving and Returning
+
 1. Open dashboard
 2. Switch to another tab for 5 minutes
 3. Switch back
@@ -116,12 +130,14 @@ You SHOULD see:
 5. Should work immediately without cache clearing
 
 ### Step 4: Check Query State (Dev Mode)
+
 ```javascript
 // In console:
-window.printAppHealth()
+window.printAppHealth();
 ```
 
 Should show:
+
 ```
 ✅ Recent API Call: true
 ```
@@ -129,6 +145,7 @@ Should show:
 ## Why This Happened
 
 ### The Blocking Chain
+
 ```
 1. Page loads
    ↓
@@ -146,6 +163,7 @@ Should show:
 ```
 
 ### Why Clearing Cache Fixed It
+
 ```
 1. window.clearOfflineCache()
    ↓
@@ -167,6 +185,7 @@ Should show:
 ## Additional Benefits
 
 ### Performance Improvements
+
 - ✅ Faster page loads (no DB initialization)
 - ✅ No periodic DB polling (every 30s)
 - ✅ No sync manager overhead
@@ -174,6 +193,7 @@ Should show:
 - ✅ Better battery life on mobile
 
 ### Reduced Complexity
+
 - ✅ No IndexedDB to manage
 - ✅ No sync queue to process
 - ✅ No cache invalidation issues
@@ -181,6 +201,7 @@ Should show:
 - ✅ Fewer edge cases
 
 ### Better Reliability
+
 - ✅ No DB version conflicts
 - ✅ No DB quota errors
 - ✅ No DB blocking issues
@@ -192,6 +213,7 @@ Should show:
 If you decide you need offline functionality:
 
 ### Option 1: Use Service Worker Cache
+
 ```javascript
 // Better than IndexedDB for caching
 // Non-blocking
@@ -199,8 +221,9 @@ If you decide you need offline functionality:
 ```
 
 ### Option 2: Use React Query Persistence
+
 ```javascript
-import { persistQueryClient } from '@tanstack/react-query-persist-client'
+import { persistQueryClient } from "@tanstack/react-query-persist-client";
 
 // Built-in persistence
 // Works with React Query
@@ -208,6 +231,7 @@ import { persistQueryClient } from '@tanstack/react-query-persist-client'
 ```
 
 ### Option 3: Re-enable with Fixes
+
 ```typescript
 // In providers.tsx:
 <OfflineInitializer />
@@ -219,9 +243,11 @@ import { persistQueryClient } from '@tanstack/react-query-persist-client'
 ## Migration Notes
 
 ### For Existing Users
+
 The `CacheMigration` component will clear the old IndexedDB automatically, so users won't have stale data issues.
 
 ### For New Users
+
 No IndexedDB is created, so no issues at all.
 
 ## Rollback (If Needed)
@@ -234,6 +260,7 @@ If you need to re-enable offline features:
 ```
 
 But make sure:
+
 1. You're actually using `useOfflineMissions`
 2. The initialization is truly non-blocking
 3. You've tested thoroughly
@@ -241,18 +268,21 @@ But make sure:
 ## Summary
 
 ### The Problem
+
 - OfflineInitializer was blocking queries
 - IndexedDB operations were hanging
 - Queries got stuck in "pending" state
 - Had to clear cache to fix (temporarily)
 
 ### The Solution
+
 - Disabled OfflineInitializer entirely
 - App doesn't use offline features anyway
 - Removed periodic DB polling
 - Made initialization non-blocking (if re-enabled)
 
 ### The Result
+
 - ✅ Queries work immediately
 - ✅ No more pending state issues
 - ✅ No cache clearing needed
