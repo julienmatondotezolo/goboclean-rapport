@@ -51,17 +51,6 @@ const queryClient = new QueryClient({
       networkMode: 'online', 
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
-      // Add recovery mechanism for auth errors
-      onError: (error) => {
-        if (error instanceof Error && 
-            (error.message.includes('Token') || error.message.includes('401'))) {
-          console.warn('Token error detected, scheduling recovery');
-          // Schedule query cache recovery after token refresh
-          setTimeout(() => {
-            queryClient.invalidateQueries();
-          }, 1000);
-        }
-      },
     },
     mutations: {
       retry: (failureCount, error) => {

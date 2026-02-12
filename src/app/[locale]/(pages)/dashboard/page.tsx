@@ -12,82 +12,61 @@ import { OfflineStatusBadge } from '@/components/offline-indicator';
 import { LoadingBanner } from '@/components/loading-banner';
 import type { Mission } from '@/types/mission';
 
-// Demo data for reliable demo experience
+// Demo data matching actual Mission interface
 const DEMO_MISSIONS: Mission[] = [
   {
     id: '1',
-    title: 'Nettoyage Toiture Villa Dubois',
-    description: 'Nettoyage complet de la toiture avec démoussage',
-    address: 'Rue de la Paix 15, 8500 Kortrijk',
+    created_by: 'admin-1',
+    assigned_workers: ['worker-1'],
     status: 'assigned',
-    priority: 'medium',
-    scheduled_for: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
+    client_first_name: 'Jean',
+    client_last_name: 'Dubois',
+    client_phone: '+32 56 123 456',
+    client_email: 'dubois@email.be',
+    client_address: 'Rue de la Paix 15, 8500 Kortrijk',
+    appointment_time: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    mission_type: 'roof',
+    mission_subtypes: ['cleaning'],
+    surface_area: 120,
+    additional_info: 'Nettoyage complet de la toiture avec démoussage',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    assigned_to: 'worker-1',
-    assigned_workers: [
-      {
-        id: 'worker-1',
-        first_name: 'Marc',
-        last_name: 'Janssens',
-        email: 'worker@goboclean.be'
-      }
-    ],
-    created_by: 'admin-1',
-    estimated_duration: 240, // 4 hours
-    client_name: 'M. & Mme Dubois',
-    client_email: 'dubois@email.be',
-    client_phone: '+32 56 123 456'
   },
   {
-    id: '2',
-    title: 'Nettoyage Façade Restaurant',
-    description: 'Nettoyage haute pression de la façade principale',
-    address: 'Grand Place 8, 8000 Bruges',
+    id: '2', 
+    created_by: 'admin-1',
+    assigned_workers: ['worker-1'],
     status: 'in_progress',
-    priority: 'high',
-    scheduled_for: new Date().toISOString(), // Today
+    client_first_name: 'Restaurant',
+    client_last_name: 'De Garre',
+    client_phone: '+32 50 341 029',
+    client_email: 'info@degarre.be', 
+    client_address: 'Grand Place 8, 8000 Bruges',
+    appointment_time: new Date().toISOString(),
+    mission_type: 'roof',
+    mission_subtypes: ['cleaning'],
+    surface_area: 200,
+    additional_info: 'Nettoyage haute pression de la façade principale',
     created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     updated_at: new Date().toISOString(),
-    assigned_to: 'worker-1',
-    assigned_workers: [
-      {
-        id: 'worker-1',
-        first_name: 'Marc',
-        last_name: 'Janssens',
-        email: 'worker@goboclean.be'
-      }
-    ],
-    created_by: 'admin-1',
-    estimated_duration: 180, // 3 hours
-    client_name: 'Restaurant De Garre',
-    client_email: 'info@degarre.be',
-    client_phone: '+32 50 341 029'
   },
   {
     id: '3',
-    title: 'Nettoyage Vitres Bureaux',
-    description: 'Nettoyage vitres intérieur/extérieur - 2ème étage',
-    address: 'Businesspark 42, 8790 Waregem',
+    created_by: 'admin-1', 
+    assigned_workers: ['worker-1'],
     status: 'completed',
-    priority: 'low',
-    scheduled_for: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+    client_first_name: 'TechCorp',
+    client_last_name: 'NV',
+    client_phone: '+32 56 789 123',
+    client_email: 'facility@techcorp.be',
+    client_address: 'Businesspark 42, 8790 Waregem',
+    appointment_time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    mission_type: 'roof',
+    mission_subtypes: ['cleaning'],
+    surface_area: 80,
+    additional_info: 'Nettoyage vitres intérieur/extérieur - 2ème étage',
     created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     updated_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    assigned_to: 'worker-1',
-    assigned_workers: [
-      {
-        id: 'worker-1',
-        first_name: 'Marc',
-        last_name: 'Janssens',
-        email: 'worker@goboclean.be'
-      }
-    ],
-    created_by: 'admin-1',
-    estimated_duration: 120, // 2 hours
-    client_name: 'TechCorp NV',
-    client_email: 'facility@techcorp.be',
-    client_phone: '+32 56 789 123'
   }
 ];
 
@@ -123,7 +102,7 @@ export default function DashboardPage() {
           setMissions(DEMO_MISSIONS);
         } else {
           // Worker only sees assigned missions
-          setMissions(DEMO_MISSIONS.filter(m => m.assigned_to === 'worker-1'));
+          setMissions(DEMO_MISSIONS.filter(m => m.assigned_workers.includes('worker-1')));
         }
         setMissionsLoading(false);
       }, 1000); // 1 second loading simulation
@@ -139,8 +118,8 @@ export default function DashboardPage() {
     if (user) {
       setProfileLoading(true);
       setTimeout(() => {
-        // Demo profile picture URL
-        setProfilePicture(user.profile_picture_url || null);
+        // Demo profile picture URL - use a placeholder since User type doesn't have profile_picture_url
+        setProfilePicture(null);
         setProfileLoading(false);
       }, 500);
     }
@@ -151,7 +130,7 @@ export default function DashboardPage() {
     if (!missions) return [];
     const today = new Date().toDateString();
     return missions.filter(mission => 
-      new Date(mission.scheduled_for).toDateString() === today
+      new Date(mission.appointment_time).toDateString() === today
     );
   }, [missions]);
 
@@ -263,29 +242,29 @@ export default function DashboardPage() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
-            title={t('todayMissions')}
+            label={t('todayMissions')}
             value={todayMissions.length}
-            icon={<Clock className="h-6 w-6" />}
-            color="blue"
+            subtitle="Today's schedule"
+            icon={Clock}
           />
           <StatCard
-            title={t('pendingMissions')}
+            label={t('pendingMissions')}
             value={pendingMissions.length}
-            icon={<AlertCircle className="h-6 w-6" />}
-            color="yellow"
+            subtitle="In progress"
+            icon={AlertCircle}
           />
           <StatCard
-            title={t('completedMissions')}
+            label={t('completedMissions')}
             value={completedMissionsCount}
-            icon={<ClipboardCheck className="h-6 w-6" />}
-            color="green"
+            subtitle="Finished"
+            icon={ClipboardCheck}
           />
           {isAdmin && (
             <StatCard
-              title="Revenue Total"
+              label="Revenue Total"
               value={`€${adminStats.totalRevenue}`}
-              icon={<ClipboardCheck className="h-6 w-6" />}
-              color="purple"
+              subtitle="This month"
+              icon={ClipboardCheck}
             />
           )}
         </div>
@@ -323,7 +302,16 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-4">
                 {missions.slice(0, 5).map((mission) => (
-                  <MissionCard key={mission.id} mission={mission} />
+                  <MissionCard 
+                    key={mission.id}
+                    status={mission.status}
+                    title={`${mission.client_first_name} ${mission.client_last_name}`}
+                    location={mission.client_address}
+                    date={new Date(mission.appointment_time).toLocaleDateString()}
+                    startTime={new Date(mission.appointment_time).toLocaleTimeString()}
+                    assignedWorkerName={mission.assigned_workers.length > 0 ? `Worker ${mission.assigned_workers[0]}` : undefined}
+                    onClick={() => router.push(`/mission/${mission.id}`)}
+                  />
                 ))}
                 {missions.length > 5 && (
                   <div className="text-center pt-4">

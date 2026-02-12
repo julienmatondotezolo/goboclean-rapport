@@ -84,7 +84,7 @@ export default function ConcurrentAuthTest() {
             </div>
             <div>
               <strong>Session ID:</strong> 
-              <span className="ml-2 text-xs font-mono">{session?.session_id?.slice(0, 8) || 'None'}</span>
+              <span className="ml-2 text-xs font-mono">{session?.access_token?.slice(0, 8) || 'None'}</span>
             </div>
             <div>
               <strong>Last Refresh:</strong> 

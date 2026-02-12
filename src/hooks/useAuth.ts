@@ -174,7 +174,7 @@ export function useAuth(options: UseAuthOptions = {}) {
 
     // Listen for auth state changes with automatic refresh handling
     const { data: { subscription } } = supabaseRef.current.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: string, session: Session | null) => {
         if (cancelled) return;
 
         console.log(`🔐 [${componentIdRef.current}] Auth event: ${event}`, session?.user?.email || 'no-user');
