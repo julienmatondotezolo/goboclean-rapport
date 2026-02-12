@@ -51,9 +51,8 @@ export interface Mission {
   before_pictures_submitted_at?: string;
   completion_unlocked_at?: string;
 
-  // Report references
-  pre_report_id?: string;
-  final_report_id?: string;
+  // Report reference
+  report_id?: string;
 
   // Timestamps
   started_at?: string;
@@ -103,6 +102,23 @@ export interface CalendarMissionsParams {
   end: string; // ISO date YYYY-MM-DD
 }
 
+export interface ReportPhoto {
+  id: string;
+  url: string;
+  type: "before" | "after";
+  order: number;
+  report_id: string;
+  created_at: string;
+  storage_path: string;
+}
+
+export interface ReportWorker {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+}
+
 export interface MissionReport {
   id: string;
   mission_id?: string;
@@ -118,10 +134,12 @@ export interface MissionReport {
   updated_at: string;
   completed_at?: string;
   mission?: Mission;
+  worker?: ReportWorker;
   worker_signature_url?: string | null;
   worker_signature_date?: string | null;
   client_signature_url?: string | null;
   client_signature_date?: string | null;
+  photos?: ReportPhoto[];
 }
 
 export interface PushSubscriptionPayload {

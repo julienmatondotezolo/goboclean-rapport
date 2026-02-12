@@ -15,6 +15,7 @@ import {
   Clock,
   CheckCircle2,
   Image as ImageIcon,
+  X,
 } from 'lucide-react';
 import Image from 'next/image';
 import { PageHeader } from '@/components/ui/page-header';
@@ -103,8 +104,9 @@ export default function ReportDetailPage() {
     });
   };
 
-  const beforePictures = report.mission?.before_pictures || [];
-  const afterPictures = report.mission?.after_pictures || [];
+  // Extract photos from the report's photos array
+  const beforePictures = report.photos?.filter(photo => photo.type === 'before').sort((a, b) => a.order - b.order) || [];
+  const afterPictures = report.photos?.filter(photo => photo.type === 'after').sort((a, b) => a.order - b.order) || [];
   const hasBeforePictures = beforePictures.length > 0;
   const hasAfterPictures = afterPictures.length > 0;
 
@@ -251,7 +253,7 @@ export default function ReportDetailPage() {
         </div>
 
         {/* Worker Information */}
-        {report.worker_first_name && (
+        {report.worker && (
           <div className="bg-[#f8fafc] rounded-2xl p-5">
             <div className="text-[11px] font-bold text-gray-500 mb-4 tracking-wide uppercase">
               {t('workerInformation')}
@@ -262,7 +264,7 @@ export default function ReportDetailPage() {
               </div>
               <div>
                 <p className="text-[15px] font-bold text-gray-900">
-                  {report.worker_first_name} {report.worker_last_name}
+                  {report.worker.first_name} {report.worker.last_name}
                 </p>
                 <p className="text-[12px] text-gray-500 font-medium">{t('assignedWorker')}</p>
               </div>
@@ -324,15 +326,15 @@ export default function ReportDetailPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {beforePictures.map((photo: string, index: number) => (
+              {beforePictures.map((photo, index: number) => (
                 <div
-                  key={index}
-                  onClick={() => setFullScreenImage(photo)}
+                  key={photo.id}
+                  onClick={() => setFullScreenImage(photo.url)}
                   className="relative rounded-xl overflow-hidden border-2 border-gray-200 bg-white cursor-pointer hover:border-brand-green-light transition-all hover:scale-[1.02] active:scale-[0.98]"
                   style={{ aspectRatio: '3/2' }}
                 >
                   <Image
-                    src={photo}
+                    src={photo.url}
                     alt={`${t('beforePhoto')} ${index + 1}`}
                     fill
                     className="object-cover"
@@ -365,15 +367,15 @@ export default function ReportDetailPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {afterPictures.map((photo: string, index: number) => (
+              {afterPictures.map((photo, index: number) => (
                 <div
-                  key={index}
-                  onClick={() => setFullScreenImage(photo)}
+                  key={photo.id}
+                  onClick={() => setFullScreenImage(photo.url)}
                   className="relative rounded-xl overflow-hidden border-2 border-gray-200 bg-white cursor-pointer hover:border-brand-green-light transition-all hover:scale-[1.02] active:scale-[0.98]"
                   style={{ aspectRatio: '3/2' }}
                 >
                   <Image
-                    src={photo}
+                    src={photo.url}
                     alt={`${t('afterPhoto')} ${index + 1}`}
                     fill
                     className="object-cover"
@@ -388,94 +390,6 @@ export default function ReportDetailPage() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Signatures Section */}
-        {(report.worker_signature_url || report.client_signature_url) && (
-          <div className="bg-[#f8fafc] rounded-2xl p-5">
-            <div className="text-[11px] font-bold text-gray-500 mb-4 tracking-wide uppercase">
-              {t('signatures')}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Worker Signature */}
-              <div className="bg-white rounded-xl p-4 border-2 border-gray-200">
-                <div className="flex items-center gap-2 mb-3">
-                  <User className="w-4 h-4 text-brand-emerald" />
-                  <span className="text-[13px] font-bold text-gray-900">
-                    {t('workerSignature')}
-                  </span>
-                </div>
-                {report.worker_signature_url ? (
-                  <div>
-                    <div className="relative w-full h-32 bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                      <Image
-                        src={report.worker_signature_url}
-                        alt={t('workerSignature')}
-                        fill
-                        className="object-contain p-2"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                      />
-                    </div>
-                    {report.worker_signature_date && (
-                      <p className="text-[11px] text-gray-500 mt-2">
-                        {t('signedOn')} {formatDate(report.worker_signature_date)} {t('at')}{' '}
-                        {formatTime(report.worker_signature_date)}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="w-full h-32 bg-gray-50 rounded-lg border border-dashed border-gray-300 flex items-center justify-center">
-                    <p className="text-[12px] text-gray-400">{t('noSignature')}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Client Signature */}
-              <div className="bg-white rounded-xl p-4 border-2 border-gray-200">
-                <div className="flex items-center gap-2 mb-3">
-                  <User className="w-4 h-4 text-brand-emerald" />
-                  <span className="text-[13px] font-bold text-gray-900">
-                    {t('clientSignature')}
-                  </span>
-                </div>
-                {report.client_signature_url ? (
-                  <div>
-                    <div className="relative w-full h-32 bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                      <Image
-                        src={report.client_signature_url}
-                        alt={t('clientSignature')}
-                        fill
-                        className="object-contain p-2"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                      />
-                    </div>
-                    {report.client_signature_date && (
-                      <p className="text-[11px] text-gray-500 mt-2">
-                        {t('signedOn')} {formatDate(report.client_signature_date)} {t('at')}{' '}
-                        {formatTime(report.client_signature_date)}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="w-full h-32 bg-gray-50 rounded-lg border border-dashed border-gray-300 flex items-center justify-center">
-                    <p className="text-[12px] text-gray-400">{t('noSignature')}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Signature Notice */}
-            {report.worker_signature_url && report.client_signature_url && (
-              <div className="mt-4 p-3 bg-green-50 rounded-xl border border-green-200">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  <p className="text-[12px] text-green-800 font-medium">
-                    {t('bothSignaturesCollected')}
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -498,22 +412,27 @@ export default function ReportDetailPage() {
       {/* Full Screen Image Modal */}
       {fullScreenImage && (
         <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center animate-in fade-in duration-200"
           onClick={() => setFullScreenImage(null)}
         >
           <button
-            onClick={() => setFullScreenImage(null)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setFullScreenImage(null);
+            }}
             className="absolute top-4 right-4 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/20 transition-all z-10"
+            aria-label="Close fullscreen"
           >
-            <ArrowLeft className="w-6 h-6 text-white" />
+            <X className="w-6 h-6 text-white" />
           </button>
-          <div className="relative w-full h-full max-w-4xl max-h-[90vh] p-4">
+          <div className="relative w-full h-full max-w-4xl max-h-[90vh] p-4" onClick={(e) => e.stopPropagation()}>
             <Image
               src={fullScreenImage}
               alt="Full screen view"
               fill
               className="object-contain"
               sizes="100vw"
+              priority
             />
           </div>
         </div>
