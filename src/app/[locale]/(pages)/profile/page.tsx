@@ -366,6 +366,7 @@ export default function ProfilePage() {
         <button
           onClick={handleLogout}
           disabled={isLoggingOut}
+          data-testid="logout-button"
           className="flex items-center gap-2 text-[#d92d20] hover:text-[#b42318] transition-colors disabled:opacity-50"
         >
           {isLoggingOut ? (
