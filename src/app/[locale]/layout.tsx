@@ -67,6 +67,7 @@ export default async function RootLayout({
           <>
             <script src="/debug-queries.js" defer></script>
             <script src="/clear-cache.js" defer></script>
+            <script src="/auth-diagnostics.js" defer></script>
           </>
         )}
       </head>

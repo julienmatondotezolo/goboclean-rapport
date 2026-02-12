@@ -129,6 +129,13 @@ export function useAuth(options: UseAuthOptions = {}) {
         // Check role authorization
         const hasRole = requiredRole ? profile.role === requiredRole : true;
 
+        console.log(`✅ [${componentIdRef.current}] Profile loaded successfully:`, {
+          userId: profile.id,
+          email: profile.email,
+          role: profile.role,
+          hasRequiredRole: hasRole,
+        });
+
         setState({
           user: profile,
           isAuthenticated: true,
