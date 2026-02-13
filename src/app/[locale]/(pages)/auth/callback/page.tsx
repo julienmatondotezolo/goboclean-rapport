@@ -9,56 +9,50 @@ import { LoadingBanner } from '@/components/loading-banner';
 export default function AuthCallbackPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<string>('Processing...');
+  const [status, setStatus] = useState<string>('Processing authentication...');
 
   useEffect(() => {
     let cancelled = false;
 
-    const handleCallback = async () => {
+    const handleAuthCallback = async () => {
       try {
         const supabase = createClient();
         
-        // Check for tokens in URL hash (from email links)
+        // Get URL parameters
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-        const type = hashParams.get('type');
-        const errorParam = hashParams.get('error');
-        const errorDescription = hashParams.get('error_description');
+        const searchParams = new URLSearchParams(window.location.search);
+        
+        const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token');
+        const type = hashParams.get('type') || searchParams.get('type');
+        const errorParam = hashParams.get('error') || searchParams.get('error');
+        const errorDescription = hashParams.get('error_description') || searchParams.get('error_description');
 
-        // Log all auth callback data for debugging
-        console.log('🔐 AUTH CALLBACK STARTED:', {
-          fullUrl: window.location.href,
-          hash: window.location.hash,
+        console.log('🔐 AUTH CALLBACK:', {
+          url: window.location.href,
+          type,
           hasAccessToken: !!accessToken,
           hasRefreshToken: !!refreshToken,
-          type,
-          errorParam,
-          errorDescription,
-          allHashParams: Object.fromEntries(hashParams.entries()),
+          error: errorParam,
           timestamp: new Date().toISOString()
         });
 
         // Check for error in URL
         if (errorParam) {
-          console.error('🚨 AUTH CALLBACK ERROR (URL):', {
-            error: errorParam,
-            description: errorDescription,
-            fullHash: window.location.hash,
-            fullUrl: window.location.href
-          });
-          throw new Error(errorDescription || errorParam);
+          const errorMsg = errorDescription || errorParam;
+          console.error('❌ AUTH CALLBACK: Error in URL:', errorMsg);
+          throw new Error(errorMsg);
         }
 
         if (cancelled) return;
 
-        if (type === 'invite' || type === 'recovery' || type === 'signup') {
-          if (!cancelled) {
-            setStatus('Setting up your session...');
-          }
+        // Handle email confirmation, password recovery, etc.
+        if (type && ['invite', 'recovery', 'signup', 'email_change'].includes(type)) {
+          setStatus('Setting up your session...');
           
           if (accessToken && refreshToken) {
-            // Set the session first
+            console.log('🔑 AUTH CALLBACK: Setting session for', type);
+            
             const { error: sessionError } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken,
@@ -67,31 +61,37 @@ export default function AuthCallbackPage() {
             if (cancelled) return;
 
             if (sessionError) {
-              console.error('🚨 AUTH CALLBACK ERROR (Invite/Recovery Session):', {
-                error: sessionError,
-                accessToken: accessToken?.substring(0, 20) + '...',
-                refreshToken: refreshToken?.substring(0, 20) + '...',
-                type,
-                fullUrl: window.location.href
-              });
+              console.error('❌ AUTH CALLBACK: Session error:', sessionError.message);
               throw sessionError;
             }
           }
           
-          if (!cancelled) {
-            setStatus('Redirecting to password setup...');
-            
-            // Redirect to password setup page with hash params preserved
-            window.location.href = `/set-password${window.location.hash}`;
+          // Redirect based on type
+          if (type === 'recovery' || type === 'invite') {
+            if (!cancelled) {
+              setStatus('Redirecting to password setup...');
+              // Use window.location for full page navigation
+              window.location.href = `/fr/set-password${window.location.hash}`;
+            }
+            return;
+          } else if (type === 'email_change') {
+            if (!cancelled) {
+              setStatus('Email confirmed. Redirecting to profile...');
+              setTimeout(() => {
+                if (!cancelled) window.location.href = '/fr/profile';
+              }, 1500);
+            }
+            return;
           }
-          
-        } else if (accessToken && refreshToken) {
+        }
+        
+        // Handle direct token exchange (email magic links, OAuth)
+        if (accessToken && refreshToken) {
           if (!cancelled) {
             setStatus('Completing authentication...');
           }
           
-          // Set the session
-          const { error: sessionError } = await supabase.auth.setSession({
+          const { data, error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
@@ -99,47 +99,76 @@ export default function AuthCallbackPage() {
           if (cancelled) return;
 
           if (sessionError) {
-            console.error('🚨 AUTH CALLBACK ERROR (Normal Auth Session):', {
-              error: sessionError,
-              accessToken: accessToken?.substring(0, 20) + '...',
-              refreshToken: refreshToken?.substring(0, 20) + '...',
-              type,
-              fullUrl: window.location.href
-            });
+            console.error('❌ AUTH CALLBACK: Session error:', sessionError.message);
             throw sessionError;
           }
 
-          if (!cancelled) {
-            setStatus('Redirecting to dashboard...');
+          if (data.session) {
+            console.log('✅ AUTH CALLBACK: Session established for', data.session.user.email);
             
-            // Redirect to dashboard
-            router.push('/dashboard');
-          }
-        } else {
-          if (!cancelled) {
-            setStatus('No valid session found...');
-            setTimeout(() => !cancelled && router.push('/login'), 1000);
+            if (!cancelled) {
+              setStatus('Authentication complete. Redirecting...');
+              // Force full page navigation to trigger middleware
+              setTimeout(() => {
+                if (!cancelled) window.location.href = '/fr/dashboard';
+              }, 1000);
+            }
+            return;
           }
         }
+
+        // Handle auth code flow (PKCE)
+        const code = searchParams.get('code');
+        if (code) {
+          if (!cancelled) {
+            setStatus('Exchanging auth code...');
+          }
+          
+          console.log('🔑 AUTH CALLBACK: Exchanging code for session');
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (cancelled) return;
+          
+          if (exchangeError) {
+            console.error('❌ AUTH CALLBACK: Code exchange error:', exchangeError.message);
+            throw exchangeError;
+          }
+          
+          if (data.session) {
+            console.log('✅ AUTH CALLBACK: Code exchange successful for', data.session.user.email);
+            
+            if (!cancelled) {
+              setStatus('Authentication complete. Redirecting...');
+              setTimeout(() => {
+                if (!cancelled) window.location.href = '/fr/dashboard';
+              }, 1000);
+            }
+            return;
+          }
+        }
+
+        // If we get here, no valid auth data was found
+        console.warn('⚠️ AUTH CALLBACK: No valid authentication data found');
+        if (!cancelled) {
+          setStatus('No valid session found. Redirecting to login...');
+          setTimeout(() => {
+            if (!cancelled) router.push('/fr/login');
+          }, 2000);
+        }
+        
       } catch (err: any) {
-        console.error('🚨 AUTH CALLBACK ERROR (Catch Block):', {
-          error: err,
-          message: err.message,
-          stack: err.stack,
-          fullUrl: window.location.href,
-          hash: window.location.hash,
-          search: window.location.search,
-          timestamp: new Date().toISOString()
-        });
+        console.error('❌ AUTH CALLBACK: Error:', err);
         
         if (!cancelled) {
-          setError(err.message);
-          setTimeout(() => !cancelled && router.push('/login'), 3000);
+          setError(err.message || 'Authentication failed');
+          setTimeout(() => {
+            if (!cancelled) router.push('/fr/login');
+          }, 3000);
         }
       }
     };
 
-    handleCallback();
+    handleAuthCallback();
 
     return () => {
       cancelled = true;
@@ -148,7 +177,7 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
-      {/* Small Loading Banner at Top */}
+      {/* Loading Banner */}
       <LoadingBanner 
         isLoading={!error} 
         message={error ? 'Authentication failed' : status} 
@@ -156,7 +185,7 @@ export default function AuthCallbackPage() {
         dismissible={false}
       />
       
-      {/* Always Show Content Area */}
+      {/* Main Content */}
       <div className="pt-20 px-6">
         <div className="max-w-md mx-auto">
           
@@ -165,8 +194,12 @@ export default function AuthCallbackPage() {
             <div className="w-16 h-16 bg-[#064e3b] rounded-2xl mx-auto mb-4 flex items-center justify-center">
               <span className="text-2xl">🔐</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">Authentication</h1>
-            <p className="text-slate-600 text-sm">Processing your login request</p>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">
+              {error ? 'Authentication Failed' : 'Authentication'}
+            </h1>
+            <p className="text-slate-600 text-sm">
+              {error ? 'Something went wrong' : 'Processing your request'}
+            </p>
           </div>
 
           {/* Status Card */}
@@ -178,16 +211,18 @@ export default function AuthCallbackPage() {
                     <span className="text-red-600 text-xl">✕</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900">Authentication Error</h3>
-                    <p className="text-slate-500 text-sm">Something went wrong</p>
+                    <h3 className="text-lg font-bold text-slate-900">Error</h3>
+                    <p className="text-slate-500 text-sm">Authentication failed</p>
                   </div>
                 </div>
+                
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                   <p className="text-red-700 text-sm font-medium">{error}</p>
                 </div>
+                
                 <div className="flex items-center justify-center text-slate-500 text-sm">
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Redirecting to login page in 3 seconds...
+                  Redirecting to login in 3 seconds...
                 </div>
               </>
             ) : (
@@ -198,32 +233,33 @@ export default function AuthCallbackPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-slate-900">Processing</h3>
-                    <p className="text-slate-500 text-sm">Setting up your account</p>
+                    <p className="text-slate-500 text-sm">Setting up your session</p>
                   </div>
                 </div>
+                
                 <div className="bg-[#064e3b]/5 border border-[#064e3b]/20 rounded-lg p-4 mb-4">
                   <p className="text-[#064e3b] text-sm font-medium">{status}</p>
                 </div>
+                
                 <div className="flex items-center justify-center text-slate-500 text-sm">
-                  <span className="w-2 h-2 bg-[#064e3b] rounded-full animate-pulse mr-2"></span>
+                  <div className="w-2 h-2 bg-[#064e3b] rounded-full animate-pulse mr-2"></div>
                   Please wait while we complete the setup...
                 </div>
               </>
             )}
           </div>
 
-          {/* Debug Info (only in development) */}
+          {/* Debug Info (development only) */}
           {process.env.NODE_ENV === 'development' && (
             <div className="bg-gray-100 rounded-lg p-3">
-              <p className="text-xs font-mono text-gray-600">
-                URL: {window.location.href.split('?')[0]}...
+              <p className="text-xs font-mono text-gray-600 break-all">
+                URL: {window.location.href}
               </p>
               <p className="text-xs font-mono text-gray-600 mt-1">
                 Check console for detailed logs
               </p>
             </div>
           )}
-
         </div>
       </div>
     </div>

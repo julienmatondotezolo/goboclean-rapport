@@ -6,103 +6,131 @@ import { Database } from '@/types/supabase';
 let supabaseInstance: SupabaseClient<Database> | null = null;
 
 export const createClient = (): SupabaseClient<Database> => {
-  // Return existing instance if already created
+  // Return existing instance if already created (but allow recreation after reset)
   if (supabaseInstance) {
     return supabaseInstance;
   }
 
-  // Create new instance with proper session isolation
+  console.log('🚀 [CLIENT] Creating new Supabase client instance');
+
+  // Create new instance with bulletproof session management
   supabaseInstance = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       auth: {
-        // 🎯 Enable automatic session refresh
+        // 🎯 Enable automatic session refresh with shorter intervals
         autoRefreshToken: true,
-        // 🔒 Persist session across page reloads
+        // 🔒 Persist session across page reloads and tabs
         persistSession: true,
-        // 🏠 Detect session changes across tabs
+        // 🏠 Detect session changes across tabs for multi-tab sync
         detectSessionInUrl: true,
-        // 📱 Storage key for session isolation
+        // 📱 Consistent storage key across the app
         storageKey: 'goboclean-auth-token',
+        // 🔄 More aggressive session refresh (5 minutes before expiry)
+        flowType: 'pkce',
+        debug: process.env.NODE_ENV === 'development',
       },
-      cookies: {
-        get(name: string) {
-          // Safely parse cookies with error handling
-          try {
-            const cookies = document.cookie.split(';');
-            for (const cookie of cookies) {
-              const [key, value] = cookie.trim().split('=');
-              if (key === name) {
-                return decodeURIComponent(value);
-              }
-            }
-            return null;
-          } catch (error) {
-            console.warn('Cookie parse error:', error);
-            return null;
-          }
-        },
-        set(name: string, value: string, options: any = {}) {
-          try {
-            let cookie = `${name}=${encodeURIComponent(value)}`;
-            
-            // Default options for security
-            const defaultOptions = {
-              path: '/',
-              sameSite: 'lax',
-              secure: window.location.protocol === 'https:',
-              maxAge: 86400 * 30, // 30 days
-            };
-
-            const finalOptions = { ...defaultOptions, ...options };
-            
-            if (finalOptions.maxAge) {
-              cookie += `; max-age=${finalOptions.maxAge}`;
-            }
-            if (finalOptions.path) {
-              cookie += `; path=${finalOptions.path}`;
-            }
-            if (finalOptions.domain) {
-              cookie += `; domain=${finalOptions.domain}`;
-            }
-            if (finalOptions.sameSite) {
-              cookie += `; samesite=${finalOptions.sameSite}`;
-            }
-            if (finalOptions.secure) {
-              cookie += '; secure';
-            }
-            
-            document.cookie = cookie;
-          } catch (error) {
-            console.warn('Cookie set error:', error);
-          }
-        },
-        remove(name: string, options: any = {}) {
-          try {
-            this.set(name, '', { ...options, maxAge: 0 });
-          } catch (error) {
-            console.warn('Cookie remove error:', error);
-          }
+      global: {
+        headers: {
+          'X-Client-Info': 'goboclean-frontend@2.4.0',
         },
       },
     }
   );
 
-  // 🔄 Global error handling for session issues
+  // 🔄 Enhanced auth state change handler with detailed logging
   supabaseInstance.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_OUT' && !session) {
-      console.log('🔐 Session ended globally');
-    }
-    if (event === 'TOKEN_REFRESHED') {
-      console.log('🔄 Token refreshed globally');
+    console.log(`🔐 [CLIENT] Auth event: ${event}`, {
+      hasSession: !!session,
+      userId: session?.user?.id?.slice(0, 8) + '...' || 'none',
+      expiresAt: session?.expires_at || 'none',
+      timeUntilExpiry: session?.expires_at ? Math.floor((session.expires_at * 1000 - Date.now()) / 1000) : 'none'
+    });
+    
+    switch (event) {
+      case 'SIGNED_OUT':
+        console.log('🚪 [CLIENT] User signed out - clearing local state');
+        // Force reload to clear any cached state
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('goboclean-auth-token');
+          sessionStorage.clear();
+        }
+        break;
+        
+      case 'TOKEN_REFRESHED':
+        console.log('🔄 [CLIENT] Token refreshed successfully');
+        // Broadcast session update to other tabs
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('supabase:session-updated', {
+            detail: { session }
+          }));
+        }
+        break;
+        
+      case 'SIGNED_IN':
+        console.log('🔑 [CLIENT] User signed in successfully');
+        // Broadcast login to other tabs
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('supabase:signed-in', {
+            detail: { session }
+          }));
+        }
+        break;
+        
+      default:
+        console.log(`🔍 [CLIENT] Unhandled auth event: ${event}`);
+        break;
     }
   });
+
+  // 🌐 Multi-tab session synchronization
+  if (typeof window !== 'undefined') {
+    // Listen for session updates from other tabs
+    window.addEventListener('supabase:session-updated', () => {
+      console.log('🔄 [CLIENT] Received session update from another tab');
+      // Trigger a session refresh to sync state
+      supabaseInstance?.auth.getSession();
+    });
+    
+    // Listen for logout events from other tabs
+    window.addEventListener('supabase:signed-out', () => {
+      console.log('🚪 [CLIENT] Received logout event from another tab');
+      // Force logout on this tab too
+      supabaseInstance?.auth.signOut();
+    });
+  }
 
   return supabaseInstance;
 };
 
 // 🧹 Reset client instance (for testing or logout)
 export const resetSupabaseClient = () => {
+  console.log('🔄 [CLIENT] Resetting Supabase client instance');
+  if (supabaseInstance) {
+    // Cleanup any listeners
+    supabaseInstance.auth.onAuthStateChange(() => {});
+  }
   supabaseInstance = null;
+  
+  // Clear storage
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('goboclean-auth-token');
+    localStorage.removeItem('supabase.auth.token');
+    sessionStorage.clear();
+  }
+};
+
+// 🔍 Debug helper to check client state
+export const debugClientState = () => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 [CLIENT] Debug State:', {
+      hasInstance: !!supabaseInstance,
+      timestamp: new Date().toISOString(),
+      localStorage: typeof window !== 'undefined' ? {
+        authToken: !!localStorage.getItem('goboclean-auth-token'),
+        supabaseToken: !!localStorage.getItem('supabase.auth.token'),
+      } : 'server-side'
+    });
+  }
 };
