@@ -1,4 +1,4 @@
-import { apiClient } from './api-client';
+import { apiClient } from "./api-client";
 import {
   offlineDB,
   getPendingSyncItems,
@@ -9,11 +9,11 @@ import {
   cacheReport,
   cacheNotifications,
   getCachedReport,
-} from './offline-store';
-import type { Report, Photo } from '@/types/report';
-import type { AppNotification } from '@/types/mission';
+} from "./offline-store";
+import type { Report, Photo } from "@/types/report";
+import type { AppNotification } from "@/types/mission";
 
-export type SyncStatus = 'idle' | 'syncing' | 'error' | 'completed';
+export type SyncStatus = "idle" | "syncing" | "error" | "completed";
 
 export interface SyncResult {
   status: SyncStatus;
@@ -41,7 +41,7 @@ export class SyncManager {
    * Check if online
    */
   private isOnline(): boolean {
-    return typeof navigator !== 'undefined' ? navigator.onLine : true;
+    return typeof navigator !== "undefined" ? navigator.onLine : true;
   }
 
   /**
@@ -49,19 +49,19 @@ export class SyncManager {
    */
   async sync(): Promise<SyncResult> {
     if (this.syncInProgress) {
-      return { status: 'syncing', syncedCount: 0, errorCount: 0, errors: [] };
+      return { status: "syncing", syncedCount: 0, errorCount: 0, errors: [] };
     }
 
     if (!this.isOnline()) {
-      return { status: 'error', syncedCount: 0, errorCount: 1, errors: ['No internet connection'] };
+      return { status: "error", syncedCount: 0, errorCount: 1, errors: ["No internet connection"] };
     }
 
     this.syncInProgress = true;
-    this.onStatusChange?.('syncing');
+    this.onStatusChange?.("syncing");
 
     try {
       await updateSettings({ sync_in_progress: true });
-      
+
       const pendingItems = await getPendingSyncItems();
       let syncedCount = 0;
       let errorCount = 0;
@@ -75,12 +75,12 @@ export class SyncManager {
           syncedCount++;
         } catch (error) {
           errorCount++;
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
           errors.push(`${item.type}: ${errorMessage}`);
-          
+
           // Update retry count and schedule retry
           await updateSyncQueueItem(item.id!, errorMessage);
-          
+
           // Remove if too many retries
           if (item.retry_count >= this.retryDelays.length) {
             await removeFromSyncQueue(item.id!);
@@ -92,12 +92,12 @@ export class SyncManager {
       try {
         await this.syncDownData();
       } catch (error) {
-        errors.push('Failed to sync down data: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        errors.push("Failed to sync down data: " + (error instanceof Error ? error.message : "Unknown error"));
         errorCount++;
       }
 
       const result: SyncResult = {
-        status: errorCount > 0 ? 'error' : 'completed',
+        status: errorCount > 0 ? "error" : "completed",
         syncedCount,
         errorCount,
         errors,
@@ -109,23 +109,22 @@ export class SyncManager {
         sync_error_count: errorCount,
       });
 
-      this.onStatusChange?.('completed', result);
+      this.onStatusChange?.("completed", result);
       return result;
-
     } catch (error) {
       const result: SyncResult = {
-        status: 'error',
+        status: "error",
         syncedCount: 0,
         errorCount: 1,
-        errors: [error instanceof Error ? error.message : 'Sync failed'],
+        errors: [error instanceof Error ? error.message : "Sync failed"],
       };
 
-      await updateSettings({ 
+      await updateSettings({
         sync_in_progress: false,
         sync_error_count: 1,
       });
 
-      this.onStatusChange?.('error', result);
+      this.onStatusChange?.("error", result);
       return result;
     } finally {
       this.syncInProgress = false;
@@ -137,22 +136,22 @@ export class SyncManager {
    */
   private async syncItem(item: SyncQueueItem): Promise<void> {
     switch (item.type) {
-      case 'mission_start':
+      case "mission_start":
         await this.syncMissionStart(item);
         break;
-        
-      case 'mission_complete':
+
+      case "mission_complete":
         await this.syncMissionComplete(item);
         break;
-        
-      case 'photo_upload':
+
+      case "photo_upload":
         await this.syncPhotoUpload(item);
         break;
-        
-      case 'notification_read':
+
+      case "notification_read":
         await this.syncNotificationRead(item);
         break;
-        
+
       default:
         throw new Error(`Unknown sync item type: ${item.type}`);
     }
@@ -162,8 +161,8 @@ export class SyncManager {
    * Sync mission start to server
    */
   private async syncMissionStart(item: SyncQueueItem): Promise<void> {
-    const response = await apiClient.post<{ mission: Report }>(`/api/missions/${item.entity_id}/start`, item.data);
-    
+    const response = await apiClient.post<{ mission: Report }>(`/missions/${item.entity_id}/start`, item.data);
+
     // Update local cache with server response (conflict resolution: server wins)
     if (response.mission) {
       await cacheReport(response.mission);
@@ -175,9 +174,9 @@ export class SyncManager {
    */
   private async syncMissionComplete(item: SyncQueueItem): Promise<void> {
     const { signatures, comments } = item.data;
-    
+
     // Complete the mission
-    const response = await apiClient.post<{ mission: Report }>(`/api/missions/${item.entity_id}/complete`, {
+    const response = await apiClient.post<{ mission: Report }>(`/missions/${item.entity_id}/complete`, {
       worker_signature_data: signatures.workerSignature,
       client_signature_data: signatures.clientSignature,
       comments,
@@ -194,15 +193,15 @@ export class SyncManager {
    */
   private async syncPhotoUpload(item: SyncQueueItem): Promise<void> {
     const { missionId, type, files } = item.data;
-    
+
     // Create FormData for upload
     const formData = new FormData();
     files.forEach((fileData: { file: Blob; filename: string }, index: number) => {
-      formData.append('files', fileData.file, fileData.filename);
+      formData.append("files", fileData.file, fileData.filename);
     });
 
-    const response = await apiClient.upload<{ photos: Photo[] }>(`/api/missions/${missionId}/photos/${type}`, formData);
-    
+    const response = await apiClient.upload<{ photos: Photo[] }>(`/missions/${missionId}/photos/${type}`, formData);
+
     // Update local cache with server URLs
     if (response.photos) {
       for (const photo of response.photos) {
@@ -219,7 +218,7 @@ export class SyncManager {
    */
   private async syncNotificationRead(item: SyncQueueItem): Promise<void> {
     await apiClient.patch(`/notifications/${item.entity_id}/read`);
-    
+
     // Update local cache
     await offlineDB.notifications.update(item.entity_id, {
       read_at: new Date().toISOString(),
@@ -233,8 +232,8 @@ export class SyncManager {
   private async syncDownData(): Promise<void> {
     try {
       // Fetch fresh missions
-      const missionsResponse = await apiClient.get<{ missions: Report[] }>('/api/missions');
-      
+      const missionsResponse = await apiClient.get<{ missions: Report[] }>("/missions");
+
       if (missionsResponse.missions) {
         // Cache each mission
         for (const mission of missionsResponse.missions) {
@@ -243,14 +242,14 @@ export class SyncManager {
       }
 
       // Fetch fresh notifications
-      const notificationsResponse = await apiClient.get<{ notifications: AppNotification[] }>('/api/notifications');
-      
+      const notificationsResponse = await apiClient.get<{ notifications: AppNotification[] }>("/notifications");
+
       if (notificationsResponse.notifications) {
         await cacheNotifications(notificationsResponse.notifications);
       }
     } catch (error) {
       // Don't fail the entire sync if download fails
-      throw new Error('Failed to download fresh data');
+      throw new Error("Failed to download fresh data");
     }
   }
 
@@ -258,7 +257,7 @@ export class SyncManager {
    * Handle online/offline state changes
    */
   setupOnlineListener(): (() => void) | void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const handleOnline = () => {
       // Automatically sync when coming back online
@@ -266,16 +265,16 @@ export class SyncManager {
     };
 
     const handleOffline = () => {
-      this.onStatusChange?.('idle');
+      this.onStatusChange?.("idle");
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     // Cleanup function
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }
 
@@ -299,15 +298,15 @@ export class SyncManager {
   async resolveConflicts(localReport: Report): Promise<void> {
     try {
       // Fetch current server version
-      const serverReport = await apiClient.get<Report>(`/api/missions/${localReport.id}`);
-      
+      const serverReport = await apiClient.get<Report>(`/missions/${localReport.id}`);
+
       // Check if server version is newer
       if (new Date(serverReport.updated_at) > new Date(localReport.updated_at)) {
         // Server wins - update local cache
         await cacheReport(serverReport, serverReport.photos);
-        
+
         // Show notification to user
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           // We could show a toast notification here about conflict resolution
         }
       }
@@ -342,30 +341,34 @@ export function initializeSyncManager(): () => void {
  * Queue a mission start for sync
  */
 export async function queueMissionStart(missionId: string, data: any): Promise<void> {
-  const { addToSyncQueue } = await import('./offline-store');
-  await addToSyncQueue('mission_start', missionId, data, 10); // High priority
+  const { addToSyncQueue } = await import("./offline-store");
+  await addToSyncQueue("mission_start", missionId, data, 10); // High priority
 }
 
 /**
  * Queue a mission completion for sync
  */
 export async function queueMissionComplete(missionId: string, data: any): Promise<void> {
-  const { addToSyncQueue } = await import('./offline-store');
-  await addToSyncQueue('mission_complete', missionId, data, 10); // High priority
+  const { addToSyncQueue } = await import("./offline-store");
+  await addToSyncQueue("mission_complete", missionId, data, 10); // High priority
 }
 
 /**
  * Queue photo uploads for sync
  */
-export async function queuePhotoUpload(missionId: string, type: 'before' | 'after', files: { file: Blob; filename: string }[]): Promise<void> {
-  const { addToSyncQueue } = await import('./offline-store');
-  await addToSyncQueue('photo_upload', missionId, { missionId, type, files }, 5); // Medium priority
+export async function queuePhotoUpload(
+  missionId: string,
+  type: "before" | "after",
+  files: { file: Blob; filename: string }[],
+): Promise<void> {
+  const { addToSyncQueue } = await import("./offline-store");
+  await addToSyncQueue("photo_upload", missionId, { missionId, type, files }, 5); // Medium priority
 }
 
 /**
  * Queue notification read for sync
  */
 export async function queueNotificationRead(notificationId: string): Promise<void> {
-  const { addToSyncQueue } = await import('./offline-store');
-  await addToSyncQueue('notification_read', notificationId, {}, 1); // Low priority
+  const { addToSyncQueue } = await import("./offline-store");
+  await addToSyncQueue("notification_read", notificationId, {}, 1); // Low priority
 }

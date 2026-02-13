@@ -79,9 +79,9 @@ export default function MonitoringPage() {
       setError(null);
       
       const [usersResponse, activitiesResponse, statsResponse] = await Promise.all([
-        apiClient.get<{ success: boolean; data: UserActivity[] }>('/api/monitoring/active-users'),
-        apiClient.get<{ success: boolean; data: ActivityLog[] }>('/api/monitoring/recent-activities?limit=50'),
-        apiClient.get<{ success: boolean; data: Statistics }>('/api/monitoring/statistics'),
+        apiClient.get<{ success: boolean; data: UserActivity[] }>('/monitoring/active-users'),
+        apiClient.get<{ success: boolean; data: ActivityLog[] }>('/monitoring/recent-activities?limit=50'),
+        apiClient.get<{ success: boolean; data: Statistics }>('/monitoring/statistics'),
       ]);
 
       if (usersResponse.success) setActiveUsers(usersResponse.data);

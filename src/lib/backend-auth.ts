@@ -7,7 +7,7 @@ export class BackendAuthService {
   private static instance: BackendAuthService;
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    this.baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
   }
 
   static getInstance(): BackendAuthService {
@@ -21,8 +21,8 @@ export class BackendAuthService {
    * Store JWT token in localStorage
    */
   private setToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('goboclean-auth-token', token);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("goboclean-auth-token", token);
     }
   }
 
@@ -30,8 +30,8 @@ export class BackendAuthService {
    * Get JWT token from localStorage
    */
   getToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('goboclean-auth-token');
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("goboclean-auth-token");
     }
     return null;
   }
@@ -40,8 +40,8 @@ export class BackendAuthService {
    * Clear stored JWT token
    */
   private clearToken(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('goboclean-auth-token');
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("goboclean-auth-token");
     }
   }
 
@@ -49,25 +49,25 @@ export class BackendAuthService {
    * Login with email/password and store JWT token
    */
   async login(email: string, password: string): Promise<any> {
-    const response = await fetch(`${this.baseUrl}/api/auth/login`, {
-      method: 'POST',
+    const response = await fetch(`${this.baseUrl}/auth/login`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Login failed');
+      throw new Error(errorData.message || "Login failed");
     }
 
     const data = await response.json();
-    
+
     if (data.access_token) {
       this.setToken(data.access_token);
     }
-    
+
     return data;
   }
 
@@ -77,24 +77,24 @@ export class BackendAuthService {
   async getCurrentUser(): Promise<any> {
     const token = this.getToken();
     if (!token) {
-      throw new Error('No authentication token');
+      throw new Error("No authentication token");
     }
 
-    const response = await fetch(`${this.baseUrl}/api/auth/me`, {
-      method: 'GET',
+    const response = await fetch(`${this.baseUrl}/auth/me`, {
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
       if (response.status === 401) {
         this.clearToken();
-        throw new Error('Session expired');
+        throw new Error("Session expired");
       }
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to get user');
+      throw new Error(errorData.message || "Failed to get user");
     }
 
     return response.json();
@@ -105,19 +105,19 @@ export class BackendAuthService {
    */
   async logout(): Promise<void> {
     const token = this.getToken();
-    
+
     // Call backend logout if we have a token
     if (token) {
       try {
-        await fetch(`${this.baseUrl}/api/auth/logout`, {
-          method: 'POST',
+        await fetch(`${this.baseUrl}/auth/logout`, {
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         });
       } catch (error) {
-        console.warn('Logout request failed:', error);
+        console.warn("Logout request failed:", error);
         // Continue with local cleanup even if backend call fails
       }
     }

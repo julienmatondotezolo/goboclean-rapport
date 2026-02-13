@@ -31,7 +31,7 @@ export default function ReportDetailPage() {
 
   const handleDownloadPDF = async () => {
     try {
-      const response = await fetch(`/api/reports/${reportId}/generate-pdf`, {
+      const response = await fetch(`/reports/${reportId}/generate-pdf`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,

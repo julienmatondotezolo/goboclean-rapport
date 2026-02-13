@@ -56,7 +56,7 @@ export default function ProfilePage() {
       // TODO: Implement backend API call for updating push notifications preference
       // Call backend API to update preference
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      const response = await fetch(`${backendUrl}/api/auth/preferences`, {
+      const response = await fetch(`${backendUrl}/auth/preferences`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -123,7 +123,7 @@ export default function ProfilePage() {
 
       // Send to backend
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      const response = await fetch(`${backendUrl}/api/auth/profile/picture`, {
+      const response = await fetch(`${backendUrl}/auth/profile/picture`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,

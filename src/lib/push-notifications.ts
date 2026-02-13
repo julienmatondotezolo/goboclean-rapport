@@ -1,16 +1,16 @@
 /**
  * Web Push Notification utilities
  */
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from "@/lib/api-client";
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 
 /**
  * Convert a URL-safe base64 string to a Uint8Array (for applicationServerKey).
  */
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = atob(base64);
   const outputArray = new Uint8Array(rawData.length);
   for (let i = 0; i < rawData.length; ++i) {
@@ -24,10 +24,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
  */
 export function isPushSupported(): boolean {
   return (
-    typeof window !== 'undefined' &&
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window
+    typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window
   );
 }
 
@@ -36,7 +33,7 @@ export function isPushSupported(): boolean {
  * Returns the permission state.
  */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
-  if (!isPushSupported()) return 'denied';
+  if (!isPushSupported()) return "denied";
   return Notification.requestPermission();
 }
 
@@ -59,10 +56,10 @@ export async function subscribeToPush(): Promise<boolean> {
 
   try {
     const permission = await requestNotificationPermission();
-    if (permission !== 'granted') return false;
+    if (permission !== "granted") return false;
 
     // Register the service worker
-    const registration = await navigator.serviceWorker.register('/sw.js');
+    const registration = await navigator.serviceWorker.register("/sw.js");
     await navigator.serviceWorker.ready;
 
     // Check for existing subscription
@@ -77,15 +74,15 @@ export async function subscribeToPush(): Promise<boolean> {
     }
 
     // Extract keys
-    const key = subscription.getKey('p256dh');
-    const auth = subscription.getKey('auth');
+    const key = subscription.getKey("p256dh");
+    const auth = subscription.getKey("auth");
 
     if (!key || !auth) {
       return false;
     }
 
     // Send to backend
-    await apiClient.post('/api/notifications/subscribe', {
+    await apiClient.post("/notifications/subscribe", {
       endpoint: subscription.endpoint,
       p256dh: btoa(String.fromCharCode(...new Uint8Array(key))),
       auth: btoa(String.fromCharCode(...new Uint8Array(auth))),
@@ -104,18 +101,18 @@ export async function unsubscribeFromPush(): Promise<boolean> {
   if (!isPushSupported()) return false;
 
   try {
-    const registration = await navigator.serviceWorker.getRegistration('/sw.js');
+    const registration = await navigator.serviceWorker.getRegistration("/sw.js");
     if (!registration) return true;
 
     const subscription = await registration.pushManager.getSubscription();
-    
+
     if (subscription) {
       // Notify backend with the endpoint before unsubscribing
-      await apiClient.request('/api/notifications/unsubscribe', {
-        method: 'DELETE',
+      await apiClient.request("/notifications/unsubscribe", {
+        method: "DELETE",
         body: JSON.stringify({ endpoint: subscription.endpoint }),
       });
-      
+
       await subscription.unsubscribe();
     }
 

@@ -1,14 +1,13 @@
-'use client';
+"use client";
 
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
-import type { MissionReport } from '@/types/mission';
+import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
+import type { MissionReport } from "@/types/mission";
 
 export const reportKeys = {
-  all: ['reports'] as const,
-  list: (filters?: Record<string, unknown>) =>
-    [...reportKeys.all, 'list', filters ?? {}] as const,
-  detail: (id: string) => [...reportKeys.all, 'detail', id] as const,
+  all: ["reports"] as const,
+  list: (filters?: Record<string, unknown>) => [...reportKeys.all, "list", filters ?? {}] as const,
+  detail: (id: string) => [...reportKeys.all, "detail", id] as const,
 };
 
 /**
@@ -19,14 +18,13 @@ export function useReports(
   opts?: Partial<UseQueryOptions<MissionReport[]>>,
 ) {
   const params = new URLSearchParams();
-  if (filters?.search) params.set('search', filters.search);
-  if (filters?.status) params.set('status', filters.status);
+  if (filters?.search) params.set("search", filters.search);
+  if (filters?.status) params.set("status", filters.status);
   const qs = params.toString();
 
   return useQuery<MissionReport[]>({
     queryKey: reportKeys.list(filters),
-    queryFn: () =>
-      apiClient.get<MissionReport[]>(`/api/reports${qs ? `?${qs}` : ''}`),
+    queryFn: () => apiClient.get<MissionReport[]>(`/reports${qs ? `?${qs}` : ""}`),
     staleTime: 30_000,
     ...opts,
   });
@@ -35,13 +33,10 @@ export function useReports(
 /**
  * Fetch a single report detail.
  */
-export function useReport(
-  id: string,
-  opts?: Partial<UseQueryOptions<MissionReport>>,
-) {
+export function useReport(id: string, opts?: Partial<UseQueryOptions<MissionReport>>) {
   return useQuery<MissionReport>({
     queryKey: reportKeys.detail(id),
-    queryFn: () => apiClient.get<MissionReport>(`/api/reports/${id}`),
+    queryFn: () => apiClient.get<MissionReport>(`/reports/${id}`),
     enabled: !!id,
     staleTime: 30_000,
     ...opts,
