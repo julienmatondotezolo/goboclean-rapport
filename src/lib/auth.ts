@@ -1,10 +1,9 @@
-import { backendAuth } from './backend-auth';
-import { User } from '@/types/report';
+import { backendAuth } from "./backend-auth";
+import { User } from "@/types/report";
 
 // Debug utilities for development
-if (process.env.NODE_ENV === 'development') {
-  import('./debug-session');
-  // test-session-helper removed (was Supabase-dependent)
+if (process.env.NODE_ENV === "development") {
+  import("./debug-session");
 }
 
 export interface LoginCredentials {
@@ -16,11 +15,10 @@ export interface SignupData extends LoginCredentials {
   first_name: string;
   last_name: string;
   phone?: string;
-  role?: 'worker' | 'admin';
+  role?: "worker" | "admin";
 }
 
 /**
- * Modern authentication service using Supabase SSR patterns
  * Handles login/logout with proper session management
  */
 export const authService = {
@@ -29,16 +27,16 @@ export const authService = {
    * Returns user data on success, throws on error
    */
   async login(credentials: LoginCredentials) {
-    console.log('🔐 AUTH: Starting login for:', credentials.email);
-    
+    console.log("🔐 AUTH: Starting login for:", credentials.email);
+
     const data = await backendAuth.login(credentials.email, credentials.password);
     const user = await backendAuth.getCurrentUser();
 
-    console.log('✅ AUTH: Login successful for:', user.email);
-    
-    return { 
+    console.log("✅ AUTH: Login successful for:", user.email);
+
+    return {
       user,
-      session: { access_token: backendAuth.getToken() }
+      session: { access_token: backendAuth.getToken() },
     };
   },
 
@@ -46,7 +44,7 @@ export const authService = {
    * Sign up new user (not implemented for backend auth)
    */
   async signup(signupData: SignupData) {
-    throw new Error('Signup not implemented for backend auth');
+    throw new Error("Signup not implemented for backend auth");
   },
 
   /**
@@ -54,14 +52,14 @@ export const authService = {
    * Clears session and redirects to login
    */
   async logout() {
-    console.log('🔐 AUTH: Starting logout');
-    
+    console.log("🔐 AUTH: Starting logout");
+
     await backendAuth.logout();
 
-    console.log('✅ AUTH: Logout successful');
-    
+    console.log("✅ AUTH: Logout successful");
+
     // Force page reload to clear all state
-    window.location.href = '/fr/login';
+    window.location.href = "/fr/login";
   },
 
   /**
@@ -75,9 +73,8 @@ export const authService = {
       }
 
       return await backendAuth.getCurrentUser();
-      
     } catch (error) {
-      console.error('❌ AUTH: getCurrentUser error:', error);
+      console.error("❌ AUTH: getCurrentUser error:", error);
       return null;
     }
   },
@@ -88,7 +85,7 @@ export const authService = {
   async getCurrentSession() {
     const token = backendAuth.getToken();
     if (!token) return null;
-    
+
     return { access_token: token };
   },
 
@@ -96,14 +93,14 @@ export const authService = {
    * Update user password (not implemented for backend auth)
    */
   async updatePassword(newPassword: string) {
-    throw new Error('Password update not implemented for backend auth');
+    throw new Error("Password update not implemented for backend auth");
   },
 
   /**
    * Reset password via email (not implemented for backend auth)
    */
   async resetPassword(email: string) {
-    throw new Error('Password reset not implemented for backend auth');
+    throw new Error("Password reset not implemented for backend auth");
   },
 
   /**
