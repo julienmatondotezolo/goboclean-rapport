@@ -26,7 +26,7 @@ export function useReports(
   return useQuery<MissionReport[]>({
     queryKey: reportKeys.list(filters),
     queryFn: () =>
-      apiClient.get<MissionReport[]>(`/reports${qs ? `?${qs}` : ''}`),
+      apiClient.get<MissionReport[]>(`/api/reports${qs ? `?${qs}` : ''}`),
     staleTime: 30_000,
     ...opts,
   });
@@ -41,7 +41,7 @@ export function useReport(
 ) {
   return useQuery<MissionReport>({
     queryKey: reportKeys.detail(id),
-    queryFn: () => apiClient.get<MissionReport>(`/reports/${id}`),
+    queryFn: () => apiClient.get<MissionReport>(`/api/reports/${id}`),
     enabled: !!id,
     staleTime: 30_000,
     ...opts,

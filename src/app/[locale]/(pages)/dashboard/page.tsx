@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { createClient } from '@/lib/supabase/client';
+// Backend auth is handled via useAuth hook
 import { Clock, ClipboardCheck, Bell, Loader2, AlertCircle } from 'lucide-react';
 import { MissionCard } from '@/components/ui/mission-card';
 import { StatCard } from '@/components/ui/stat-card';
 import { useRouter } from '@/i18n/routing';
 import { LogoGoBoClean } from '@/components/ui/logo';
-import { handleSupabaseError } from '@/lib/error-handler';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyMissions, useAllMissions } from '@/hooks/useMissions';
 import { useAdminStats } from '@/hooks/useAdminStats';
@@ -21,8 +20,6 @@ export default function DashboardPage() {
   const t = useTranslations('Dashboard');
   const router = useRouter();
   const { user, isAdmin, isLoading: authLoading } = useAuth();
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
 
   // Role-based mission fetching: admin sees all, worker sees own
   // Guard all queries with !!user to prevent 401 on login page
@@ -45,47 +42,6 @@ export default function DashboardPage() {
   // Notification count
   const { data: notifData } = useNotifications({ enabled: !!user });
   const unreadCount = notifData?.unreadCount ?? 0;
-
-  // Fetch profile picture
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchProfile = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (cancelled) return;
-        
-        if (session) {
-          const { data: profile, error } = await supabase
-            .from('users')
-            .select('profile_picture_url')
-            .eq('id', session.user.id)
-            .single() as { data: any; error: any };
-          
-          if (cancelled) return;
-          
-          if (error) handleSupabaseError(error, 'Failed to load profile');
-          else if (profile) setProfilePicture((profile as any).profile_picture_url);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          handleSupabaseError(error, 'Dashboard');
-        }
-      } finally {
-        if (!cancelled) {
-          setProfileLoading(false);
-        }
-      }
-    };
-
-    fetchProfile();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Derive today's missions sorted by appointment time
   const todayMissions = useMemo(() => {
@@ -135,7 +91,7 @@ export default function DashboardPage() {
     ? `${adminStats?.completedToday ?? 0}/${adminStats?.activeMissions ?? totalActive}`
     : `${completedCount}/${(missions?.length ?? 0)}`;
 
-  const isLoading = authLoading || profileLoading;
+  const isLoading = authLoading;
 
   // User name with fallback and debug logging
   const userName = user?.first_name ?? 'User';
@@ -216,7 +172,7 @@ export default function DashboardPage() {
             <div className="relative">
               <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white/20">
                 <img 
-                  src={profilePicture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}&backgroundColor=ffad33`} 
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}&backgroundColor=ffad33`} 
                   alt="Avatar" 
                   className="w-full h-full object-cover"
                 />

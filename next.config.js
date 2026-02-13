@@ -9,11 +9,11 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://ihlnwzrsvfxgossytuiz.supabase.co",
-      "style-src 'self' 'unsafe-inline'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: https: blob:",
-      "font-src 'self' https:",
-      "connect-src 'self' http://localhost:3001 https://ihlnwzrsvfxgossytuiz.supabase.co https://api.goboclean.be wss://",
+      "font-src 'self' https://fonts.gstatic.com",
+      "connect-src 'self' http://localhost:3001 https://api.goboclean.be https://nominatim.openstreetmap.org wss://localhost:* data:",
       "frame-ancestors 'none'",
       "form-action 'self'",
       "base-uri 'self'",
@@ -73,11 +73,15 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.supabase.co",
+        hostname: "images.unsplash.com",
       },
       {
         protocol: "https",
-        hostname: "images.unsplash.com",
+        hostname: "api.dicebear.com",
+      },
+      {
+        protocol: "https",
+        hostname: "ihlnwzrsvfxgossytuiz.supabase.co",
       },
     ],
   },

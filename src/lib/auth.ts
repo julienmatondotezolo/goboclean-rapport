@@ -4,7 +4,7 @@ import { User } from '@/types/report';
 // Debug utilities for development
 if (process.env.NODE_ENV === 'development') {
   import('./debug-session');
-  import('./test-session-helper');
+  // test-session-helper removed (was Supabase-dependent)
 }
 
 export interface LoginCredentials {

@@ -57,49 +57,10 @@ export default function MissionCreatePage() {
   const params = useParams();
   const t = useTranslations('MissionCreate');
   const { user, isAdmin, isLoading: authLoading } = useAuth();
+  
+  // ALL HOOKS MUST BE CALLED AT THE TOP - NO CONDITIONAL CALLS!
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedWorkers, setSelectedWorkers] = useState<string[]>([]);
-  
-  // Redirect workers away — admin only page
-  useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      router.replace(`/${params.locale}/dashboard`);
-    }
-  }, [authLoading, isAdmin, router, params.locale]);
-
-  // Real API hooks
-  const { data: workers, isLoading: workersLoading } = useWorkersList();
-  const createMission = useCreateMission();
-
-  // Block render for non-admins
-  if (!user && authLoading) {
-    return (
-      <div className="min-h-screen bg-white">
-        <LoadingBanner 
-          isLoading={true} 
-          message="Loading..." 
-        />
-        <div className="pt-16">
-          <PageHeader title="New Mission" />
-        </div>
-      </div>
-    );
-  }
-
-  if (user && !isAdmin) {
-    return (
-      <div className="min-h-screen bg-white">
-        <PageHeader title="Access Denied" />
-        <div className="p-6 text-center">
-          <ShieldAlert className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <p className="text-gray-600">You don't have permission to create missions.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const progressValue = (currentStep / TOTAL_STEPS) * 100;
-
   const [clientInfo, setClientInfo] = useState<ClientInfo>({
     firstName: '',
     lastName: '',
@@ -135,6 +96,48 @@ export default function MissionCreatePage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // API hooks - also must be at the top!
+  const { data: workers, isLoading: workersLoading } = useWorkersList();
+  const createMission = useCreateMission();
+
+  // Effects - also must be at the top!
+  useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.replace(`/${params.locale}/dashboard`);
+    }
+  }, [authLoading, isAdmin, router, params.locale]);
+
+  // Computed values after hooks
+  const progressValue = (currentStep / TOTAL_STEPS) * 100;
+
+  // Early returns for conditional rendering (AFTER all hooks)
+  if (!user && authLoading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <LoadingBanner 
+          isLoading={true} 
+          message="Loading..." 
+        />
+        <div className="pt-16">
+          <PageHeader title="New Mission" />
+        </div>
+      </div>
+    );
+  }
+
+  if (user && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-white">
+        <PageHeader title="Access Denied" />
+        <div className="p-6 text-center">
+          <ShieldAlert className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-600">You don't have permission to create missions.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Helper functions
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
 

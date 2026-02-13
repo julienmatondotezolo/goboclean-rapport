@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import { handleError, showSuccess } from '@/lib/error-handler';
 import { PageHeader } from '@/components/ui/page-header';
 import { LanguageSelectorModal } from '@/components/language-selector-modal';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Key, 
   Bell, 
@@ -25,91 +25,41 @@ export default function ProfilePage() {
   const t = useTranslations('Profile');
   const params = useParams();
   const locale = params.locale as string;
+  const { user, isLoading: authLoading, logout } = useAuth();
+  
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [isUpdatingPreference, setIsUpdatingPreference] = useState(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
-  const [fullName, setFullName] = useState('User');
-  const [role, setRole] = useState('Worker');
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [isUploadingPicture, setIsUploadingPicture] = useState(false);
 
-  // Fetch user data
+  // Derive user data from backend auth
+  const fullName = user ? `${user.first_name} ${user.last_name}` : 'User';
+  const role = user?.role === 'admin' ? 'Administrator' : 'Worker';
+
+  // Load initial profile data
   useEffect(() => {
-    let cancelled = false;
-
-    const fetchUserData = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (cancelled) return; // Exit if cancelled
-        
-        if (sessionError) {
-          throw sessionError;
-        }
-        
-        if (!session) {
-          router.push('/login');
-          return;
-        }
-        
-        const { data: profile, error } = await supabase
-          .from('users')
-          .select('first_name, last_name, role, profile_picture_url, push_notifications_enabled')
-          .eq('id', session.user.id)
-          .single() as { data: any; error: any };
-
-        if (cancelled) return; // Exit if cancelled
-
-        if (error) {
-          throw error;
-        }
-
-        if (profile) {
-          setFullName(`${profile.first_name} ${profile.last_name}`);
-          setRole(profile.role === 'admin' ? 'Administrator' : 'Worker');
-          setProfilePicture(profile.profile_picture_url);
-          setPushNotifications(profile.push_notifications_enabled ?? true);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          handleError(error, { title: 'Failed to load profile' });
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchUserData();
-
-    // Cleanup function to cancel request if component unmounts
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
+    if (user) {
+      // Set profile picture from user data if available
+      setProfilePicture(user.profile_picture_url || null);
+      // TODO: Load push notification preference from backend when API is ready
+      setPushNotifications(true);
+    }
+  }, [user]);
 
   const handlePushNotificationsToggle = async () => {
     const newValue = !pushNotifications;
     setIsUpdatingPreference(true);
 
     try {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('No active session');
-      }
-
+      // TODO: Implement backend API call for updating push notifications preference
       // Call backend API to update preference
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      const response = await fetch(`${backendUrl}/auth/preferences`, {
+      const response = await fetch(`${backendUrl}/api/auth/preferences`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -167,23 +117,16 @@ export default function ProfilePage() {
     setIsUploadingPicture(true);
 
     try {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('No active session');
-      }
-
       // Create FormData to send to backend
       const formData = new FormData();
       formData.append('profilePicture', file);
 
       // Send to backend
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      const response = await fetch(`${backendUrl}/auth/profile/picture`, {
+      const response = await fetch(`${backendUrl}/api/auth/profile/picture`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
         body: formData,
       });
@@ -215,18 +158,10 @@ export default function ProfilePage() {
     console.log('🚪 [PROFILE] handleLogout started');
     setIsLoggingOut(true);
     try {
-      console.log('🚪 [PROFILE] Logging user activity...');
-      // Log logout activity before signing out
-      const { logUserLogout } = await import('@/lib/user-activity');
-      await logUserLogout();
-
-      console.log('🚪 [PROFILE] Calling supabase signOut...');
-      const supabase = createClient();
-      const { error } = await supabase.auth.signOut();
+      console.log('🚪 [PROFILE] Calling backend logout...');
+      await logout();
       
-      if (error) throw error;
-      
-      console.log('🚪 [PROFILE] SignOut successful, showing toast...');
+      console.log('🚪 [PROFILE] Logout successful, showing toast...');
       showSuccess(
         t('logoutSuccess') || 'Logged out',
         t('logoutSuccessDescription') || 'You have been logged out successfully'
@@ -243,18 +178,32 @@ export default function ProfilePage() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <LoadingBanner 
+          isLoading={true} 
+          message="Loading profile..." 
+        />
+      </div>
+    );
+  }
+
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-white pb-32">
       {/* Loading Banner */}
       <LoadingBanner 
-        isLoading={isLoading} 
-        message="Loading profile..." 
+        isLoading={isLoggingOut || isUploadingPicture} 
+        message={isLoggingOut ? "Logging out..." : "Uploading picture..."} 
       />
       
       {/* Header */}
-      <div className={isLoading ? 'pt-16' : ''}>
-        <PageHeader title={t('profile')} />
-      </div>
+      <PageHeader title={t('profile')} />
       
       {/* Profile Section */}
       <div className="pt-8 pb-10 px-8 flex flex-col items-center">
@@ -266,7 +215,7 @@ export default function ProfilePage() {
                 <Loader2 className="w-10 h-10 animate-spin text-[#064e3b]" />
               ) : (
                 <img 
-                  src={profilePicture || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=200&h=200"}
+                  src={profilePicture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name}&backgroundColor=ffad33`}
                   alt={fullName}
                   className="w-full h-full object-cover"
                 />
@@ -392,6 +341,7 @@ export default function ProfilePage() {
       <LanguageSelectorModal
         isOpen={isLanguageModalOpen}
         onClose={() => setIsLanguageModalOpen(false)}
+        currentLocale={locale}
       />
 
       {/* Sync/Offline Indicators — only visible on profile page */}

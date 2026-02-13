@@ -17,7 +17,7 @@ export function useWorkersList(
 ) {
   return useQuery<WorkerSummary[]>({
     queryKey: workerKeys.list(),
-    queryFn: () => apiClient.get<WorkerSummary[]>('/admin/workers'),
+    queryFn: () => apiClient.get<WorkerSummary[]>('/api/admin/workers'),
     staleTime: 120_000, // 2 min
     ...opts,
   });
