@@ -137,7 +137,20 @@ export default function DashboardPage() {
 
   const isLoading = authLoading || profileLoading;
 
+  // User name with fallback and debug logging
   const userName = user?.first_name ?? 'User';
+  
+  // Debug logging in development
+  if (process.env.NODE_ENV === 'development' && user) {
+    console.log('🔍 Dashboard User Debug:', {
+      firstName: user.first_name,
+      lastName: user.last_name,
+      email: user.email,
+      role: user.role,
+      userName: userName,
+      userObject: user
+    });
+  }
 
   // Helper to format mission time
   const formatTime = (iso: string) => {
@@ -284,6 +297,19 @@ export default function DashboardPage() {
             <ClipboardCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-[16px] font-bold text-gray-600 mb-1">{t('noMissions')}</p>
             <p className="text-[13px] text-gray-400">{t('noMissionsDescription')}</p>
+            {/* Debug info for demo */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-left text-blue-700">
+                <strong>Debug Info:</strong><br/>
+                • User: {user?.first_name} {user?.last_name} ({user?.email})<br/>
+                • Role: {user?.role}<br/>
+                • Auth Loading: {authLoading ? 'Yes' : 'No'}<br/>
+                • Missions Loading: {missionsLoading ? 'Yes' : 'No'}<br/>
+                • Total Missions: {missions?.length || 0}<br/>
+                • Display Missions: {allDisplayMissions.length}<br/>
+                • Backend URL: {process.env.NEXT_PUBLIC_BACKEND_URL}
+              </div>
+            )}
           </div>
         )}
 
