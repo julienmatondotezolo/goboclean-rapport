@@ -6,7 +6,8 @@ import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { apiClient } from '@/lib/api-client';
 import { handleError, showSuccess } from '@/lib/error-handler';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
@@ -23,11 +24,18 @@ type ChangePasswordForm = {
 
 export default function ChangePasswordPage() {
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
   const t = useTranslations('ChangePassword');
   const [isLoading, setIsLoading] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    router.push('/login');
+    return null;
+  }
 
   const passwordSchema = z.object({
     currentPassword: z.string().min(1, t('currentPasswordRequired') || 'Current password is required'),
@@ -50,46 +58,27 @@ export default function ChangePasswordPage() {
     setIsLoading(true);
     
     try {
-      const supabase = createClient();
-      
-      // Get current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        throw new Error('No active session');
-      }
-
-      // First, verify current password by attempting to sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: session.user.email!,
-        password: data.currentPassword,
+      const response = await apiClient.put('/auth/change-password', {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
       });
 
-      if (signInError) {
-        throw new Error(t('incorrectCurrentPassword') || 'Current password is incorrect');
+      if (response.success) {
+        showSuccess(
+          t('passwordChanged') || 'Password Changed',
+          t('passwordChangedDescription') || 'Your password has been updated successfully'
+        );
+
+        // Reset form
+        reset();
+
+        // Navigate back to profile after a short delay
+        setTimeout(() => {
+          router.push('/profile');
+        }, 1500);
+      } else {
+        throw new Error(response.message || 'Failed to change password');
       }
-
-      // Update password using Supabase Auth
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: data.newPassword,
-      });
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      showSuccess(
-        t('passwordChanged') || 'Password Changed',
-        t('passwordChangedDescription') || 'Your password has been updated successfully'
-      );
-
-      // Reset form
-      reset();
-
-      // Navigate back to profile after a short delay
-      setTimeout(() => {
-        router.push('/profile');
-      }, 1500);
       
     } catch (error: any) {
       handleError(error, { 
