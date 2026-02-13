@@ -28,7 +28,7 @@ export function useNotifications(
 ) {
   return useQuery<NotificationsResponse>({
     queryKey: notificationKeys.list(),
-    queryFn: () => apiClient.get<NotificationsResponse>('/notifications'),
+    queryFn: () => apiClient.get<NotificationsResponse>('/api/notifications'),
     staleTime: 15_000,
     refetchInterval: 60_000, // poll every minute
     ...opts,
@@ -42,7 +42,7 @@ export function useMarkNotificationRead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      apiClient.patch(`/notifications/${id}/read`),
+      apiClient.patch(`/api/notifications/${id}/read`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: notificationKeys.all });
     },
@@ -55,7 +55,7 @@ export function useMarkNotificationRead() {
 export function useDeleteNotification() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => apiClient.delete(`/notifications/${id}`),
+    mutationFn: (id: string) => apiClient.delete(`/api/notifications/${id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: notificationKeys.all });
     },
@@ -68,7 +68,7 @@ export function useDeleteNotification() {
 export function useClearAllNotifications() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => apiClient.delete('/notifications'),
+    mutationFn: () => apiClient.delete('/api/notifications'),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: notificationKeys.all });
     },
@@ -81,7 +81,7 @@ export function useClearAllNotifications() {
 export function useSubscribePush() {
   return useMutation({
     mutationFn: (sub: PushSubscriptionPayload) =>
-      apiClient.post('/notifications/subscribe', sub),
+      apiClient.post('/api/notifications/subscribe', sub),
   });
 }
 
@@ -98,7 +98,7 @@ export function useUnsubscribePush() {
           const subscription = await registration.pushManager.getSubscription();
           if (subscription) {
             // Send the endpoint to the backend
-            return apiClient.request('/notifications/unsubscribe', {
+            return apiClient.request('/api/notifications/unsubscribe', {
               method: 'DELETE',
               body: JSON.stringify({ endpoint: subscription.endpoint }),
             });
@@ -106,7 +106,7 @@ export function useUnsubscribePush() {
         }
       }
       // If no subscription found, just make a simple DELETE call
-      return apiClient.delete('/notifications/unsubscribe');
+      return apiClient.delete('/api/notifications/unsubscribe');
     },
   });
 }

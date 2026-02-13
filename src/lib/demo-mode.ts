@@ -7,7 +7,7 @@
  * Use this for stable demos when backend integration has issues.
  */
 
-export const DEMO_MODE = true; // Set to false to re-enable backend integration
+export const DEMO_MODE = false; // Set to false to re-enable backend integration
 
 // Demo data for missions
 export const DEMO_MISSIONS = [

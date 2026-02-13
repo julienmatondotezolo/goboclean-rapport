@@ -16,7 +16,7 @@ export function useAdminStats(
 ) {
   return useQuery<AdminStats>({
     queryKey: statsKeys.all,
-    queryFn: () => apiClient.get<AdminStats>('/admin/stats'),
+    queryFn: () => apiClient.get<AdminStats>('/api/admin/stats'),
     staleTime: 60_000,
     ...opts,
   });

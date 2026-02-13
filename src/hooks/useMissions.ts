@@ -39,7 +39,7 @@ export function useMyMissions(
 ) {
   return useQuery<Mission[]>({
     queryKey: missionKeys.my(),
-    queryFn: () => apiClient.get<Mission[]>('/missions'),
+    queryFn: () => apiClient.get<Mission[]>('/api/missions'),
     staleTime: 30_000,
     ...opts,
   });
@@ -53,7 +53,7 @@ export function useAllMissions(
 ) {
   return useQuery<Mission[]>({
     queryKey: missionKeys.lists(),
-    queryFn: () => apiClient.get<Mission[]>('/missions'),
+    queryFn: () => apiClient.get<Mission[]>('/api/missions'),
     staleTime: 30_000,
     ...opts,
   });
@@ -68,7 +68,7 @@ export function useMission(
 ) {
   return useQuery<Mission>({
     queryKey: missionKeys.detail(id),
-    queryFn: () => apiClient.get<Mission>(`/missions/${id}`),
+    queryFn: () => apiClient.get<Mission>(`/api/missions/${id}`),
     enabled: !!id,
     staleTime: 20_000,
     ...opts,
@@ -86,7 +86,7 @@ export function useCalendarMissions(
     queryKey: missionKeys.calendar(params),
     queryFn: () =>
       apiClient.get<Mission[]>(
-        `/missions/calendar?start=${params.start}&end=${params.end}`,
+        `/api/missions/calendar?start=${params.start}&end=${params.end}`,
       ),
     enabled: !!params.start && !!params.end,
     staleTime: 30_000,
@@ -103,7 +103,7 @@ export function useCreateMission() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateMissionPayload) =>
-      apiClient.post<Mission>('/missions', data),
+      apiClient.post<Mission>('/api/missions', data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: missionKeys.all });
     },
@@ -117,7 +117,7 @@ export function useStartMission() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      apiClient.post<Mission>(`/missions/${id}/start`),
+      apiClient.post<Mission>(`/api/missions/${id}/start`),
     onSuccess: (_data, id) => {
       qc.invalidateQueries({ queryKey: missionKeys.detail(id) });
       qc.invalidateQueries({ queryKey: missionKeys.all });
@@ -139,7 +139,7 @@ export function useUploadBeforePictures() {
       id: string;
       formData: FormData;
       onProgress?: (pct: number) => void;
-    }) => apiClient.upload<Mission>(`/missions/${id}/before-pictures`, formData, onProgress),
+    }) => apiClient.upload<Mission>(`/api/missions/${id}/before-pictures`, formData, onProgress),
     onSuccess: (_data, { id }) => {
       qc.invalidateQueries({ queryKey: missionKeys.detail(id) });
       qc.invalidateQueries({ queryKey: missionKeys.all });
@@ -161,7 +161,7 @@ export function useCompleteMission() {
       id: string;
       formData: FormData;
       onProgress?: (pct: number) => void;
-    }) => apiClient.upload<Mission>(`/missions/${id}/complete`, formData, onProgress),
+    }) => apiClient.upload<Mission>(`/api/missions/${id}/complete`, formData, onProgress),
     onSuccess: (_data, { id }) => {
       qc.invalidateQueries({ queryKey: missionKeys.detail(id) });
       qc.invalidateQueries({ queryKey: missionKeys.all });
@@ -176,7 +176,7 @@ export function useUpdateMission() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateMissionPayload> & { status?: string } }) =>
-      apiClient.patch<Mission>(`/missions/${id}`, data),
+      apiClient.patch<Mission>(`/api/missions/${id}`, data),
     onSuccess: (_data, { id }) => {
       qc.invalidateQueries({ queryKey: missionKeys.detail(id) });
       qc.invalidateQueries({ queryKey: missionKeys.all });
@@ -190,7 +190,7 @@ export function useUpdateMission() {
 export function useDeleteMission() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => apiClient.delete(`/missions/${id}`),
+    mutationFn: (id: string) => apiClient.delete(`/api/missions/${id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: missionKeys.all });
     },
@@ -204,7 +204,7 @@ export function useRescheduleMission() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: RescheduleMissionPayload }) =>
-      apiClient.patch<Mission>(`/missions/${id}/reschedule`, data),
+      apiClient.patch<Mission>(`/api/missions/${id}/reschedule`, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: missionKeys.all });
     },
