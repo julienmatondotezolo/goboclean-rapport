@@ -1,4 +1,4 @@
-import { createClient } from './supabase/client';
+import { backendAuth } from './backend-auth';
 import logger from './logger';
 
 /**
@@ -14,63 +14,13 @@ class ApiClient {
   }
 
   /**
-   * Get the current user's access token with automatic refresh
-   * Prevents race conditions with concurrent refresh attempts
+   * Get the current user's access token from backend auth
    */
   private async getAccessToken(): Promise<string | null> {
-    // If refresh is already in progress, wait for it
-    if (this.refreshPromise) {
-      console.log('🔄 Token refresh in progress, waiting...');
-      return await this.refreshPromise;
-    }
-
-    const supabase = createClient();
-    
-    // Get current session
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      return null;
-    }
-
-    // Check if token is about to expire (within 5 minutes)
-    const expiresAt = session.expires_at || 0;
-    const now = Math.floor(Date.now() / 1000);
-    const timeUntilExpiry = expiresAt - now;
-
-    if (timeUntilExpiry < 300) { // Less than 5 minutes
-      console.log('🔄 Token expiring soon, refreshing...');
-      
-      // Create single shared refresh promise to prevent race conditions
-      this.refreshPromise = this.performTokenRefresh();
-      const result = await this.refreshPromise;
-      this.refreshPromise = null; // Reset after completion
-      return result;
-    }
-
-    return session.access_token;
+    return backendAuth.getToken();
   }
 
-  /**
-   * Perform token refresh with proper error handling
-   */
-  private async performTokenRefresh(): Promise<string | null> {
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.refreshSession();
-      
-      if (error || !data.session) {
-        console.error('❌ Token refresh failed:', error?.message || 'No session returned');
-        throw new Error('Token refresh failed');
-      }
-      
-      console.log('✅ Token refreshed successfully in API client');
-      return data.session.access_token;
-    } catch (error) {
-      console.error('❌ Token refresh error:', error);
-      throw error;
-    }
-  }
+""
 
   /**
    * Make an authenticated request to the backend

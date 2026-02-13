@@ -1,4 +1,4 @@
-import { createClient } from './supabase/client';
+import { backendAuth } from './backend-auth';
 import { User } from '@/types/report';
 
 // Debug utilities for development
@@ -29,63 +29,24 @@ export const authService = {
    * Returns user data on success, throws on error
    */
   async login(credentials: LoginCredentials) {
-    const supabase = createClient();
-    
     console.log('🔐 AUTH: Starting login for:', credentials.email);
     
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: credentials.email,
-      password: credentials.password,
-    });
+    const data = await backendAuth.login(credentials.email, credentials.password);
+    const user = await backendAuth.getCurrentUser();
 
-    if (error) {
-      console.error('❌ AUTH: Login failed:', error.message);
-      throw error;
-    }
-
-    if (!data.user || !data.session) {
-      console.error('❌ AUTH: No user/session returned');
-      throw new Error('Authentication failed - no session created');
-    }
-
-    console.log('✅ AUTH: Login successful for:', data.user.email);
+    console.log('✅ AUTH: Login successful for:', user.email);
     
-    // Session is automatically handled by Supabase SSR
-    // Middleware will handle the redirect
     return { 
-      user: data.user,
-      session: data.session 
+      user,
+      session: { access_token: backendAuth.getToken() }
     };
   },
 
   /**
-   * Sign up new user
+   * Sign up new user (not implemented for backend auth)
    */
   async signup(signupData: SignupData) {
-    const supabase = createClient();
-    
-    console.log('🔐 AUTH: Starting signup for:', signupData.email);
-    
-    const { data, error } = await supabase.auth.signUp({
-      email: signupData.email,
-      password: signupData.password,
-      options: {
-        data: {
-          first_name: signupData.first_name,
-          last_name: signupData.last_name,
-          phone: signupData.phone,
-          role: signupData.role || 'worker',
-        },
-      },
-    });
-
-    if (error) {
-      console.error('❌ AUTH: Signup failed:', error.message);
-      throw error;
-    }
-
-    console.log('✅ AUTH: Signup successful');
-    return data;
+    throw new Error('Signup not implemented for backend auth');
   },
 
   /**
@@ -93,16 +54,9 @@ export const authService = {
    * Clears session and redirects to login
    */
   async logout() {
-    const supabase = createClient();
-    
     console.log('🔐 AUTH: Starting logout');
     
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) {
-      console.error('❌ AUTH: Logout failed:', error.message);
-      throw error;
-    }
+    await backendAuth.logout();
 
     console.log('✅ AUTH: Logout successful');
     
@@ -115,34 +69,12 @@ export const authService = {
    * Returns null if not authenticated or profile not found
    */
   async getCurrentUser(): Promise<User | null> {
-    const supabase = createClient();
-    
     try {
-      // Get current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('❌ AUTH: Session error:', sessionError.message);
-        return null;
-      }
-      
-      if (!session?.user) {
+      if (!backendAuth.isAuthenticated()) {
         return null;
       }
 
-      // Get user profile from database
-      const { data: profile, error: profileError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-
-      if (profileError) {
-        console.error('❌ AUTH: Profile fetch error:', profileError.message);
-        return null;
-      }
-
-      return profile;
+      return await backendAuth.getCurrentUser();
       
     } catch (error) {
       console.error('❌ AUTH: getCurrentUser error:', error);
@@ -154,74 +86,32 @@ export const authService = {
    * Get current session
    */
   async getCurrentSession() {
-    const supabase = createClient();
+    const token = backendAuth.getToken();
+    if (!token) return null;
     
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error('❌ AUTH: Get session error:', error.message);
-      return null;
-    }
-    
-    return session;
+    return { access_token: token };
   },
 
   /**
-   * Update user password
+   * Update user password (not implemented for backend auth)
    */
   async updatePassword(newPassword: string) {
-    const supabase = createClient();
-    
-    console.log('🔐 AUTH: Updating password');
-    
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-    
-    if (error) {
-      console.error('❌ AUTH: Password update failed:', error.message);
-      throw error;
-    }
-
-    console.log('✅ AUTH: Password updated successfully');
+    throw new Error('Password update not implemented for backend auth');
   },
 
   /**
-   * Reset password via email
+   * Reset password via email (not implemented for backend auth)
    */
   async resetPassword(email: string) {
-    const supabase = createClient();
-    
-    console.log('🔐 AUTH: Sending password reset for:', email);
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
-    });
-    
-    if (error) {
-      console.error('❌ AUTH: Password reset failed:', error.message);
-      throw error;
-    }
-
-    console.log('✅ AUTH: Password reset email sent');
+    throw new Error('Password reset not implemented for backend auth');
   },
 
   /**
    * Refresh current session
    */
   async refreshSession() {
-    const supabase = createClient();
-    
-    console.log('🔄 AUTH: Refreshing session');
-    
-    const { data, error } = await supabase.auth.refreshSession();
-    
-    if (error) {
-      console.error('❌ AUTH: Session refresh failed:', error.message);
-      throw error;
-    }
-
-    console.log('✅ AUTH: Session refreshed');
-    return data;
+    // For backend auth, just check if token is still valid
+    const user = await backendAuth.getCurrentUser();
+    return { user, session: { access_token: backendAuth.getToken() } };
   },
 };
