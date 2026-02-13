@@ -2,315 +2,332 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { createClient } from '@/lib/supabase/client';
 import { Clock, ClipboardCheck, Bell, Loader2, AlertCircle } from 'lucide-react';
 import { MissionCard } from '@/components/ui/mission-card';
 import { StatCard } from '@/components/ui/stat-card';
 import { useRouter } from '@/i18n/routing';
 import { LogoGoBoClean } from '@/components/ui/logo';
-import { handleSupabaseError } from '@/lib/error-handler';
 import { useAuth } from '@/hooks/useAuth';
-import { useMyMissions, useAllMissions } from '@/hooks/useMissions';
-import { useAdminStats } from '@/hooks/useAdminStats';
-import { useNotifications } from '@/hooks/useNotifications';
+import { OfflineStatusBadge } from '@/components/offline-indicator';
 import { LoadingBanner } from '@/components/loading-banner';
 import type { Mission } from '@/types/mission';
+
+// Demo data matching actual Mission interface
+const DEMO_MISSIONS: Mission[] = [
+  {
+    id: '1',
+    created_by: 'admin-1',
+    assigned_workers: ['worker-1'],
+    status: 'assigned',
+    client_first_name: 'Jean',
+    client_last_name: 'Dubois',
+    client_phone: '+32 56 123 456',
+    client_email: 'dubois@email.be',
+    client_address: 'Rue de la Paix 15, 8500 Kortrijk',
+    appointment_time: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    mission_type: 'roof',
+    mission_subtypes: ['cleaning'],
+    surface_area: 120,
+    additional_info: 'Nettoyage complet de la toiture avec démoussage',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: '2', 
+    created_by: 'admin-1',
+    assigned_workers: ['worker-1'],
+    status: 'in_progress',
+    client_first_name: 'Restaurant',
+    client_last_name: 'De Garre',
+    client_phone: '+32 50 341 029',
+    client_email: 'info@degarre.be', 
+    client_address: 'Grand Place 8, 8000 Bruges',
+    appointment_time: new Date().toISOString(),
+    mission_type: 'roof',
+    mission_subtypes: ['cleaning'],
+    surface_area: 200,
+    additional_info: 'Nettoyage haute pression de la façade principale',
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: '3',
+    created_by: 'admin-1', 
+    assigned_workers: ['worker-1'],
+    status: 'completed',
+    client_first_name: 'TechCorp',
+    client_last_name: 'NV',
+    client_phone: '+32 56 789 123',
+    client_email: 'facility@techcorp.be',
+    client_address: 'Businesspark 42, 8790 Waregem',
+    appointment_time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    mission_type: 'roof',
+    mission_subtypes: ['cleaning'],
+    surface_area: 80,
+    additional_info: 'Nettoyage vitres intérieur/extérieur - 2ème étage',
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+  }
+];
+
+const DEMO_ADMIN_STATS = {
+  totalMissions: 15,
+  completedMissions: 8,
+  pendingMissions: 4,
+  inProgressMissions: 3,
+  activeWorkers: 3,
+  totalRevenue: 4250,
+  avgMissionDuration: 195,
+  customerSatisfaction: 4.8
+};
 
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
   const router = useRouter();
-  const { user, isAdmin, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(2); // Demo notification count
 
-  // Role-based mission fetching: admin sees all, worker sees own
-  // Use isAuthenticated instead of !!user to handle cases where profile fetch fails
-  const adminMissionsQuery = useAllMissions({ enabled: isAuthenticated && isAdmin });
-  const workerMissionsQuery = useMyMissions({ enabled: isAuthenticated && !isAdmin });
-  const missionsQuery = isAdmin ? adminMissionsQuery : workerMissionsQuery;
+  // Demo data with loading simulation
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [missionsLoading, setMissionsLoading] = useState(true);
+  const [adminStats, setAdminStats] = useState(DEMO_ADMIN_STATS);
 
-  const {
-    data: missions,
-    isLoading: missionsLoading,
-    isError: missionsError,
-    refetch: refetchMissions,
-  } = missionsQuery;
-
-  // Admin stats (only fetched for admins)
-  const {
-    data: adminStats,
-  } = useAdminStats({ enabled: isAuthenticated && isAdmin });
-
-  // Notification count
-  const { data: notifData } = useNotifications({ enabled: isAuthenticated });
-  const unreadCount = notifData?.unreadCount ?? 0;
-
-  // Fetch profile picture
+  // Simulate data loading
   useEffect(() => {
-    let cancelled = false;
-
-    const fetchProfile = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (cancelled) return;
-        
-        if (session) {
-          const { data: profile, error } = await supabase
-            .from('users')
-            .select('profile_picture_url')
-            .eq('id', session.user.id)
-            .single() as { data: any; error: any };
-          
-          if (cancelled) return;
-          
-          if (error) handleSupabaseError(error, 'Failed to load profile');
-          else if (profile) setProfilePicture((profile as any).profile_picture_url);
+    const loadDemoData = () => {
+      setTimeout(() => {
+        if (isAdmin) {
+          setMissions(DEMO_MISSIONS);
+        } else {
+          // Worker only sees assigned missions
+          setMissions(DEMO_MISSIONS.filter(m => m.assigned_workers.includes('worker-1')));
         }
-      } catch (error) {
-        if (!cancelled) {
-          handleSupabaseError(error, 'Dashboard');
-        }
-      } finally {
-        if (!cancelled) {
-          setProfileLoading(false);
-        }
-      }
+        setMissionsLoading(false);
+      }, 1000); // 1 second loading simulation
     };
 
-    fetchProfile();
+    if (user) {
+      loadDemoData();
+    }
+  }, [user, isAdmin]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Simulate profile picture loading
+  useEffect(() => {
+    if (user) {
+      setProfileLoading(true);
+      setTimeout(() => {
+        // Demo profile picture URL - use a placeholder since User type doesn't have profile_picture_url
+        setProfilePicture(null);
+        setProfileLoading(false);
+      }, 500);
+    }
+  }, [user]);
 
-  // Derive today's missions sorted by appointment time
+  // Computed stats for cards
   const todayMissions = useMemo(() => {
     if (!missions) return [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    return missions
-      .filter((m) => {
-        const appt = new Date(m.appointment_time);
-        return appt >= today && appt < tomorrow && m.status !== 'cancelled';
-      })
-      .sort(
-        (a, b) =>
-          new Date(a.appointment_time).getTime() -
-          new Date(b.appointment_time).getTime(),
-      );
+    const today = new Date().toDateString();
+    return missions.filter(mission => 
+      new Date(mission.appointment_time).toDateString() === today
+    );
   }, [missions]);
 
-  // Upcoming missions (not today, not cancelled/completed)
-  const upcomingMissions = useMemo(() => {
+  const pendingMissions = useMemo(() => {
     if (!missions) return [];
-    const tomorrow = new Date();
-    tomorrow.setHours(0, 0, 0, 0);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    return missions
-      .filter((m) => {
-        const appt = new Date(m.appointment_time);
-        return appt >= tomorrow && m.status !== 'cancelled' && m.status !== 'completed';
-      })
-      .sort(
-        (a, b) =>
-          new Date(a.appointment_time).getTime() -
-          new Date(b.appointment_time).getTime(),
-      )
-      .slice(0, 3);
+    return missions.filter(mission => 
+      mission.status === 'assigned' || mission.status === 'in_progress'
+    );
   }, [missions]);
 
-  // Compute stats
-  const completedCount = missions?.filter((m) => m.status === 'completed').length ?? 0;
-  const totalActive = missions?.filter((m) => m.status !== 'cancelled' && m.status !== 'completed').length ?? 0;
-  const weekHours = adminStats?.weekHours ?? 0;
-  const tasksDisplay = isAdmin
-    ? `${adminStats?.completedToday ?? 0}/${adminStats?.activeMissions ?? totalActive}`
-    : `${completedCount}/${(missions?.length ?? 0)}`;
+  const completedMissionsCount = useMemo(() => {
+    if (!missions) return 0;
+    return missions.filter(mission => mission.status === 'completed').length;
+  }, [missions]);
 
-  const isLoading = authLoading || profileLoading;
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">{t('loading')}</p>
+        </div>
+      </div>
+    );
+  }
 
-  const userName = user?.first_name ?? 'User';
-
-  // Helper to format mission time
-  const formatTime = (iso: string) => {
-    const d = new Date(iso);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  // Helper to format mission date
-  const formatDate = (iso: string) => {
-    const d = new Date(iso);
-    return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
-  };
-
-  // Combine today + upcoming for display
-  const allDisplayMissions = [...todayMissions, ...upcomingMissions];
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] pb-32 font-sans selection:bg-lime-200">
-      {/* Loading Banner */}
-      <LoadingBanner 
-        isLoading={isLoading} 
-        message="Loading dashboard..." 
-      />
+    <div className="min-h-screen bg-gray-50">
+      <LoadingBanner />
       
-      {/* Dark Green Header with Curved Bottom */}
-      <div className={`relative bg-[#064e3b] text-white pt-2 pb-24 rounded-b-[40px] shadow-lg overflow-hidden z-0 ${isLoading ? 'pt-16' : ''}`}>
-        {/* Mobile Status Bar */}
-        <div className="px-8 flex items-center justify-between mb-8">
-        </div>
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <LogoGoBoClean className="h-8 w-auto" />
+              <h1 className="text-2xl font-bold text-gray-900">
+                {t('title')}
+              </h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <OfflineStatusBadge />
+              
+              {/* Notifications */}
+              <button
+                onClick={() => router.push('/notifications')}
+                className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <Bell className="h-6 w-6" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
 
-        {/* Logo & Notifications */}
-        <div className="px-8 flex items-center justify-between mb-8">
-          <div className="flex items-center gap-1">
-            <div className="w-12 h-12">
-              <LogoGoBoClean className="scale-75" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-[20px] font-bold leading-none">GoBoclean Rapport</h1>
-              </div>
-              <p className="text-[#a3e635] text-[10px] font-bold tracking-widest uppercase">
-                Made with love
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => router.push('/notifications')}
-            className="relative w-11 h-11 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 hover:bg-white/20 transition-all active:scale-90"
-          >
-            <Bell className="w-5 h-5" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* Welcome Card */}
-        <div className="mx-8 bg-white/10 backdrop-blur-md rounded-[24px] p-5 border border-white/10 shadow-inner">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white/20">
-                <img 
-                  src={profilePicture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}&backgroundColor=ffad33`} 
-                  alt="Avatar" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="absolute bottom-0 right-0 w-4 h-4 bg-[#a3e635] rounded-full border-[3px] border-[#064e3b] shadow-sm"></div>
-            </div>
-            <div>
-              <h2 className="text-[18px] font-bold mb-0.5">
-                {t('welcome')}, {userName}
-              </h2>
-              <p className="text-white/70 text-[14px] font-medium">
-                {t('today')}: {todayMissions.length} {t('activeMissions').toLowerCase()}
-              </p>
+              {/* Profile */}
+              <button
+                onClick={() => router.push('/profile')}
+                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                {profileLoading ? (
+                  <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
+                ) : profilePicture ? (
+                  <img
+                    src={profilePicture}
+                    alt="Profile"
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                    <span className="text-gray-600 text-sm font-medium">
+                      {user.first_name?.[0]}{user.last_name?.[0]}
+                    </span>
+                  </div>
+                )}
+                <span className="text-sm font-medium text-gray-700">
+                  {user.first_name} {user.last_name}
+                </span>
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Stats Cards - Overlapping the header */}
-      <div className="px-8 -mt-14 mb-8 relative z-10">
-        <div className="grid grid-cols-2 gap-4">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            {t('welcome', { name: user.first_name })}
+          </h2>
+          <p className="text-gray-600">
+            {isAdmin ? t('adminSubtitle') : t('subtitle')}
+          </p>
+          
+          {/* Demo Mode Indicator */}
+          <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
+            🎯 Mode Démo - Données d'exemple pour présentation
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
+            label={t('todayMissions')}
+            value={todayMissions.length}
+            subtitle="Today's schedule"
             icon={Clock}
-            label={t('hours')}
-            value={isAdmin ? weekHours : todayMissions.length}
-            subtitle={isAdmin ? t('weekToDate') : t('today')}
-            iconColor="text-[#a3e635]"
           />
           <StatCard
-            icon={ClipboardCheck}
-            label={t('tasks')}
-            value={tasksDisplay}
-            subtitle={t('completed')}
-            iconColor="text-[#064e3b]"
+            label={t('pendingMissions')}
+            value={pendingMissions.length}
+            subtitle="In progress"
+            icon={AlertCircle}
           />
+          <StatCard
+            label={t('completedMissions')}
+            value={completedMissionsCount}
+            subtitle="Finished"
+            icon={ClipboardCheck}
+          />
+          {isAdmin && (
+            <StatCard
+              label="Revenue Total"
+              value={`€${adminStats.totalRevenue}`}
+              subtitle="This month"
+              icon={ClipboardCheck}
+            />
+          )}
         </div>
-      </div>
-
-      {/* Assigned Missions Section */}
-      <div className="px-8">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-[20px] font-bold text-[#1e293b]">
-            {t('assignedMissions')}
-          </h3>
-          <button
-            onClick={() => router.push('/schedule')}
-            className="text-[14px] font-bold text-[#064e3b] hover:opacity-70 transition-opacity"
-          >
-            {t('viewAll')}
-          </button>
-        </div>
-
-        {/* Loading State */}
-        {missionsLoading && (
-          <div className="bg-gray-50 rounded-2xl p-4 flex items-center justify-center">
-            <Loader2 className="h-5 w-5 animate-spin text-[#064e3b]" />
-            <span className="ml-2 text-[13px] text-gray-600">{t('loading')}</span>
-          </div>
-        )}
-
-        {/* Error State */}
-        {missionsError && !missionsLoading && (
-          <div className="bg-red-50 rounded-2xl p-6 text-center">
-            <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
-            <p className="text-[14px] font-bold text-red-700 mb-2">{t('errorLoading')}</p>
-            <button
-              onClick={() => refetchMissions()}
-              className="text-[13px] font-bold text-[#064e3b] hover:underline"
-            >
-              {t('retry')}
-            </button>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!missionsLoading && !missionsError && allDisplayMissions.length === 0 && (
-          <div className="bg-[#f8fafc] rounded-2xl p-8 text-center border-2 border-dashed border-gray-200">
-            <ClipboardCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-[16px] font-bold text-gray-600 mb-1">{t('noMissions')}</p>
-            <p className="text-[13px] text-gray-400">{t('noMissionsDescription')}</p>
-          </div>
-        )}
 
         {/* Missions List */}
-        {!missionsLoading && !missionsError && allDisplayMissions.length > 0 && (
-          <div className="space-y-4">
-            {allDisplayMissions.map((mission) => {
-              const workerDetail = mission.assigned_workers_details?.[0];
-              const workerName = workerDetail
-                ? `${workerDetail.first_name} ${workerDetail.last_name}`
-                : undefined;
-
-              return (
-                <MissionCard
-                  key={mission.id}
-                  status={mission.status}
-                  title={`${mission.client_first_name} ${mission.client_last_name}`}
-                  location={mission.client_address}
-                  date={formatDate(mission.appointment_time)}
-                  startTime={formatTime(mission.appointment_time)}
-                  assignedWorkerName={workerName}
-                  assignedWorkers={mission.assigned_workers_details}
-                  onClick={() => router.push(`/mission/${mission.id}`)}
-                />
-              );
-            })}
+        <div className="bg-white rounded-lg shadow">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-gray-900">
+                {isAdmin ? t('allMissions') : t('myMissions')}
+              </h3>
+              {isAdmin && (
+                <button
+                  onClick={() => router.push('/missions/new')}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+                >
+                  {t('newMission')}
+                </button>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+
+          <div className="p-6">
+            {missionsLoading ? (
+              <div className="text-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                <p className="text-gray-600">{t('loadingMissions')}</p>
+              </div>
+            ) : missions.length === 0 ? (
+              <div className="text-center py-8">
+                <ClipboardCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-2">{t('noMissions')}</p>
+                <p className="text-sm text-gray-500">{t('noMissionsSubtext')}</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {missions.slice(0, 5).map((mission) => (
+                  <MissionCard 
+                    key={mission.id}
+                    status={mission.status}
+                    title={`${mission.client_first_name} ${mission.client_last_name}`}
+                    location={mission.client_address}
+                    date={new Date(mission.appointment_time).toLocaleDateString()}
+                    startTime={new Date(mission.appointment_time).toLocaleTimeString()}
+                    assignedWorkerName={mission.assigned_workers.length > 0 ? `Worker ${mission.assigned_workers[0]}` : undefined}
+                    onClick={() => router.push(`/mission/${mission.id}`)}
+                  />
+                ))}
+                {missions.length > 5 && (
+                  <div className="text-center pt-4">
+                    <button
+                      onClick={() => router.push('/missions')}
+                      className="text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      {t('viewAllMissions')} ({missions.length - 5} {t('more')})
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

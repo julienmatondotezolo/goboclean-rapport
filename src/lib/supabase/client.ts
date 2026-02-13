@@ -1,6 +1,6 @@
-import { createBrowserClient } from "@supabase/ssr";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "@/types/supabase";
+import { createBrowserClient } from '@supabase/ssr';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { Database } from '@/types/supabase';
 
 // 🔐 Singleton pattern to prevent session conflicts between multiple users
 let supabaseInstance: SupabaseClient<Database> | null = null;
@@ -11,34 +11,91 @@ export const createClient = (): SupabaseClient<Database> => {
     return supabaseInstance;
   }
 
-  // 🧹 Migration: Clear old localStorage-based session
-  // This ensures users with old sessions will need to re-login with the new cookie-based system
-  if (typeof window !== "undefined") {
-    try {
-      const oldStorageKey = "goboclean-auth-token";
-      if (localStorage.getItem(oldStorageKey)) {
-        console.log("🔄 Migrating from localStorage to cookie-based auth");
-        localStorage.removeItem(oldStorageKey);
-      }
-    } catch (error) {
-      console.warn("Failed to clear old auth storage:", error);
-    }
-  }
-
   // Create new instance with proper session isolation
-  // Use default cookie storage so middleware can read the session
   supabaseInstance = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        // 🎯 Enable automatic session refresh
+        autoRefreshToken: true,
+        // 🔒 Persist session across page reloads
+        persistSession: true,
+        // 🏠 Detect session changes across tabs
+        detectSessionInUrl: true,
+        // 📱 Storage key for session isolation
+        storageKey: 'goboclean-auth-token',
+      },
+      cookies: {
+        get(name: string) {
+          // Safely parse cookies with error handling
+          try {
+            const cookies = document.cookie.split(';');
+            for (const cookie of cookies) {
+              const [key, value] = cookie.trim().split('=');
+              if (key === name) {
+                return decodeURIComponent(value);
+              }
+            }
+            return null;
+          } catch (error) {
+            console.warn('Cookie parse error:', error);
+            return null;
+          }
+        },
+        set(name: string, value: string, options: any = {}) {
+          try {
+            let cookie = `${name}=${encodeURIComponent(value)}`;
+            
+            // Default options for security
+            const defaultOptions = {
+              path: '/',
+              sameSite: 'lax',
+              secure: window.location.protocol === 'https:',
+              maxAge: 86400 * 30, // 30 days
+            };
+
+            const finalOptions = { ...defaultOptions, ...options };
+            
+            if (finalOptions.maxAge) {
+              cookie += `; max-age=${finalOptions.maxAge}`;
+            }
+            if (finalOptions.path) {
+              cookie += `; path=${finalOptions.path}`;
+            }
+            if (finalOptions.domain) {
+              cookie += `; domain=${finalOptions.domain}`;
+            }
+            if (finalOptions.sameSite) {
+              cookie += `; samesite=${finalOptions.sameSite}`;
+            }
+            if (finalOptions.secure) {
+              cookie += '; secure';
+            }
+            
+            document.cookie = cookie;
+          } catch (error) {
+            console.warn('Cookie set error:', error);
+          }
+        },
+        remove(name: string, options: any = {}) {
+          try {
+            this.set(name, '', { ...options, maxAge: 0 });
+          } catch (error) {
+            console.warn('Cookie remove error:', error);
+          }
+        },
+      },
+    }
   );
 
   // 🔄 Global error handling for session issues
-  supabaseInstance.auth.onAuthStateChange((event: string, session: any) => {
-    if (event === "SIGNED_OUT" && !session) {
-      console.log("🔐 Session ended globally");
+  supabaseInstance.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' && !session) {
+      console.log('🔐 Session ended globally');
     }
-    if (event === "TOKEN_REFRESHED") {
-      console.log("🔄 Token refreshed globally");
+    if (event === 'TOKEN_REFRESHED') {
+      console.log('🔄 Token refreshed globally');
     }
   });
 

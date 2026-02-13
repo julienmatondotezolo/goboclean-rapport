@@ -47,6 +47,7 @@ export function MissionCard({
 
   return (
     <div
+      data-testid="mission-card"
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}

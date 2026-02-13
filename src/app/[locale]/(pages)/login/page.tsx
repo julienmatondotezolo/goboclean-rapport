@@ -120,6 +120,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
+                data-testid="email-input"
                 placeholder={t('emailPlaceholder')}
                 {...register('email')}
                 className={cn(errors.email ? 'border-red-500' : '')}
@@ -149,6 +150,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
+                  data-testid="password-input"
                   placeholder={t('passwordPlaceholder')}
                   {...register('password')}
                   className={cn(
@@ -187,6 +189,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
+              data-testid="login-button"
               className="w-full mt-4"
               disabled={isLoading}
             >

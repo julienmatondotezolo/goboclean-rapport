@@ -26,24 +26,46 @@ interface Statistics {
 }
 
 function AdminDashboardContent() {
-  const [stats, setStats] = useState<Statistics | null>(null);
+  // Demo data instead of API calls
+  const [stats, setStats] = useState<Statistics>({
+    totalReports: 24,
+    reportsByStatus: {
+      draft: 3,
+      pending_signature: 8,
+      completed: 13,
+    },
+    reportsByWorker: [
+      {
+        worker: { first_name: 'Marc', last_name: 'Janssens' },
+        count: 15,
+      },
+      {
+        worker: { first_name: 'Sophie', last_name: 'Vanderstraeten' },
+        count: 9,
+      },
+    ],
+    reportsPerMonth: [
+      { month: '2026-01', count: 8 },
+      { month: '2026-02', count: 16 },
+    ],
+    activeWorkers: 2,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchStatistics = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await apiClient.get<Statistics>('/admin/stats');
-      setStats(data);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Erreur lors du chargement des statistiques');
-    } finally {
+    // Simulate loading for demo
+    setLoading(true);
+    setError(null);
+    
+    setTimeout(() => {
       setLoading(false);
-    }
+      // Stats already set above
+    }, 1000);
   };
 
   useEffect(() => {
+    // Load demo data on mount
     fetchStatistics();
   }, []);
 
