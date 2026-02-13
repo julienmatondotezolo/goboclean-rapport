@@ -139,25 +139,35 @@ export function useAuth(options: UseAuthOptions = {}) {
     try {
       console.log(`👤 [useAuth-${componentIdRef.current}] Updating auth state for user: ${session.user.email}`);
       
-      // Get user profile with retry logic
+      // Get user profile from backend API with retry logic
       let profile = null;
       let profileError = null;
       
       for (let attempt = 0; attempt < 3; attempt++) {
-        const { data, error } = await supabaseRef.current
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single() as { data: any; error: any };
+        try {
+          // Call backend /auth/me endpoint
+          const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+          const response = await fetch(`${backendUrl}/api/auth/me`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          });
 
-        if (!error) {
-          profile = data;
-          break;
+          if (response.ok) {
+            profile = await response.json();
+            break;
+          } else {
+            const errorText = await response.text();
+            profileError = new Error(`Backend API error ${response.status}: ${errorText}`);
+          }
+        } catch (error) {
+          profileError = error;
         }
         
-        profileError = error;
         if (attempt < 2) {
-          console.warn(`⚠️ [useAuth-${componentIdRef.current}] Profile fetch attempt ${attempt + 1} failed, retrying...`);
+          console.warn(`⚠️ [useAuth-${componentIdRef.current}] Backend profile fetch attempt ${attempt + 1} failed, retrying...`);
           await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
         }
       }

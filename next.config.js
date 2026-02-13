@@ -13,7 +13,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https: blob:",
       "font-src 'self' https:",
-      "connect-src 'self' https://ihlnwzrsvfxgossytuiz.supabase.co https://api.goboclean.be wss://",
+      "connect-src 'self' http://localhost:3001 https://ihlnwzrsvfxgossytuiz.supabase.co https://api.goboclean.be wss://",
       "frame-ancestors 'none'",
       "form-action 'self'",
       "base-uri 'self'",

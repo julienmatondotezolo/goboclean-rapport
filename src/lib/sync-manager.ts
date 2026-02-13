@@ -162,7 +162,7 @@ export class SyncManager {
    * Sync mission start to server
    */
   private async syncMissionStart(item: SyncQueueItem): Promise<void> {
-    const response = await apiClient.post<{ mission: Report }>(`/missions/${item.entity_id}/start`, item.data);
+    const response = await apiClient.post<{ mission: Report }>(`/api/missions/${item.entity_id}/start`, item.data);
     
     // Update local cache with server response (conflict resolution: server wins)
     if (response.mission) {
@@ -177,7 +177,7 @@ export class SyncManager {
     const { signatures, comments } = item.data;
     
     // Complete the mission
-    const response = await apiClient.post<{ mission: Report }>(`/missions/${item.entity_id}/complete`, {
+    const response = await apiClient.post<{ mission: Report }>(`/api/missions/${item.entity_id}/complete`, {
       worker_signature_data: signatures.workerSignature,
       client_signature_data: signatures.clientSignature,
       comments,
@@ -201,7 +201,7 @@ export class SyncManager {
       formData.append('files', fileData.file, fileData.filename);
     });
 
-    const response = await apiClient.upload<{ photos: Photo[] }>(`/missions/${missionId}/photos/${type}`, formData);
+    const response = await apiClient.upload<{ photos: Photo[] }>(`/api/missions/${missionId}/photos/${type}`, formData);
     
     // Update local cache with server URLs
     if (response.photos) {
@@ -233,7 +233,7 @@ export class SyncManager {
   private async syncDownData(): Promise<void> {
     try {
       // Fetch fresh missions
-      const missionsResponse = await apiClient.get<{ missions: Report[] }>('/missions');
+      const missionsResponse = await apiClient.get<{ missions: Report[] }>('/api/missions');
       
       if (missionsResponse.missions) {
         // Cache each mission
@@ -243,7 +243,7 @@ export class SyncManager {
       }
 
       // Fetch fresh notifications
-      const notificationsResponse = await apiClient.get<{ notifications: AppNotification[] }>('/notifications');
+      const notificationsResponse = await apiClient.get<{ notifications: AppNotification[] }>('/api/notifications');
       
       if (notificationsResponse.notifications) {
         await cacheNotifications(notificationsResponse.notifications);
@@ -299,7 +299,7 @@ export class SyncManager {
   async resolveConflicts(localReport: Report): Promise<void> {
     try {
       // Fetch current server version
-      const serverReport = await apiClient.get<Report>(`/missions/${localReport.id}`);
+      const serverReport = await apiClient.get<Report>(`/api/missions/${localReport.id}`);
       
       // Check if server version is newer
       if (new Date(serverReport.updated_at) > new Date(localReport.updated_at)) {

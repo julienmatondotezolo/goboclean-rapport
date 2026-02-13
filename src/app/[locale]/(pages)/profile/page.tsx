@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { handleError, showSuccess } from '@/lib/error-handler';
 import { PageHeader } from '@/components/ui/page-header';
@@ -22,6 +23,8 @@ import { LoadingBanner } from '@/components/loading-banner';
 export default function ProfilePage() {
   const router = useRouter();
   const t = useTranslations('Profile');
+  const params = useParams();
+  const locale = params.locale as string;
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
@@ -209,27 +212,32 @@ export default function ProfilePage() {
   };
 
   const handleLogout = async () => {
+    console.log('🚪 [PROFILE] handleLogout started');
     setIsLoggingOut(true);
     try {
+      console.log('🚪 [PROFILE] Logging user activity...');
       // Log logout activity before signing out
       const { logUserLogout } = await import('@/lib/user-activity');
       await logUserLogout();
 
+      console.log('🚪 [PROFILE] Calling supabase signOut...');
       const supabase = createClient();
       const { error } = await supabase.auth.signOut();
       
       if (error) throw error;
       
+      console.log('🚪 [PROFILE] SignOut successful, showing toast...');
       showSuccess(
         t('logoutSuccess') || 'Logged out',
         t('logoutSuccessDescription') || 'You have been logged out successfully'
       );
       
-      // Small delay for toast to show
-      setTimeout(() => {
-        router.push('/login');
-      }, 500);
+      console.log('🚪 [PROFILE] Attempting redirect to:', `/${locale}/login`);
+      // Force browser redirect to login page
+      window.location.href = `/${locale}/login`;
+      console.log('🚪 [PROFILE] Redirect call completed');
     } catch (error: any) {
+      console.error('🚪 [PROFILE] Logout error:', error);
       handleError(error, { title: t('logoutError') || 'Logout failed' });
       setIsLoggingOut(false);
     }

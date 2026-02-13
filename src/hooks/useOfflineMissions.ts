@@ -56,7 +56,7 @@ export function useOfflineMissions() {
   const serverQuery = useQuery({
     queryKey: missionKeys.lists(),
     queryFn: async () => {
-      const response = await apiClient.get<{ missions: Report[] }>('/missions');
+      const response = await apiClient.get<{ missions: Report[] }>('/api/missions');
       
       // Cache the fetched data
       if (response.missions) {
@@ -113,7 +113,7 @@ export function useOfflineMission(missionId: string) {
   const serverQuery = useQuery({
     queryKey: missionKeys.detail(missionId),
     queryFn: async () => {
-      const mission = await apiClient.get<Report>(`/missions/${missionId}`);
+      const mission = await apiClient.get<Report>(`/api/missions/${missionId}`);
       
       // Cache the fetched data
       await cacheReport(mission, mission.photos);
@@ -148,7 +148,7 @@ export function useStartMission() {
     mutationFn: async ({ missionId }: { missionId: string }) => {
       if (navigator.onLine) {
         // Online: send immediately
-        const response = await apiClient.post<{ mission: Report }>(`/missions/${missionId}/start`);
+        const response = await apiClient.post<{ mission: Report }>(`/api/missions/${missionId}/start`);
         
         // Cache the response
         await cacheReport(response.mission);
@@ -205,7 +205,7 @@ export function useCompleteMission() {
 
       if (navigator.onLine) {
         // Online: send immediately
-        const response = await apiClient.post<{ mission: Report }>(`/missions/${missionId}/complete`, {
+        const response = await apiClient.post<{ mission: Report }>(`/api/missions/${missionId}/complete`, {
           worker_signature_data: workerSignature,
           client_signature_data: clientSignature,
           comments,
@@ -264,7 +264,7 @@ export function useUploadPhotos() {
           formData.append('files', file);
         });
 
-        const response = await apiClient.upload<{ photos: Photo[] }>(`/missions/${missionId}/photos/${type}`, formData);
+        const response = await apiClient.upload<{ photos: Photo[] }>(`/api/missions/${missionId}/photos/${type}`, formData);
         
         // Cache the photos with their server URLs
         if (response.photos) {

@@ -85,7 +85,7 @@ export async function subscribeToPush(): Promise<boolean> {
     }
 
     // Send to backend
-    await apiClient.post('/notifications/subscribe', {
+    await apiClient.post('/api/notifications/subscribe', {
       endpoint: subscription.endpoint,
       p256dh: btoa(String.fromCharCode(...new Uint8Array(key))),
       auth: btoa(String.fromCharCode(...new Uint8Array(auth))),
@@ -111,7 +111,7 @@ export async function unsubscribeFromPush(): Promise<boolean> {
     
     if (subscription) {
       // Notify backend with the endpoint before unsubscribing
-      await apiClient.request('/notifications/unsubscribe', {
+      await apiClient.request('/api/notifications/unsubscribe', {
         method: 'DELETE',
         body: JSON.stringify({ endpoint: subscription.endpoint }),
       });
