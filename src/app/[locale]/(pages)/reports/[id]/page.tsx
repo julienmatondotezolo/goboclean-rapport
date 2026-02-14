@@ -56,8 +56,13 @@ export default function ReportDetailPage() {
     try {
       setIsDownloading(true);
       
-      // Open PDF in new tab for download
-      window.open(report.pdf_url, '_blank');
+      // Download PDF file directly
+      const link = document.createElement('a');
+      link.href = report.pdf_url;
+      link.download = `Rapport-${report.id.slice(0, 8).toUpperCase()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
       showSuccess(t('downloadStarted'));
     } catch (error) {
