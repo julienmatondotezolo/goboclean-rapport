@@ -126,4 +126,9 @@ export interface User {
   last_name: string;
   phone?: string | null;
   is_active: boolean;
+  is_onboarded?: boolean;
+  profile_picture_url?: string | null;
+  language?: 'en' | 'fr' | 'nl';
+  push_notifications_enabled?: boolean;
+  stay_connected?: boolean;
 }

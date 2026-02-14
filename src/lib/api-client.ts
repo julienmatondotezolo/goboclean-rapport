@@ -1,4 +1,4 @@
-import { createClient } from "./supabase/client";
+import { backendAuth } from "./backend-auth";
 import logger from "./logger";
 
 /**
@@ -6,114 +6,33 @@ import logger from "./logger";
  */
 class ApiClient {
   private baseUrl: string;
+  private refreshPromise: Promise<string | null> | null = null;
+  private activeRequests = new Map<string, AbortController>();
 
   constructor() {
     this.baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
   }
 
   /**
-   * Get the current user's access token with automatic refresh
+   * Get the current user's access token from backend auth
    */
   private async getAccessToken(): Promise<string | null> {
-    const supabase = createClient();
-
-    // Get current session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return null;
-    }
-
-    // Check if token is about to expire (within 5 minutes)
-    const expiresAt = session.expires_at || 0;
-    const now = Math.floor(Date.now() / 1000);
-    const timeUntilExpiry = expiresAt - now;
-
-    if (timeUntilExpiry < 300) {
-      // Less than 5 minutes
-      console.log("🔄 Token expiring soon, refreshing...");
-
-      try {
-        const { data, error } = await supabase.auth.refreshSession();
-
-        if (error) {
-          console.error("❌ Token refresh failed:", error.message);
-          // Return the existing token, might still be valid briefly
-          return session.access_token;
-        }
-
-        if (data.session) {
-          console.log("✅ Token refreshed in API client");
-          return data.session.access_token;
-        }
-      } catch (error) {
-        console.error("❌ Token refresh error:", error);
-        return session.access_token;
-      }
-    }
-
-    return session.access_token;
-  }
-
-  /**
-   * Capture the caller information from stack trace
-   */
-  private getCallerContext(): { caller: string; hook?: string; component?: string } {
-    const stack = new Error().stack || "";
-    const lines = stack.split("\n");
-
-    let caller = "unknown";
-    let hook: string | undefined;
-    let component: string | undefined;
-
-    // Look for hook or component in stack trace
-    for (const line of lines) {
-      // Skip api-client.ts and internal calls
-      if (line.includes("api-client.ts") || line.includes("ApiClient")) continue;
-
-      // Check for hooks (useMissions, useAuth, etc.)
-      const hookMatch = line.match(/use[A-Z]\w+/);
-      if (hookMatch && !hook) {
-        hook = hookMatch[0];
-      }
-
-      // Check for component files
-      const componentMatch = line.match(/([A-Z]\w+(?:Page|Component|Card|Modal|Form|Layout))\.tsx?/);
-      if (componentMatch && !component) {
-        component = componentMatch[1];
-      }
-
-      // Extract file and line number for caller
-      if (!caller || caller === "unknown") {
-        const fileMatch = line.match(/([^/]+\.tsx?):(\d+):(\d+)/);
-        if (fileMatch) {
-          const [, fileName, lineNum] = fileMatch;
-          caller = `${fileName}:${lineNum}`;
-        }
-      }
-
-      // If we found both hook and component, we're done
-      if (hook && component) break;
-    }
-
-    return { caller, hook, component };
+    return backendAuth.getToken();
   }
 
   /**
    * Make an authenticated request to the backend
+   * Prevents AbortController conflicts between multiple requests
    */
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const method = options.method || "GET";
     const startTime = Date.now();
-    const callerContext = this.getCallerContext();
+    const requestId = `${method}-${endpoint}-${Date.now()}`;
 
     // Log API call start
     logger.apiCall(method, endpoint, {
       hasAuth: !!(await this.getAccessToken()),
       bodySize: options.body ? JSON.stringify(options.body).length : 0,
-      ...callerContext,
     });
 
     try {
@@ -128,9 +47,15 @@ class ApiClient {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      // Add timeout to prevent infinite hangs
+      // Create request-specific AbortController to prevent conflicts
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      this.activeRequests.set(requestId, controller);
+
+      const timeoutId = setTimeout(() => {
+        if (this.activeRequests.has(requestId)) {
+          controller.abort();
+        }
+      }, 30000); // 30s timeout
 
       let response: Response;
       try {
@@ -139,9 +64,13 @@ class ApiClient {
           headers,
           signal: controller.signal,
         });
+
         clearTimeout(timeoutId);
+        this.activeRequests.delete(requestId);
       } catch (fetchError) {
         clearTimeout(timeoutId);
+        this.activeRequests.delete(requestId);
+
         if ((fetchError as Error).name === "AbortError") {
           throw new Error("Request timeout - please try again");
         }
@@ -167,7 +96,6 @@ class ApiClient {
           statusText: response.statusText,
           responseTime,
           errorData,
-          ...callerContext,
         });
 
         throw error;
@@ -190,7 +118,6 @@ class ApiClient {
         logger.apiError(method, endpoint, error, {
           responseTime,
           errorType: "network",
-          ...callerContext,
         });
       }
 
@@ -249,14 +176,12 @@ class ApiClient {
   async upload<T>(endpoint: string, formData: FormData, onProgress?: (percent: number) => void): Promise<T> {
     const startTime = Date.now();
     const fileCount = Array.from(formData.entries()).filter(([key, value]) => value instanceof File).length;
-    const callerContext = this.getCallerContext();
 
     // Log upload start
     logger.apiCall("POST", endpoint, {
       uploadType: "multipart/form-data",
       fileCount,
       hasProgress: !!onProgress,
-      ...callerContext,
     });
 
     try {
@@ -295,7 +220,6 @@ class ApiClient {
             responseTime,
             uploadType: "fetch",
             fileCount,
-            ...callerContext,
           });
 
           throw error;
@@ -387,7 +311,6 @@ class ApiClient {
               uploadType: "xhr",
               fileCount,
               errorData,
-              ...callerContext,
             });
 
             reject(error);
@@ -401,7 +324,6 @@ class ApiClient {
             uploadType: "xhr",
             fileCount,
             errorType: "network",
-            ...callerContext,
           });
           reject(error);
         });
@@ -413,7 +335,6 @@ class ApiClient {
             uploadType: "xhr",
             fileCount,
             errorType: "abort",
-            ...callerContext,
           });
           reject(error);
         });
@@ -429,7 +350,6 @@ class ApiClient {
           uploadType: onProgress ? "xhr" : "fetch",
           fileCount,
           errorType: "setup",
-          ...callerContext,
         });
       }
 

@@ -1,32 +1,30 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { createClient } from '@/lib/supabase/client';
+// Backend auth is handled via useAuth hook
 import { Clock, ClipboardCheck, Bell, Loader2, AlertCircle } from 'lucide-react';
 import { MissionCard } from '@/components/ui/mission-card';
 import { StatCard } from '@/components/ui/stat-card';
 import { useRouter } from '@/i18n/routing';
 import { LogoGoBoClean } from '@/components/ui/logo';
-import { handleSupabaseError } from '@/lib/error-handler';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyMissions, useAllMissions } from '@/hooks/useMissions';
 import { useAdminStats } from '@/hooks/useAdminStats';
 import { useNotifications } from '@/hooks/useNotifications';
+import { OfflineStatusBadge } from '@/components/offline-indicator';
 import { LoadingBanner } from '@/components/loading-banner';
 import type { Mission } from '@/types/mission';
 
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
   const router = useRouter();
-  const { user, isAdmin, isAuthenticated, isLoading: authLoading } = useAuth();
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
 
   // Role-based mission fetching: admin sees all, worker sees own
-  // Use isAuthenticated instead of !!user to handle cases where profile fetch fails
-  const adminMissionsQuery = useAllMissions({ enabled: isAuthenticated && isAdmin });
-  const workerMissionsQuery = useMyMissions({ enabled: isAuthenticated && !isAdmin });
+  // Guard all queries with !!user to prevent 401 on login page
+  const adminMissionsQuery = useAllMissions({ enabled: !!user && isAdmin });
+  const workerMissionsQuery = useMyMissions({ enabled: !!user && !isAdmin });
   const missionsQuery = isAdmin ? adminMissionsQuery : workerMissionsQuery;
 
   const {
@@ -39,52 +37,11 @@ export default function DashboardPage() {
   // Admin stats (only fetched for admins)
   const {
     data: adminStats,
-  } = useAdminStats({ enabled: isAuthenticated && isAdmin });
+  } = useAdminStats({ enabled: !!user && isAdmin });
 
   // Notification count
-  const { data: notifData } = useNotifications({ enabled: isAuthenticated });
+  const { data: notifData } = useNotifications({ enabled: !!user });
   const unreadCount = notifData?.unreadCount ?? 0;
-
-  // Fetch profile picture
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchProfile = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (cancelled) return;
-        
-        if (session) {
-          const { data: profile, error } = await supabase
-            .from('users')
-            .select('profile_picture_url')
-            .eq('id', session.user.id)
-            .single() as { data: any; error: any };
-          
-          if (cancelled) return;
-          
-          if (error) handleSupabaseError(error, 'Failed to load profile');
-          else if (profile) setProfilePicture((profile as any).profile_picture_url);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          handleSupabaseError(error, 'Dashboard');
-        }
-      } finally {
-        if (!cancelled) {
-          setProfileLoading(false);
-        }
-      }
-    };
-
-    fetchProfile();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Derive today's missions sorted by appointment time
   const todayMissions = useMemo(() => {
@@ -134,9 +91,22 @@ export default function DashboardPage() {
     ? `${adminStats?.completedToday ?? 0}/${adminStats?.activeMissions ?? totalActive}`
     : `${completedCount}/${(missions?.length ?? 0)}`;
 
-  const isLoading = authLoading || profileLoading;
+  const isLoading = authLoading;
 
+  // User name with fallback and debug logging
   const userName = user?.first_name ?? 'User';
+  
+  // Debug logging in development
+  if (process.env.NODE_ENV === 'development' && user) {
+    console.log('🔍 Dashboard User Debug:', {
+      firstName: user.first_name,
+      lastName: user.last_name,
+      email: user.email,
+      role: user.role,
+      userName: userName,
+      userObject: user
+    });
+  }
 
   // Helper to format mission time
   const formatTime = (iso: string) => {
@@ -176,6 +146,7 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <h1 className="text-[20px] font-bold leading-none">GoBoclean Rapport</h1>
+                <OfflineStatusBadge />
               </div>
               <p className="text-[#a3e635] text-[10px] font-bold tracking-widest uppercase">
                 Made with love
@@ -201,7 +172,7 @@ export default function DashboardPage() {
             <div className="relative">
               <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white/20">
                 <img 
-                  src={profilePicture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}&backgroundColor=ffad33`} 
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}&backgroundColor=ffad33`} 
                   alt="Avatar" 
                   className="w-full h-full object-cover"
                 />
@@ -282,6 +253,19 @@ export default function DashboardPage() {
             <ClipboardCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-[16px] font-bold text-gray-600 mb-1">{t('noMissions')}</p>
             <p className="text-[13px] text-gray-400">{t('noMissionsDescription')}</p>
+            {/* Debug info for demo */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-left text-blue-700">
+                <strong>Debug Info:</strong><br/>
+                • User: {user?.first_name} {user?.last_name} ({user?.email})<br/>
+                • Role: {user?.role}<br/>
+                • Auth Loading: {authLoading ? 'Yes' : 'No'}<br/>
+                • Missions Loading: {missionsLoading ? 'Yes' : 'No'}<br/>
+                • Total Missions: {missions?.length || 0}<br/>
+                • Display Missions: {allDisplayMissions.length}<br/>
+                • Backend URL: {process.env.NEXT_PUBLIC_BACKEND_URL}
+              </div>
+            )}
           </div>
         )}
 

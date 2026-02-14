@@ -567,6 +567,7 @@ export default function AfterPicturesPage() {
                     width={400}
                     height={150}
                     className="w-full h-[150px] object-contain bg-white"
+                    style={{ width: "auto", height: "150px" }}
                   />
                   <div className="absolute top-2 right-2 w-7 h-7 bg-[#a3e635] rounded-full flex items-center justify-center shadow-lg">
                     <CheckCircle className="w-5 h-5 text-[#064e3b]" />
@@ -639,6 +640,7 @@ export default function AfterPicturesPage() {
                     width={400}
                     height={150}
                     className="w-full h-[150px] object-contain bg-white"
+                    style={{ width: "auto", height: "150px" }}
                   />
                   <div className="absolute top-2 right-2 w-7 h-7 bg-[#a3e635] rounded-full flex items-center justify-center shadow-lg">
                     <CheckCircle className="w-5 h-5 text-[#064e3b]" />

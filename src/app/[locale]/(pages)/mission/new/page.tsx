@@ -56,9 +56,9 @@ export default function MissionCreatePage() {
   const router = useRouter();
   const params = useParams();
   const t = useTranslations('MissionCreate');
-  const { user, isAdmin, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
   
-  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  // ALL HOOKS MUST BE CALLED AT THE TOP - NO CONDITIONAL CALLS!
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedWorkers, setSelectedWorkers] = useState<string[]>([]);
   const [clientInfo, setClientInfo] = useState<ClientInfo>({
@@ -96,21 +96,21 @@ export default function MissionCreatePage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Real API hooks - must be called before any conditional returns
-  const { data: workers, isLoading: workersLoading } = useWorkersList({ enabled: isAuthenticated && isAdmin });
+  // API hooks - also must be at the top!
+  const { data: workers, isLoading: workersLoading } = useWorkersList();
   const createMission = useCreateMission();
 
-  // Redirect workers away — admin only page
+  // Effects - also must be at the top!
   useEffect(() => {
     if (!authLoading && !isAdmin) {
       router.replace(`/${params.locale}/dashboard`);
     }
   }, [authLoading, isAdmin, router, params.locale]);
 
-  // Calculate progress value
+  // Computed values after hooks
   const progressValue = (currentStep / TOTAL_STEPS) * 100;
 
-  // Block render for non-admins
+  // Early returns for conditional rendering (AFTER all hooks)
   if (!user && authLoading) {
     return (
       <div className="min-h-screen bg-white">
@@ -137,6 +137,7 @@ export default function MissionCreatePage() {
     );
   }
 
+  // Helper functions
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
 

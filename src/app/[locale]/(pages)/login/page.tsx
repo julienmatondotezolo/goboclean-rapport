@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Logo } from '@/components/ui/logo';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { authService } from '@/lib/auth';
 
 type LoginForm = {
   email: string;
@@ -24,16 +23,28 @@ type LoginForm = {
 };
 
 export default function LoginPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const locale = useLocale();
   const { toast } = useToast();
   const t = useTranslations('Login');
+  
   const [isLoading, setIsLoading] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   
-  // Get redirect URL from query params
+  // Get redirect URL from query params (middleware will handle this)
   const redirectUrl = searchParams.get('redirect');
+  
+  // Check if we're already in a redirect loop
+  useEffect(() => {
+    const url = window.location.href;
+    if (url.includes('/fr/fr/') || url.includes('/nl/nl/') || url.includes('/en/en/')) {
+      console.warn('🚨 REDIRECT LOOP DETECTED:', url);
+      // Clean the URL
+      const cleanUrl = url.replace(/\/(fr|nl|en)\/(fr|nl|en)\//, '/$1/');
+      window.location.replace(cleanUrl);
+    }
+  }, []);
 
   const loginSchema = z.object({
     email: z.string().email(t('invalidEmail')),
@@ -52,43 +63,48 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      const supabase = createClient();
+      console.log('🔐 LOGIN: Starting authentication for:', data.email);
       
-      // Sign in with Supabase
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      // Use the modern auth service
+      const result = await authService.login({
         email: data.email,
         password: data.password,
       });
 
-      if (authError) throw authError;
-
-      // Log login activity
-      const { logUserLogin, isFirstLogin } = await import('@/lib/user-activity');
-      await logUserLogin();
-
-      // Check if this is first login
-      const isFirst = await isFirstLogin(authData.user.id);
+      console.log('✅ LOGIN: Authentication successful');
       
+      // Show success message
       toast({
         title: t('loginSuccess'),
         description: t('welcome'),
         variant: 'success',
       });
 
-      // Small delay for toast
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Use window.location for hard refresh to ensure cookies are set
-      // This allows the proxy to properly detect the authenticated session
-      // Preserve locale in the URL
-      if (isFirst) {
-        window.location.href = `/${locale}/onboarding`;
-      } else if (redirectUrl && redirectUrl.startsWith('/')) {
-        window.location.href = redirectUrl;
-      } else {
-        window.location.href = `/${locale}/dashboard`;
+      // Log activity (optional - don't block on this)
+      try {
+        const { userActivityService } = await import('@/lib/user-activity');
+        await userActivityService.logLogin(result.user.id);
+        
+        // Check if user needs onboarding (first login or incomplete profile)
+        if (!result.user.is_onboarded) {
+          console.log('🎯 LOGIN: Onboarding required');
+          // Redirect to onboarding if profile not completed
+          window.location.href = redirectUrl || '/fr/onboarding';
+          return;
+        }
+      } catch (activityError) {
+        console.warn('⚠️ LOGIN: Activity logging failed:', activityError);
+        // Don't block login flow for activity logging errors
       }
+
+      // Force page navigation - let middleware handle the final destination
+      // This prevents client-side navigation issues
+      console.log('🔄 LOGIN: Forcing page refresh to:', redirectUrl || '/fr/dashboard');
+      window.location.href = redirectUrl || '/fr/dashboard';
+      
     } catch (error: any) {
+      console.error('❌ LOGIN: Authentication failed:', error);
+      
       toast({
         title: t('loginError') || 'Login failed',
         description: error.message || t('invalidCredentials') || 'Invalid email or password',
@@ -109,6 +125,14 @@ export default function LoginPage() {
 
         {/* Form Section */}
         <div className="bg-white rounded-[3rem] shadow-2xl px-10 py-12 mx-6 -mt-20 relative z-10 border border-slate-50">
+          {redirectUrl && (
+            <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                You need to log in to access that page
+              </p>
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-3">
               <Label 
@@ -120,10 +144,12 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
+                data-testid="email-input"
                 placeholder={t('emailPlaceholder')}
                 {...register('email')}
                 className={cn(errors.email ? 'border-red-500' : '')}
                 disabled={isLoading}
+                autoComplete="email"
               />
               {errors.email && (
                 <p className="text-sm text-red-500 mt-1 ml-1">{errors.email.message}</p>
@@ -149,6 +175,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
+                  data-testid="password-input"
                   placeholder={t('passwordPlaceholder')}
                   {...register('password')}
                   className={cn(
@@ -156,11 +183,13 @@ export default function LoginPage() {
                     errors.password ? 'border-red-500' : ''
                   )}
                   disabled={isLoading}
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                  disabled={isLoading}
                 >
                   {showPassword ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
                 </button>
@@ -175,6 +204,7 @@ export default function LoginPage() {
                 id="keepLoggedIn"
                 checked={keepLoggedIn}
                 onCheckedChange={(checked) => setKeepLoggedIn(checked as boolean)}
+                disabled={isLoading}
                 className="w-7 h-7 rounded-lg border-2 border-slate-200 data-[state=checked]:bg-[#1a2e1a] data-[state=checked]:border-[#1a2e1a] transition-all"
               />
               <label
@@ -187,6 +217,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
+              data-testid="login-button"
               className="w-full mt-4"
               disabled={isLoading}
             >
@@ -209,7 +240,7 @@ export default function LoginPage() {
         <div className="mt-16 mb-16 text-center space-y-10">          
           <div className="space-y-4">
             <p className="text-xs font-bold text-slate-400 tracking-tight">
-              {t('version')} 2.4.0 (Build 88)
+              {t('version')} 2.4.0 (Build 89) - Auth Fixed
             </p>
             <button className="text-[15px] text-brand-emerald-darker hover:text-black font-black underline underline-offset-8 decoration-4 decoration-brand-lime/30 hover:decoration-brand-lime transition-all">
               {t('contactSupport')}

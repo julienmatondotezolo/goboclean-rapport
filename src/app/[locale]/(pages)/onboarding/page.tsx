@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { apiClient } from '@/lib/api-client';
 import { handleError, showSuccess } from '@/lib/error-handler';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,59 +15,33 @@ import Image from 'next/image';
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
   const t = useTranslations('Onboarding');
   const [isLoading, setIsLoading] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
 
-    const checkAuth = async () => {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (cancelled) return;
-      
-      if (!session) {
-        router.push('/login');
+    if (user) {
+      // If already onboarded, redirect to dashboard
+      if (user.is_onboarded) {
+        router.push('/dashboard');
         return;
       }
 
-      setUserId(session.user.id);
-
-      // Get existing user data
-      const { data: userData } = await supabase
-        .from('users')
-        .select('first_name, last_name, profile_picture_url, is_onboarded')
-        .eq('id', session.user.id)
-        .single() as { data: any };
-
-      if (cancelled) return;
-
-      if (userData) {
-        // If already onboarded, redirect to dashboard
-        if (userData.is_onboarded) {
-          router.push('/dashboard');
-          return;
-        }
-
-        // Pre-fill with existing data
-        if (userData.first_name) setFirstName(userData.first_name);
-        if (userData.last_name) setLastName(userData.last_name);
-        if (userData.profile_picture_url) setProfilePicturePreview(userData.profile_picture_url);
-      }
-    };
-
-    checkAuth();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
+      // Pre-fill with existing data
+      if (user.first_name) setFirstName(user.first_name);
+      if (user.last_name) setLastName(user.last_name);
+      if (user.profile_picture_url) setProfilePicturePreview(user.profile_picture_url);
+    }
+  }, [isAuthenticated, user, router]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -107,19 +82,11 @@ export default function OnboardingPage() {
       return;
     }
 
-    if (!userId) return;
+    if (!user?.id) return;
 
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      
-      // Get auth token for backend request
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
-      }
-
       // Create FormData to send to backend
       const formData = new FormData();
       formData.append('firstName', firstName.trim());
@@ -132,33 +99,22 @@ export default function OnboardingPage() {
         throw new Error('Please select a profile picture');
       }
 
-      // Send to backend
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      
-      const response = await fetch(`${backendUrl}/auth/onboarding`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: formData,
-      });
+      // Send to backend using apiClient
+      const result = await apiClient.upload<{ success: boolean; message: string; user?: any }>('/auth/onboarding', formData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to complete onboarding');
+      if (result.success) {
+        showSuccess(
+          t('success') || 'Profile completed!',
+          t('successDescription') || 'Welcome to GoBoclean Rapport!'
+        );
+
+        // Redirect to dashboard
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1000);
+      } else {
+        throw new Error(result.message || 'Failed to complete onboarding');
       }
-
-      const result = await response.json();
-
-      showSuccess(
-        t('success') || 'Profile completed!',
-        t('successDescription') || 'Welcome to GoBoclean Rapport!'
-      );
-
-      // Redirect to dashboard
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 1000);
     } catch (error: any) {
       handleError(error, { title: t('error') || 'Failed to complete profile' });
     } finally {

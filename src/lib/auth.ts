@@ -1,5 +1,10 @@
-import { createClient } from "./supabase/client";
+import { backendAuth } from "./backend-auth";
 import { User } from "@/types/report";
+
+// Debug utilities for development
+if (process.env.NODE_ENV === "development") {
+  import("./debug-session");
+}
 
 export interface LoginCredentials {
   email: string;
@@ -13,79 +18,97 @@ export interface SignupData extends LoginCredentials {
   role?: "worker" | "admin";
 }
 
+/**
+ * Handles login/logout with proper session management
+ */
 export const authService = {
+  /**
+   * Sign in user with email/password
+   * Returns user data on success, throws on error
+   */
   async login(credentials: LoginCredentials) {
-    const supabase = createClient();
+    console.log("🔐 AUTH: Starting login for:", credentials.email);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: credentials.email,
-      password: credentials.password,
-    });
+    const data = await backendAuth.login(credentials.email, credentials.password);
+    const user = await backendAuth.getCurrentUser();
 
-    if (error) throw error;
+    console.log("✅ AUTH: Login successful for:", user.email);
 
-    // Don't fetch profile here - let the app fetch it after redirect
-    // This avoids RLS issues during the login flow
-    return { user: data.user };
+    return {
+      user,
+      session: { access_token: backendAuth.getToken() },
+    };
   },
 
+  /**
+   * Sign up new user (not implemented for backend auth)
+   */
   async signup(signupData: SignupData) {
-    const supabase = createClient();
-
-    const { data, error } = await supabase.auth.signUp({
-      email: signupData.email,
-      password: signupData.password,
-      options: {
-        data: {
-          first_name: signupData.first_name,
-          last_name: signupData.last_name,
-          phone: signupData.phone,
-          role: signupData.role || "worker",
-        },
-      },
-    });
-
-    if (error) throw error;
-
-    return data;
+    throw new Error("Signup not implemented for backend auth");
   },
 
+  /**
+   * Sign out user
+   * Clears session and redirects to login
+   */
   async logout() {
-    const supabase = createClient();
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    console.log("🔐 AUTH: Starting logout");
+
+    await backendAuth.logout();
+
+    console.log("✅ AUTH: Logout successful");
+
+    // Force page reload to clear all state
+    window.location.href = "/fr/login";
   },
 
+  /**
+   * Get current user with profile data
+   * Returns null if not authenticated or profile not found
+   */
   async getCurrentUser(): Promise<User | null> {
-    const supabase = createClient();
+    try {
+      if (!backendAuth.isAuthenticated()) {
+        return null;
+      }
 
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) return null;
-
-    const { data: profile, error: profileError } = await supabase.from("users").select("*").eq("id", user.id).single();
-
-    if (profileError) return null;
-
-    return profile;
+      return await backendAuth.getCurrentUser();
+    } catch (error) {
+      console.error("❌ AUTH: getCurrentUser error:", error);
+      return null;
+    }
   },
 
+  /**
+   * Get current session
+   */
+  async getCurrentSession() {
+    const token = backendAuth.getToken();
+    if (!token) return null;
+
+    return { access_token: token };
+  },
+
+  /**
+   * Update user password (not implemented for backend auth)
+   */
   async updatePassword(newPassword: string) {
-    const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-    if (error) throw error;
+    throw new Error("Password update not implemented for backend auth");
   },
 
+  /**
+   * Reset password via email (not implemented for backend auth)
+   */
   async resetPassword(email: string) {
-    const supabase = createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
-    if (error) throw error;
+    throw new Error("Password reset not implemented for backend auth");
+  },
+
+  /**
+   * Refresh current session
+   */
+  async refreshSession() {
+    // For backend auth, just check if token is still valid
+    const user = await backendAuth.getCurrentUser();
+    return { user, session: { access_token: backendAuth.getToken() } };
   },
 };

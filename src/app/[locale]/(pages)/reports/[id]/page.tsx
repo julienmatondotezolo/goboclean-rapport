@@ -56,8 +56,25 @@ export default function ReportDetailPage() {
     try {
       setIsDownloading(true);
       
-      // Open PDF in new tab for download
-      window.open(report.pdf_url, '_blank');
+      // Fetch PDF file first to handle CORS and create blob URL
+      const response = await fetch(report.pdf_url);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Create download link with blob URL
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `Rapport-${report.id.slice(0, 8).toUpperCase()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up blob URL
+      URL.revokeObjectURL(blobUrl);
       
       showSuccess(t('downloadStarted'));
     } catch (error) {

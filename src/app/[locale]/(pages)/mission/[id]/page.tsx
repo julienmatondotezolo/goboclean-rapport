@@ -664,6 +664,36 @@ export default function MissionDetailPage() {
             </div>
           </div>
         )}
+        
+        {/* After Pictures Section */}
+        {hasAfterPictures && (
+          <div className="bg-[#f8fafc] rounded-2xl p-5">
+            <div className="text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+              {t('afterPictures')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {mission.after_pictures!.map((photo: string, index: number) => (
+                <div
+                  key={index}
+                  onClick={() => setFullScreenImage(photo)}
+                  className="relative rounded-xl overflow-hidden border-2 border-gray-200 bg-white cursor-pointer hover:border-[#a3e635] transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ aspectRatio: '3/2' }}
+                >
+                  <Image
+                    src={photo}
+                    alt={`After photo ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                  />
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded">
+                    {index + 1}/{mission.after_pictures!.length}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* After Pictures Section */}
         {hasAfterPictures && (

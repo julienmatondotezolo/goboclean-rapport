@@ -48,43 +48,12 @@ export function handleError(error: any, options: ErrorHandlerOptions = {}) {
 }
 
 /**
- * Handle Supabase errors specifically
- */
-export function handleSupabaseError(error: any, context?: string) {
-  const title = context ? `${context} Error` : 'Database Error';
-  
-  // Common Supabase error messages
-  const errorMessages: Record<string, string> = {
-    'JWT expired': 'Your session has expired. Please login again.',
-    'Invalid JWT': 'Your session is invalid. Please login again.',
-    'permission denied': 'You don\'t have permission to access this resource.',
-    'row-level security': 'Access denied. Please check your permissions.',
-    'duplicate key': 'This record already exists.',
-    'foreign key': 'Cannot delete this record as it\'s being used elsewhere.',
-  };
-
-  // Check if error message matches any known patterns
-  let customMessage: string | undefined;
-  if (error?.message) {
-    for (const [pattern, message] of Object.entries(errorMessages)) {
-      if (error.message.toLowerCase().includes(pattern.toLowerCase())) {
-        customMessage = message;
-        break;
-      }
-    }
-  }
-
-  return handleError(error, {
-    title,
-    description: customMessage,
-  });
-}
-
-/**
  * Handle authentication errors
  */
 export function handleAuthError(error: any) {
-  return handleSupabaseError(error, 'Authentication');
+  return handleError(error, {
+    title: 'Authentication Error',
+  });
 }
 
 /**
