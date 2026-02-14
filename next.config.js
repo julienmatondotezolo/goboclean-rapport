@@ -13,7 +13,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: https: blob:",
       "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' http://localhost:3001 https://api.goboclean.be https://nominatim.openstreetmap.org wss://localhost:* data:",
+      "connect-src 'self' http://localhost:3001 https://api.goboclean.be https://nominatim.openstreetmap.org https://ihlnwzrsvfxgossytuiz.supabase.co wss://localhost:* data:",
       "frame-ancestors 'none'",
       "form-action 'self'",
       "base-uri 'self'",
