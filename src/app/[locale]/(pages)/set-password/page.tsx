@@ -31,7 +31,6 @@ export default function SetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
-  const [isValidSession, setIsValidSession] = useState(false);
 
   const passwordSchema = z.object({
     password: z.string()
