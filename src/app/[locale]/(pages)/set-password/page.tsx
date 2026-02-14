@@ -13,7 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/ui/logo';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { apiClient } from '@/lib/api-client';
 import { LoadingBanner } from '@/components/loading-banner';
 
 type SetPasswordForm = {
@@ -24,10 +25,12 @@ type SetPasswordForm = {
 export default function SetPasswordPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
   const t = useTranslations('Login');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isValidSession, setIsValidSession] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
 
   const passwordSchema = z.object({
@@ -47,72 +50,41 @@ export default function SetPasswordPage() {
   });
 
   useEffect(() => {
-    const checkSession = async () => {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        // Try to get session from URL hash
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-
-        if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          if (!error) {
-            setIsValidSession(true);
-          } else {
-            toast({
-              title: 'Session Error',
-              description: 'Invalid or expired link. Please request a new invitation.',
-              variant: 'destructive',
-            });
-            setTimeout(() => router.push('/login'), 3000);
-          }
-        } else {
-          toast({
-            title: 'Invalid Link',
-            description: 'This link is invalid or has expired.',
-            variant: 'destructive',
-          });
-          setTimeout(() => router.push('/login'), 3000);
-        }
-      } else {
-        setIsValidSession(true);
-      }
-    };
-
-    checkSession();
-  }, [router, toast]);
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in to set your password.',
+        variant: 'destructive',
+      });
+      setTimeout(() => router.push('/login'), 3000);
+    } else {
+      setIsValidSession(true);
+    }
+  }, [isAuthenticated, router, toast]);
 
   const onSubmit = async (data: SetPasswordForm) => {
     setIsLoading(true);
     
     try {
-      const supabase = createClient();
-      
-      const { error } = await supabase.auth.updateUser({
+      const response = await apiClient.put('/auth/set-password', {
         password: data.password,
       });
 
-      if (error) throw error;
+      if (response.success) {
+        toast({
+          title: 'Password Set Successfully! ✅',
+          description: 'Your account is now active. Redirecting to login...',
+          variant: 'success',
+        });
 
-      toast({
-        title: 'Password Set Successfully! ✅',
-        description: 'Your account is now active. Redirecting to login...',
-        variant: 'success',
-      });
-
-      // Sign out and redirect to login
-      await supabase.auth.signOut();
-      
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
+        // Redirect to login
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      } else {
+        throw new Error(response.message || 'Failed to set password');
+      }
       
     } catch (error: any) {
       toast({
