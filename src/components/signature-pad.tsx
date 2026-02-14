@@ -7,6 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Eraser, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Type fix for React 19 compatibility
+const SignatureCanvasComponent = SignatureCanvas as any;
+
 interface SignaturePadProps {
   title: string;
   description?: string;
@@ -24,7 +27,7 @@ export function SignaturePad({
   disabled = false,
   className,
 }: SignaturePadProps) {
-  const sigCanvas = useRef<SignatureCanvas | null>(null);
+  const sigCanvas = useRef<any>(null);
   const [isEmpty, setIsEmpty] = useState(true);
   const [isSaved, setIsSaved] = useState(!!value);
   const loadedValueRef = useRef<string | null>(null);
@@ -75,7 +78,7 @@ export function SignaturePad({
             disabled && 'opacity-50 pointer-events-none'
           )}
         >
-          <SignatureCanvas
+          <SignatureCanvasComponent
             ref={sigCanvas}
             canvasProps={{
               className: 'w-full h-48 touch-none',
