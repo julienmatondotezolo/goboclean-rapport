@@ -63,11 +63,8 @@ export default function ReportsPage() {
   };
 
   const handleReportClick = (report: MissionReport) => {
-    if (report.pdf_url) {
-      window.open(report.pdf_url, '_blank');
-    } else {
-      router.push(`/reports/${report.id}`);
-    }
+    // Always navigate to report detail page, never direct download
+    router.push(`/reports/${report.id}`);
   };
 
   return (
