@@ -82,14 +82,13 @@ export default function LoginPage() {
 
       // Log activity (optional - don't block on this)
       try {
-        const { logUserLogin, isFirstLogin } = await import('@/lib/user-activity');
-        await logUserLogin();
+        const { userActivityService } = await import('@/lib/user-activity');
+        await userActivityService.logLogin(result.user.id);
         
-        // Check if first login for onboarding redirect
-        const isFirst = await isFirstLogin(result.user.id);
-        if (isFirst) {
-          console.log('🎯 LOGIN: First login detected - onboarding flow');
-          // Middleware will handle redirect, but we can force it
+        // Check if user needs onboarding (first login or incomplete profile)
+        if (!result.user.is_onboarded) {
+          console.log('🎯 LOGIN: Onboarding required');
+          // Redirect to onboarding if profile not completed
           window.location.href = redirectUrl || '/fr/onboarding';
           return;
         }

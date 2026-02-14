@@ -341,7 +341,6 @@ export default function ProfilePage() {
       <LanguageSelectorModal
         isOpen={isLanguageModalOpen}
         onClose={() => setIsLanguageModalOpen(false)}
-        currentLocale={locale}
       />
 
       {/* Sync/Offline Indicators — only visible on profile page */}

@@ -66,7 +66,7 @@ export default function SetPasswordPage() {
     setIsLoading(true);
     
     try {
-      const response = await apiClient.put('/auth/set-password', {
+      const response = await apiClient.put<{ success: boolean; message: string }>('/auth/set-password', {
         password: data.password,
       });
 

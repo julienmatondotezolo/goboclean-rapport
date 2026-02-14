@@ -58,7 +58,7 @@ export default function ChangePasswordPage() {
     setIsLoading(true);
     
     try {
-      const response = await apiClient.put('/auth/change-password', {
+      const response = await apiClient.put<{ success: boolean; message: string }>('/auth/change-password', {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });

@@ -100,7 +100,7 @@ export default function OnboardingPage() {
       }
 
       // Send to backend using apiClient
-      const result = await apiClient.upload('/auth/onboarding', formData);
+      const result = await apiClient.upload<{ success: boolean; message: string; user?: any }>('/auth/onboarding', formData);
 
       if (result.success) {
         showSuccess(
