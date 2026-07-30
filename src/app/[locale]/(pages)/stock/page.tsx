@@ -177,7 +177,7 @@ export default function StockPage() {
                   <div className="min-w-0">
                     <p className="text-[14px] font-bold text-gray-900 truncate">{i.label}</p>
                     <p className="text-[12px] text-gray-500">
-                      {L('seuil', 'drempel', 'threshold')} {Number(i.threshold)} {i.unit}
+                      {L('alerte sous', 'alarm onder', 'alert below')} {Number(i.threshold)}
                     </p>
                   </div>
                 </div>
@@ -186,7 +186,7 @@ export default function StockPage() {
                     i.low ? 'bg-red-100 text-red-700' : 'bg-[#a3e635]/20 text-[#064e3b]'
                   }`}
                 >
-                  {Number(i.quantity)} {i.unit}
+                  {Number(i.quantity)} {L('en stock', 'in voorraad', 'in stock')}
                 </span>
               </div>
               {/* Jauge quantité / seuil */}
