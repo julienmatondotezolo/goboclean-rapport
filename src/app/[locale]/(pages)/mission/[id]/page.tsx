@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { subtypeLabel } from '@/lib/services';
+import { equipmentLabel } from '@/lib/equipment';
 import {
   MapPin,
   Clock,
@@ -374,7 +376,7 @@ export default function MissionDetailPage() {
   }
 
   const displayTitle = `${mission.client_first_name} ${mission.client_last_name}`;
-  const subtypesLabel = mission.mission_subtypes?.map((st) => st).join(', ') || '';
+  const subtypesLabel = mission.mission_subtypes?.map((st) => subtypeLabel(st, locale)).join(', ') || '';
   const appointmentDate = new Date(mission.appointment_time).toLocaleDateString([], {
     day: 'numeric',
     month: 'long',
@@ -496,6 +498,17 @@ export default function MissionDetailPage() {
               </span>
             </div>
           </div>
+
+          {mission.equipment && mission.equipment.length > 0 && (
+            <div className="bg-[#f8fafc] rounded-2xl p-4">
+              <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+                {locale === 'fr' ? 'Matériel' : locale === 'nl' ? 'Materiaal' : 'Equipment'}
+              </div>
+              <span className="text-[15px] font-bold text-gray-900">
+                {mission.equipment.map((eq) => equipmentLabel(eq, locale)).join(', ')}
+              </span>
+            </div>
+          )}
 
           <div className="bg-[#f8fafc] rounded-2xl p-4">
             <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">

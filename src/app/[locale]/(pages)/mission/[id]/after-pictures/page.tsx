@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { subtypeLabel } from '@/lib/services';
 import { Camera, X, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
@@ -525,7 +526,7 @@ export default function AfterPicturesPage() {
                       {t('roofType')}
                     </span>
                     <span className="text-[13px] font-bold text-gray-900">
-                      {mission.mission_subtypes?.join(', ') || 'Roof'}
+                      {mission.mission_subtypes?.map((st) => subtypeLabel(st, locale)).join(', ') || 'Roof'}
                     </span>
                   </div>
 

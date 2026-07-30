@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { subtypeLabel } from '@/lib/services';
 import {
   ArrowLeft,
   Download,
@@ -320,7 +321,7 @@ export default function ReportDetailPage() {
                 <div className="flex justify-between">
                   <span className="text-gray-600">{t('missionType')}:</span>
                   <span className="font-bold text-gray-900">
-                    {report.mission.mission_subtypes.join(', ')}
+                    {report.mission.mission_subtypes.map((st: string) => subtypeLabel(st, locale)).join(', ')}
                   </span>
                 </div>
               )}

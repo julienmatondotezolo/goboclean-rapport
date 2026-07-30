@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { MapPin, Phone, Mail, Calendar, Clock, FileText, Home, CheckCircle2, ArrowRight, Loader2, ShieldAlert } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { showSuccess, handleError } from '@/lib/error-handler';
 import { LoadingBanner } from '@/components/loading-banner';
 import type { CreateMissionPayload, MissionSubtype } from '@/types/mission';
+import { SERVICES, SERVICE_IDS, subtypeLabel } from '@/lib/services';
+import { EQUIPMENT, EQUIPMENT_IDS, equipmentLabel } from '@/lib/equipment';
 
 interface ClientInfo {
   firstName: string;
@@ -30,10 +32,8 @@ interface ClientInfo {
 interface MissionDetails {
   missionType: 'roof' | 'industrial';
   additionalInformation: string;
-  subTypes: {
-    cleaning: boolean;
-    coating: boolean;
-  };
+  subTypes: Record<string, boolean>;
+  equipment: Record<string, boolean>;
   surfaceArea: string;
   facadeNumber: string;
   features: {
@@ -56,6 +56,7 @@ export default function MissionCreatePage() {
   const router = useRouter();
   const params = useParams();
   const t = useTranslations('MissionCreate');
+  const locale = useLocale();
   const { user, isAdmin, isLoading: authLoading } = useAuth();
   
   // ALL HOOKS MUST BE CALLED AT THE TOP - NO CONDITIONAL CALLS!
@@ -74,10 +75,8 @@ export default function MissionCreatePage() {
   const [missionDetails, setMissionDetails] = useState<MissionDetails>({
     missionType: 'roof',
     additionalInformation: '',
-    subTypes: {
-      cleaning: false,
-      coating: false,
-    },
+    subTypes: Object.fromEntries(SERVICE_IDS.map((id) => [id, false])),
+    equipment: Object.fromEntries(EQUIPMENT_IDS.map((id) => [id, false])),
     surfaceArea: '',
     facadeNumber: '1',
     features: {
@@ -174,7 +173,7 @@ export default function MissionCreatePage() {
   const validateStep2 = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!missionDetails.subTypes.cleaning && !missionDetails.subTypes.coating) {
+    if (!Object.values(missionDetails.subTypes).some(Boolean)) {
       newErrors.subTypes = t('requiredField');
     }
 
@@ -236,10 +235,9 @@ export default function MissionCreatePage() {
       return;
     }
 
-    // Build subtypes array
-    const subtypes: MissionSubtype[] = [];
-    if (missionDetails.subTypes.cleaning) subtypes.push('cleaning');
-    if (missionDetails.subTypes.coating) subtypes.push('coating');
+    // Build subtypes array (catalog order)
+    const subtypes: MissionSubtype[] = SERVICE_IDS.filter((id) => missionDetails.subTypes[id]);
+    const equipment = EQUIPMENT_IDS.filter((id) => missionDetails.equipment[id]);
 
     const payload: CreateMissionPayload = {
       client_first_name: clientInfo.firstName,
@@ -255,6 +253,7 @@ export default function MissionCreatePage() {
       additional_info: missionDetails.additionalInformation || undefined,
       features: missionDetails.features,
       assigned_workers: selectedWorkers,
+      equipment,
     };
 
     try {
@@ -486,34 +485,57 @@ export default function MissionCreatePage() {
                 {t('missionSubtype')} *
               </label>
               <div className="space-y-3">
-                <label className="flex items-center gap-3 p-4 rounded-xl bg-[#f8fafc] cursor-pointer hover:bg-gray-100 transition-all">
-                  <Checkbox
-                    checked={missionDetails.subTypes.cleaning}
-                    onCheckedChange={(checked) =>
-                      setMissionDetails({
-                        ...missionDetails,
-                        subTypes: { ...missionDetails.subTypes, cleaning: checked as boolean },
-                      })
-                    }
-                  />
-                  <span className="text-[14px] font-medium text-gray-900">{t('cleaning')}</span>
-                </label>
-                <label className="flex items-center gap-3 p-4 rounded-xl bg-[#f8fafc] cursor-pointer hover:bg-gray-100 transition-all">
-                  <Checkbox
-                    checked={missionDetails.subTypes.coating}
-                    onCheckedChange={(checked) =>
-                      setMissionDetails({
-                        ...missionDetails,
-                        subTypes: { ...missionDetails.subTypes, coating: checked as boolean },
-                      })
-                    }
-                  />
-                  <span className="text-[14px] font-medium text-gray-900">{t('coating')}</span>
-                </label>
+                {SERVICES.map((service) => (
+                  <label
+                    key={service.id}
+                    className="flex items-center gap-3 p-4 rounded-xl bg-[#f8fafc] cursor-pointer hover:bg-gray-100 transition-all"
+                  >
+                    <Checkbox
+                      checked={missionDetails.subTypes[service.id] ?? false}
+                      onCheckedChange={(checked) =>
+                        setMissionDetails({
+                          ...missionDetails,
+                          subTypes: { ...missionDetails.subTypes, [service.id]: checked as boolean },
+                        })
+                      }
+                    />
+                    <span className="text-[14px] font-medium text-gray-900">
+                      {subtypeLabel(service.id, locale)}
+                    </span>
+                  </label>
+                ))}
               </div>
               {errors.subTypes && (
                 <p className="text-red-500 text-xs mt-2">{errors.subTypes}</p>
               )}
+            </div>
+
+            {/* Equipment */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+                {locale === 'fr' ? 'Matériel' : locale === 'nl' ? 'Materiaal' : 'Equipment'}
+              </label>
+              <div className="space-y-3">
+                {EQUIPMENT.map((eq) => (
+                  <label
+                    key={eq.id}
+                    className="flex items-center gap-3 p-4 rounded-xl bg-[#f8fafc] cursor-pointer hover:bg-gray-100 transition-all"
+                  >
+                    <Checkbox
+                      checked={missionDetails.equipment[eq.id] ?? false}
+                      onCheckedChange={(checked) =>
+                        setMissionDetails({
+                          ...missionDetails,
+                          equipment: { ...missionDetails.equipment, [eq.id]: checked as boolean },
+                        })
+                      }
+                    />
+                    <span className="text-[14px] font-medium text-gray-900">
+                      {equipmentLabel(eq.id, locale)}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Site Measurements */}

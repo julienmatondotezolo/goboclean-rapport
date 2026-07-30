@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { subtypeLabel } from '@/lib/services';
 import {
   ChevronLeft,
   ChevronRight,
@@ -267,13 +268,13 @@ export default function SchedulePage() {
         {mission.client_address} • {fmtTime(mission.appointment_time)}
       </p>
       {!compact && mission.mission_subtypes?.length > 0 && (
-        <div className="flex gap-1 mt-2">
+        <div className="flex flex-wrap gap-1 mt-2">
           {mission.mission_subtypes.map((st) => (
             <span
               key={st}
-              className="text-[10px] font-bold bg-gray-900/10 text-gray-900 px-2 py-0.5 rounded-md uppercase"
+              className="text-[10px] font-bold bg-gray-900/10 text-gray-900 px-2 py-0.5 rounded-md"
             >
-              {st}
+              {subtypeLabel(st, locale)}
             </span>
           ))}
         </div>

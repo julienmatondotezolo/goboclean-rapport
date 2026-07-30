@@ -4,7 +4,8 @@ export type MissionStatus = "assigned" | "in_progress" | "waiting_completion" | 
 
 export type MissionType = "roof";
 
-export type MissionSubtype = "cleaning" | "coating";
+// Service ids from the Roof Revive catalog (src/lib/services.ts) + legacy values.
+export type MissionSubtype = string;
 
 export interface MissionFeatures {
   frontParking?: boolean;
@@ -46,6 +47,9 @@ export interface Mission {
 
   // Property Features
   features?: MissionFeatures;
+
+  // Equipment (gros_dibo, petit_dibo, machine_peinture, camionnette)
+  equipment?: string[];
 
   // Timer
   before_pictures_submitted_at?: string;
@@ -91,6 +95,7 @@ export interface CreateMissionPayload {
   additional_info?: string;
   features?: MissionFeatures;
   assigned_workers: string[];
+  equipment?: string[];
 }
 
 export interface RescheduleMissionPayload {
