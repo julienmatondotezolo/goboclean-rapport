@@ -1,6 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
 @import "tailwindcss";
 
+/* L'app est designée en clair uniquement : sans cette déclaration, les
+   navigateurs en dark mode rendent les contrôles natifs (date, number,
+   select…) avec du texte blanc → blanc sur blanc, champs illisibles. */
+:root {
+  color-scheme: light;
+}
+
+input,
+select,
+textarea {
+  color: #1a202c;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
+}
+
 @theme {
   /* Brand Colors - Tailwind v4 theme configuration */
   --color-brand-green: #84cc16;

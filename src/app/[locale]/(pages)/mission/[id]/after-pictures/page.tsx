@@ -866,7 +866,7 @@ export default function AfterPicturesPage() {
                 value={mileage}
                 onChange={(e) => setMileage(e.target.value)}
                 placeholder="km"
-                className="w-28 p-2 rounded-lg border-2 border-gray-200 text-[14px] text-right"
+                className="w-28 p-2 rounded-lg border-2 border-gray-200 text-[14px] text-right bg-white text-gray-900 placeholder:text-gray-400"
               />
             </div>
             <input

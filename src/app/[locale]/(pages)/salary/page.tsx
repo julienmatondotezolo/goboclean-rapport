@@ -169,7 +169,7 @@ export default function SalaryPage() {
               type="date"
               value={newDate}
               onChange={(e) => setNewDate(e.target.value)}
-              className="w-full p-3 rounded-xl border-2 border-gray-200 text-[14px]"
+              className="w-full p-3 rounded-xl border-2 border-gray-200 text-[14px] bg-white text-gray-900 placeholder:text-gray-400"
             />
             <div className="flex flex-wrap gap-2">
               {AMOUNTS.map((a) => (
@@ -191,7 +191,7 @@ export default function SalaryPage() {
                 placeholder={L('autre', 'ander', 'other')}
                 value={newAmount !== null && !AMOUNTS.includes(newAmount) ? newAmount : ''}
                 onChange={(e) => setNewAmount(parseFloat(e.target.value) || null)}
-                className="w-24 p-2 rounded-lg border-2 border-gray-200 text-[13px] text-right"
+                className="w-24 p-2 rounded-lg border-2 border-gray-200 text-[13px] text-right bg-white text-gray-900 placeholder:text-gray-400"
               />
             </div>
             <Button

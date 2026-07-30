@@ -844,7 +844,7 @@ export default function MissionDetailPage() {
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
                   placeholder={locale === 'nl' ? 'Bedrag € (optioneel)' : 'Montant € (optionnel)'}
-                  className="w-full p-3 rounded-xl border-2 border-gray-200 text-[14px]"
+                  className="w-full p-3 rounded-xl border-2 border-gray-200 text-[14px] bg-white text-gray-900 placeholder:text-gray-400"
                 />
                 <Button
                   onClick={handleRecordPayment}

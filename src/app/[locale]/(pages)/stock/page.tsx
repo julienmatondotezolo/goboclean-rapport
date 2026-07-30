@@ -109,7 +109,7 @@ export default function StockPage() {
                 inputMode="numeric"
                 value={units}
                 onChange={(e) => setUnits(e.target.value)}
-                className="w-24 p-3 rounded-xl border-2 border-gray-200 text-[14px] text-right"
+                className="w-24 p-3 rounded-xl border-2 border-gray-200 text-[14px] text-right bg-white text-gray-900"
               />
               <Button
                 onClick={() => consume.mutate()}
