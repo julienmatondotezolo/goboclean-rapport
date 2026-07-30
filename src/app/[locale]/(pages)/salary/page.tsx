@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
@@ -106,6 +106,33 @@ export default function SalaryPage() {
   const todayIso = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Brussels' });
   const weekdayShort = (iso: string) =>
     new Date(`${iso}T12:00:00`).toLocaleDateString(locale, { weekday: 'short' }).replace('.', '');
+  const monthLabel = (() => {
+    const label = new Date(`${month}-01T12:00:00`).toLocaleDateString(locale, {
+      month: 'long',
+      year: 'numeric',
+    });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  })();
+  const selectedDayLabel = newDate
+    ? new Date(`${newDate}T12:00:00`).toLocaleDateString(locale, {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      })
+    : null;
+
+  // Présélectionne aujourd'hui (si libre) et centre la bande dessus
+  const stripRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!newDate && month === todayIso.slice(0, 7) && data && !existingDates.has(todayIso)) {
+      setNewDate(todayIso);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, month]);
+  useEffect(() => {
+    const target = stripRef.current?.querySelector('[data-selected="true"], [data-today="true"]');
+    if (target) target.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, [newDate, month, data]);
 
   const fmtDay = (iso: string) =>
     new Date(`${iso}T12:00:00`).toLocaleDateString(locale, { weekday: 'short', day: '2-digit', month: '2-digit' });
@@ -140,7 +167,7 @@ export default function SalaryPage() {
             <button onClick={() => { setMonth(shiftMonth(month, -1)); setNewDate(''); }} className="p-1">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <span className="text-[14px] font-bold uppercase tracking-wide">{month}</span>
+            <span className="text-[14px] font-bold uppercase tracking-wide">{monthLabel}</span>
             <button onClick={() => { setMonth(shiftMonth(month, 1)); setNewDate(''); }} className="p-1">
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -172,11 +199,26 @@ export default function SalaryPage() {
         {/* Saisie d'une journée (admin) */}
         {isAdmin && effectiveWorkerId && (
           <div className="bg-[#f8fafc] rounded-2xl p-4 space-y-3">
-            <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
-              + {L('Saisir une journée', 'Dag toevoegen', 'Add a day')}
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
+                + {L('Saisir une journée', 'Dag toevoegen', 'Add a day')}
+              </div>
+              <button
+                onClick={() => {
+                  setMonth(todayIso.slice(0, 7));
+                  setNewDate(todayIso);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-[12px] font-bold border-2 transition-all ${
+                  newDate === todayIso
+                    ? 'bg-[#064e3b] text-white border-[#064e3b]'
+                    : 'bg-white text-[#064e3b] border-[#a3e635]'
+                }`}
+              >
+                {L("Aujourd'hui", 'Vandaag', 'Today')}
+              </button>
             </div>
             {/* Sélecteur de jour mobile-first : bande des jours du mois affiché */}
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+            <div ref={stripRef} className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
               {Array.from({ length: daysInMonth(month) }, (_, i) => {
                 const day = i + 1;
                 const iso = `${month}-${String(day).padStart(2, '0')}`;
@@ -186,6 +228,8 @@ export default function SalaryPage() {
                 return (
                   <button
                     key={iso}
+                    data-selected={sel}
+                    data-today={isToday}
                     disabled={taken}
                     onClick={() => setNewDate(sel ? '' : iso)}
                     className={`shrink-0 w-12 py-2 rounded-xl border-2 flex flex-col items-center transition-all ${
@@ -229,6 +273,12 @@ export default function SalaryPage() {
                 className="w-24 p-2 rounded-lg border-2 border-gray-200 text-[13px] text-right bg-white text-gray-900 placeholder:text-gray-400"
               />
             </div>
+            {selectedDayLabel && (
+              <p className="text-[13px] font-bold text-[#064e3b] bg-[#a3e635]/15 rounded-xl px-3 py-2">
+                {selectedDayLabel}
+                {newAmount !== null ? ` — ${newAmount} €` : ''}
+              </p>
+            )}
             <Button
               onClick={() => addDay.mutate()}
               disabled={!newDate || newAmount === null || addDay.isPending}
