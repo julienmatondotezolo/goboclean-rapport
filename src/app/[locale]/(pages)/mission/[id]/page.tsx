@@ -29,7 +29,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 import { AddressAutocomplete } from '@/components/address-autocomplete';
 import Image from 'next/image';
-import { useMission, useStartMission, useUpdateMission, useDeleteMission } from '@/hooks/useMissions';
+import { useMission, useStartMission, useUpdateMission, useDeleteMission, useRecordPayment } from '@/hooks/useMissions';
 import { useWorkersList } from '@/hooks/useWorkers';
 import { useAuth } from '@/hooks/useAuth';
 import { handleError, showSuccess } from '@/lib/error-handler';
@@ -54,6 +54,28 @@ export default function MissionDetailPage() {
   const updateMission = useUpdateMission();
   const deleteMission = useDeleteMission();
   const { data: allWorkers, isLoading: workersLoading } = useWorkersList({ enabled: isAdmin });
+
+  const recordPayment = useRecordPayment();
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState('');
+
+  const handleRecordPayment = async () => {
+    if (!paymentMethod) return;
+    try {
+      const res = await recordPayment.mutateAsync({
+        id,
+        method: paymentMethod,
+        ...(paymentAmount.trim() !== '' ? { amount: parseFloat(paymentAmount) } : {}),
+      });
+      if (res.bon_sent) {
+        showSuccess(locale === 'nl' ? 'Betaling geregistreerd, bon verzonden' : 'Paiement enregistré, bon envoyé au client');
+      } else {
+        showSuccess(locale === 'nl' ? 'Betaling geregistreerd (bon niet verzonden)' : 'Paiement enregistré (bon non envoyé)');
+      }
+    } catch (error) {
+      handleError(error, { title: locale === 'nl' ? 'Betaling mislukt' : 'Échec de l’enregistrement du paiement' });
+    }
+  };
 
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<{ minutes: number; seconds: number } | null>(null);
@@ -767,6 +789,81 @@ export default function MissionDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Payment / bon d'exécution (lot 3 — admin, mission terminée) */}
+        {isAdmin && mission.status === 'completed' && (
+          <div className="bg-[#f8fafc] rounded-2xl p-4 space-y-3">
+            <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
+              {locale === 'fr' ? 'Paiement & bon d’exécution' : locale === 'nl' ? 'Betaling & uitvoeringsbon' : 'Payment & execution slip'}
+            </div>
+            {mission.payment ? (
+              <div className="space-y-1">
+                <p className="text-[14px] font-bold text-gray-900">
+                  💰{' '}
+                  {{ cash: 'Cash', virement: 'Virement', virement_instantane: 'Virement instantané', autre: 'Autre' }[
+                    mission.payment.method
+                  ] ?? mission.payment.method}
+                  {mission.payment.amount ? ` — ${mission.payment.amount} €` : ''}
+                </p>
+                <p className="text-[12px] text-gray-500">
+                  {new Date(mission.payment.received_at).toLocaleString(locale)}
+                </p>
+                <p className="text-[13px] font-medium">
+                  {mission.bon_sent_at
+                    ? `✅ ${locale === 'nl' ? 'Bon verzonden naar de klant' : locale === 'en' ? 'Bon sent to the client' : 'Bon d’exécution envoyé au client'}`
+                    : `⚠️ ${locale === 'nl' ? 'Bon niet verzonden (geen e-mail/PDF)' : locale === 'en' ? 'Bon not sent (no email/PDF)' : 'Bon non envoyé (pas d’email client ou de PDF)'}`}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'cash', label: 'Cash' },
+                    { id: 'virement', label: locale === 'nl' ? 'Overschrijving' : 'Virement' },
+                    { id: 'virement_instantane', label: locale === 'nl' ? 'Instant overschrijving' : 'Virement instantané' },
+                    { id: 'autre', label: locale === 'nl' ? 'Andere' : 'Autre' },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setPaymentMethod(m.id)}
+                      className={`px-3 py-2 rounded-lg text-[13px] font-bold border-2 transition-all ${
+                        paymentMethod === m.id
+                          ? 'bg-[#064e3b] text-white border-[#064e3b]'
+                          : 'bg-white text-gray-600 border-gray-200'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  placeholder={locale === 'nl' ? 'Bedrag € (optioneel)' : 'Montant € (optionnel)'}
+                  className="w-full p-3 rounded-xl border-2 border-gray-200 text-[14px]"
+                />
+                <Button
+                  onClick={handleRecordPayment}
+                  disabled={!paymentMethod || recordPayment.isPending}
+                  className="w-full"
+                >
+                  {recordPayment.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                  <span className="text-[14px] font-bold uppercase tracking-wide">
+                    {locale === 'nl'
+                      ? '💰 Betaling ontvangen → bon verzenden'
+                      : locale === 'en'
+                        ? '💰 Payment received → send bon'
+                        : '💰 Paiement reçu → envoyer le bon'}
+                  </span>
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Action Button */}
         {mission.status !== 'completed' && mission.status !== 'cancelled' && (

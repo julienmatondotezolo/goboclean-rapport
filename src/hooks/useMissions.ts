@@ -157,6 +157,24 @@ export function useUpdateMission() {
 }
 
 /**
+ * Record client payment + send bon d'exécution (admin only)
+ */
+export function useRecordPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, method, amount }: { id: string; method: string; amount?: number }) =>
+      apiClient.post<{ mission: Mission; bon_sent: boolean; warning: string | null }>(
+        `/missions/${id}/payment`,
+        { method, ...(amount !== undefined ? { amount } : {}) },
+      ),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: missionKeys.detail(id) });
+      qc.invalidateQueries({ queryKey: missionKeys.all });
+    },
+  });
+}
+
+/**
  * Delete a mission (admin only)
  */
 export function useDeleteMission() {

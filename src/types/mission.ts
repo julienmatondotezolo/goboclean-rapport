@@ -51,6 +51,12 @@ export interface Mission {
   // Equipment (gros_dibo, petit_dibo, machine_peinture, camionnette)
   equipment?: string[];
 
+  // Lot 2/3 closure & payment
+  closure_checklist?: Record<string, boolean>;
+  fuel_state?: { levels: Record<string, string>; mileage_km: number };
+  payment?: { method: string; amount?: number | null; received_at: string; recorded_by: string };
+  bon_sent_at?: string;
+
   // Timer
   before_pictures_submitted_at?: string;
   completion_unlocked_at?: string;
