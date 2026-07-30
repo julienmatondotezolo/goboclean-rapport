@@ -12,14 +12,17 @@ import Image from 'next/image';
 import { useCompleteMission, useMission } from '@/hooks/useMissions';
 import { showSuccess, handleError } from '@/lib/error-handler';
 import { useAuth } from '@/hooks/useAuth';
+import { CLOSURE_CHECKLIST, FUEL_LEVELS, FUEL_EQUIPMENT, closureLabel } from '@/lib/closure';
+import { equipmentLabel } from '@/lib/equipment';
 
 const STEPS = {
   PHOTOS: 1,
   CONFIRMATION: 2,
   SIGNATURE: 3,
+  CLOTURE: 4,
 };
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
 const REQUIRED_PHOTOS = 4;
 
 export default function AfterPicturesPage() {
@@ -45,6 +48,15 @@ export default function AfterPicturesPage() {
   const [isWorkerCanvasEmpty, setIsWorkerCanvasEmpty] = useState(true);
   const [isClientCanvasEmpty, setIsClientCanvasEmpty] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Clôture bloquante (lot 2)
+  const [closureChecklist, setClosureChecklist] = useState<Record<string, boolean>>(
+    Object.fromEntries(CLOSURE_CHECKLIST.map((c) => [c.id, false])),
+  );
+  const [materialPhotos, setMaterialPhotos] = useState<File[]>([]);
+  const [fuelPhoto, setFuelPhoto] = useState<File | null>(null);
+  const [fuelLevels, setFuelLevels] = useState<Record<string, string>>({});
+  const [mileage, setMileage] = useState('');
 
   const workerCanvasRef = useRef<HTMLCanvasElement>(null);
   const clientCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -138,6 +150,19 @@ export default function AfterPicturesPage() {
       formData.append('client_signature', clientBlob, 'client-signature.png');
     }
 
+    // Clôture bloquante : checklist + photos matériel + essence/kilométrage
+    formData.append('closure_checklist', JSON.stringify(closureChecklist));
+    formData.append(
+      'fuel_state',
+      JSON.stringify({ levels: fuelLevels, mileage_km: parseInt(mileage, 10) || 0 }),
+    );
+    materialPhotos.forEach((file, index) => {
+      formData.append('material_photos', file, `material-${index + 1}.jpg`);
+    });
+    if (fuelPhoto) {
+      formData.append('fuel_photo', fuelPhoto, 'fuel.jpg');
+    }
+
     try {
       await completeMutation.mutateAsync({
         id,
@@ -155,6 +180,19 @@ export default function AfterPicturesPage() {
   const canProceed = photoCount >= REQUIRED_PHOTOS;
   const remainingPhotos = Math.max(0, REQUIRED_PHOTOS - photoCount);
   const canComplete = workerSignature !== null && clientSignature !== null;
+
+  // Clôture bloquante : matériel à essence de la mission (repli : camionnette seule)
+  const missionFuelEquipment = (() => {
+    const eq = (mission?.equipment ?? []).filter((e) => FUEL_EQUIPMENT.includes(e));
+    return eq.length > 0 ? eq : ['camionnette'];
+  })();
+  const canClose =
+    Object.values(closureChecklist).every(Boolean) &&
+    materialPhotos.length > 0 &&
+    fuelPhoto !== null &&
+    mileage.trim() !== '' &&
+    missionFuelEquipment.every((eq) => !!fuelLevels[eq]);
+  const L = (fr: string, nl: string, en: string) => (locale === 'fr' ? fr : locale === 'nl' ? nl : en);
 
   // Initialize canvas on mount
   useEffect(() => {
@@ -697,6 +735,174 @@ export default function AfterPicturesPage() {
             </div>
           )}
 
+          {/* Next: closure step */}
+          <div className="pt-4 space-y-3">
+            <Button
+              onClick={() => setCurrentStep(STEPS.CLOTURE)}
+              disabled={!canComplete}
+              className="w-full"
+            >
+              <CheckCircle className="w-5 h-5" />
+              <span className="text-[15px] font-bold uppercase tracking-wide">
+                {L('Clôture du chantier →', 'Afsluiting van de werf →', 'Site closure →')}
+              </span>
+            </Button>
+
+            <button
+              onClick={() => setCurrentStep(STEPS.CONFIRMATION)}
+              className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors disabled:opacity-50"
+            >
+              {t('backToConfirmation')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 4: Blocking closure — checklist + material photos + fuel state */}
+      {currentStep === STEPS.CLOTURE && (
+        <div className="space-y-5">
+          <div>
+            <h2 className="text-[19px] font-bold text-gray-900">
+              {L('Clôture du chantier', 'Afsluiting van de werf', 'Site closure')}
+            </h2>
+            <p className="text-[13px] text-gray-500">
+              {L(
+                'Tout est obligatoire pour pouvoir clôturer.',
+                'Alles is verplicht om te kunnen afsluiten.',
+                'Everything is required before closing.',
+              )}
+            </p>
+          </div>
+
+          {/* Checklist */}
+          <div className="bg-[#f8fafc] rounded-2xl p-4 space-y-3">
+            <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
+              {L('Checklist de fin de chantier', 'Checklist einde werf', 'End-of-site checklist')}
+            </div>
+            {CLOSURE_CHECKLIST.map((item) => (
+              <label key={item.id} className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 accent-[#064e3b]"
+                  checked={closureChecklist[item.id] ?? false}
+                  onChange={(e) =>
+                    setClosureChecklist({ ...closureChecklist, [item.id]: e.target.checked })
+                  }
+                />
+                <span className="text-[14px] font-medium text-gray-900">
+                  {closureLabel(item.labels, locale)}
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {/* Material photos */}
+          <div className="bg-[#f8fafc] rounded-2xl p-4 space-y-3">
+            <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
+              {L('Photos du matériel nettoyé', "Foto's van het gereinigde materiaal", 'Photos of cleaned material')}{' '}
+              *
+            </div>
+            <input
+              id="material-photos-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                if (files.length) setMaterialPhotos((prev) => [...prev, ...files]);
+                e.target.value = '';
+              }}
+            />
+            <button
+              onClick={() => document.getElementById('material-photos-input')?.click()}
+              className="w-full p-3 rounded-xl border-2 border-dashed border-gray-300 text-[13px] font-bold text-gray-600 hover:border-[#064e3b]"
+            >
+              📷{' '}
+              {materialPhotos.length > 0
+                ? L(
+                    `${materialPhotos.length} photo(s) — en ajouter`,
+                    `${materialPhotos.length} foto('s) — toevoegen`,
+                    `${materialPhotos.length} photo(s) — add more`,
+                  )
+                : L('Prendre une photo', 'Foto nemen', 'Take a photo')}
+            </button>
+          </div>
+
+          {/* Fuel state */}
+          <div className="bg-[#f8fafc] rounded-2xl p-4 space-y-3">
+            <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
+              {L('État de l’essence', 'Brandstofpeil', 'Fuel state')} *
+            </div>
+            {missionFuelEquipment.map((eq) => (
+              <div key={eq} className="flex items-center justify-between gap-2">
+                <span className="text-[14px] font-medium text-gray-900">{equipmentLabel(eq, locale)}</span>
+                <div className="flex gap-1">
+                  {FUEL_LEVELS.map((lvl) => (
+                    <button
+                      key={lvl.id}
+                      onClick={() => setFuelLevels({ ...fuelLevels, [eq]: lvl.id })}
+                      className={`px-3 py-1.5 rounded-lg text-[12px] font-bold border-2 transition-all ${
+                        fuelLevels[eq] === lvl.id
+                          ? 'bg-[#064e3b] text-white border-[#064e3b]'
+                          : 'bg-white text-gray-600 border-gray-200'
+                      }`}
+                    >
+                      {closureLabel(lvl.labels, locale)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div className="flex items-center justify-between gap-3 pt-2">
+              <span className="text-[14px] font-medium text-gray-900">
+                {L('Kilométrage camionnette', 'Kilometerstand bestelwagen', 'Van mileage')} *
+              </span>
+              <input
+                type="number"
+                min="0"
+                inputMode="numeric"
+                value={mileage}
+                onChange={(e) => setMileage(e.target.value)}
+                placeholder="km"
+                className="w-28 p-2 rounded-lg border-2 border-gray-200 text-[14px] text-right"
+              />
+            </div>
+            <input
+              id="fuel-photo-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setFuelPhoto(file);
+                e.target.value = '';
+              }}
+            />
+            <button
+              onClick={() => document.getElementById('fuel-photo-input')?.click()}
+              className="w-full p-3 rounded-xl border-2 border-dashed border-gray-300 text-[13px] font-bold text-gray-600 hover:border-[#064e3b]"
+            >
+              ⛽{' '}
+              {fuelPhoto
+                ? L('Photo essence/compteur prise ✓', 'Foto brandstof/teller genomen ✓', 'Fuel/odometer photo taken ✓')
+                : L('Photo essence + compteur', 'Foto brandstof + teller', 'Fuel + odometer photo')}{' '}
+              *
+            </button>
+          </div>
+
+          {!canClose && (
+            <p className="text-[12px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-3">
+              {L(
+                '⚠️ Clôture bloquée : coche toute la checklist, ajoute les photos, l’essence et le kilométrage.',
+                '⚠️ Afsluiten geblokkeerd: vink de hele checklist aan, voeg de foto’s, brandstof en kilometerstand toe.',
+                '⚠️ Closure blocked: check the whole checklist, add photos, fuel state and mileage.',
+              )}
+            </p>
+          )}
+
           {/* Upload Progress */}
           {completeMutation.isPending && (
             <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 space-y-2">
@@ -711,10 +917,10 @@ export default function AfterPicturesPage() {
           )}
 
           {/* Complete Button */}
-          <div className="pt-4 space-y-3">
+          <div className="pt-2 space-y-3">
             <Button
               onClick={handleCompleteMission}
-              disabled={!canComplete || completeMutation.isPending}
+              disabled={!canClose || !canComplete || completeMutation.isPending}
               className="w-full"
             >
               {completeMutation.isPending ? (
@@ -728,11 +934,11 @@ export default function AfterPicturesPage() {
             </Button>
 
             <button
-              onClick={() => setCurrentStep(STEPS.CONFIRMATION)}
+              onClick={() => setCurrentStep(STEPS.SIGNATURE)}
               disabled={completeMutation.isPending}
               className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors disabled:opacity-50"
             >
-              {t('backToConfirmation')}
+              ← {L('Retour aux signatures', 'Terug naar handtekeningen', 'Back to signatures')}
             </button>
           </div>
         </div>
