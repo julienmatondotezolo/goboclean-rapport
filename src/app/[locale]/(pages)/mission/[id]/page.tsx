@@ -799,7 +799,6 @@ export default function MissionDetailPage() {
             {mission.payment ? (
               <div className="space-y-1">
                 <p className="text-[14px] font-bold text-gray-900">
-                  💰{' '}
                   {{ cash: 'Cash', virement: 'Virement', virement_instantane: 'Virement instantané', autre: 'Autre' }[
                     mission.payment.method
                   ] ?? mission.payment.method}
@@ -810,8 +809,8 @@ export default function MissionDetailPage() {
                 </p>
                 <p className="text-[13px] font-medium">
                   {mission.bon_sent_at
-                    ? `✅ ${locale === 'nl' ? 'Bon verzonden naar de klant' : locale === 'en' ? 'Bon sent to the client' : 'Bon d’exécution envoyé au client'}`
-                    : `⚠️ ${locale === 'nl' ? 'Bon niet verzonden (geen e-mail/PDF)' : locale === 'en' ? 'Bon not sent (no email/PDF)' : 'Bon non envoyé (pas d’email client ou de PDF)'}`}
+                    ? (locale === 'nl' ? 'Bon verzonden naar de klant' : locale === 'en' ? 'Bon sent to the client' : 'Bon d’exécution envoyé au client')
+                    : (locale === 'nl' ? 'Bon niet verzonden (geen e-mail/PDF)' : locale === 'en' ? 'Bon not sent (no email/PDF)' : 'Bon non envoyé (pas d’email client ou de PDF)')}
                 </p>
               </div>
             ) : (
@@ -854,10 +853,10 @@ export default function MissionDetailPage() {
                   {recordPayment.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                   <span className="text-[14px] font-bold uppercase tracking-wide">
                     {locale === 'nl'
-                      ? '💰 Betaling ontvangen → bon verzenden'
+                      ? 'Betaling ontvangen → bon verzenden'
                       : locale === 'en'
-                        ? '💰 Payment received → send bon'
-                        : '💰 Paiement reçu → envoyer le bon'}
+                        ? 'Payment received → send bon'
+                        : 'Paiement reçu → envoyer le bon'}
                   </span>
                 </Button>
               </div>

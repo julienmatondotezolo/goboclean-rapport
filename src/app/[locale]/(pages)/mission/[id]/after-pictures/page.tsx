@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { subtypeLabel } from '@/lib/services';
-import { Camera, X, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
+import { Camera, X, ArrowRight, CheckCircle, Loader2, Fuel, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -819,7 +819,7 @@ export default function AfterPicturesPage() {
               onClick={() => document.getElementById('material-photos-input')?.click()}
               className="w-full p-3 rounded-xl border-2 border-dashed border-gray-300 text-[13px] font-bold text-gray-600 hover:border-[#064e3b]"
             >
-              📷{' '}
+              <Camera className="w-4 h-4 inline mr-1.5 -mt-0.5" />
               {materialPhotos.length > 0
                 ? L(
                     `${materialPhotos.length} photo(s) — en ajouter`,
@@ -885,21 +885,24 @@ export default function AfterPicturesPage() {
               onClick={() => document.getElementById('fuel-photo-input')?.click()}
               className="w-full p-3 rounded-xl border-2 border-dashed border-gray-300 text-[13px] font-bold text-gray-600 hover:border-[#064e3b]"
             >
-              ⛽{' '}
+              <Fuel className="w-4 h-4 inline mr-1.5 -mt-0.5" />
               {fuelPhoto
-                ? L('Photo essence/compteur prise ✓', 'Foto brandstof/teller genomen ✓', 'Fuel/odometer photo taken ✓')
+                ? L('Photo essence/compteur prise', 'Foto brandstof/teller genomen', 'Fuel/odometer photo taken')
                 : L('Photo essence + compteur', 'Foto brandstof + teller', 'Fuel + odometer photo')}{' '}
               *
             </button>
           </div>
 
           {!canClose && (
-            <p className="text-[12px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-3">
-              {L(
-                '⚠️ Clôture bloquée : coche toute la checklist, ajoute les photos, l’essence et le kilométrage.',
-                '⚠️ Afsluiten geblokkeerd: vink de hele checklist aan, voeg de foto’s, brandstof en kilometerstand toe.',
-                '⚠️ Closure blocked: check the whole checklist, add photos, fuel state and mileage.',
-              )}
+            <p className="text-[12px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                {L(
+                  'Clôture bloquée : coche toute la checklist, ajoute les photos, l’essence et le kilométrage.',
+                  'Afsluiten geblokkeerd: vink de hele checklist aan, voeg de foto’s, brandstof en kilometerstand toe.',
+                  'Closure blocked: check the whole checklist, add photos, fuel state and mileage.',
+                )}
+              </span>
             </p>
           )}
 

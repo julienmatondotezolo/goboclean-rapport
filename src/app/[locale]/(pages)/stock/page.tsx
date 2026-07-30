@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { Loader2, SprayCan, Droplets, Paintbrush } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api-client';
@@ -20,14 +20,20 @@ interface StockItem {
   low: boolean;
 }
 
-const EMOJI: Record<string, string> = {
-  anti_mousse: '🧴',
-  hydrofuge: '💧',
-  peinture_gris_ardoise: '⬜',
-  peinture_noir: '⚫',
-  peinture_rouge: '🔴',
-  peinture_rouge_sombre: '🟤',
+const PAINT_COLORS: Record<string, string> = {
+  peinture_gris_ardoise: '#64748b',
+  peinture_noir: '#111827',
+  peinture_rouge: '#dc2626',
+  peinture_rouge_sombre: '#7f1d1d',
 };
+
+function ProductIcon({ id, className = 'w-4 h-4' }: { id: string; className?: string }) {
+  if (id === 'anti_mousse') return <SprayCan className={`${className} text-[#064e3b]`} />;
+  if (id === 'hydrofuge') return <Droplets className={`${className} text-sky-600`} />;
+  const color = PAINT_COLORS[id];
+  if (color) return <Paintbrush className={className} style={{ color }} />;
+  return null;
+}
 
 export default function StockPage() {
   const params = useParams();
@@ -71,7 +77,7 @@ export default function StockPage() {
 
   return (
     <div className="min-h-screen bg-white pb-28">
-      <PageHeader title={`📦 ${L('Stock', 'Stock', 'Stock')}`} onBack={() => router.push(`/${locale}/dashboard`)} />
+      <PageHeader title="Stock" onBack={() => router.push(`/${locale}/dashboard`)} />
 
       <div className="px-6 space-y-5 pt-4">
         {/* Déclarer une consommation */}
@@ -97,7 +103,10 @@ export default function StockPage() {
                     : 'bg-white text-gray-600 border-gray-200'
                 }`}
               >
-                {EMOJI[i.id] ?? '📦'} {i.label}
+                <span className="inline-flex items-center gap-1.5">
+                  <ProductIcon id={i.id} />
+                  {i.label}
+                </span>
               </button>
             ))}
           </div>
@@ -128,7 +137,7 @@ export default function StockPage() {
         {/* État du stock */}
         <div className="space-y-3">
           <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
-            📊 {L('État du stock actuel', 'Huidige stock', 'Current stock')}
+            {L('État du stock actuel', 'Huidige stock', 'Current stock')}
           </div>
           {isLoading && <Loader2 className="w-5 h-5 animate-spin text-[#064e3b]" />}
           {(items ?? []).map((i) => (
@@ -139,8 +148,9 @@ export default function StockPage() {
               }`}
             >
               <div>
-                <p className="text-[14px] font-bold text-gray-900">
-                  {EMOJI[i.id] ?? '📦'} {i.label}{' '}
+                <p className="text-[14px] font-bold text-gray-900 flex items-center gap-1.5">
+                  <ProductIcon id={i.id} />
+                  {i.label}{' '}
                   {i.low && (
                     <span className="text-[10px] font-bold text-red-600 uppercase">
                       {L('faible', 'laag', 'low')}

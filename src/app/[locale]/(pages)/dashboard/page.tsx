@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 // Backend auth is handled via useAuth hook
-import { Clock, ClipboardCheck, Bell, Loader2, AlertCircle } from 'lucide-react';
+import { Clock, ClipboardCheck, Bell, Loader2, AlertCircle, Package, Wallet } from 'lucide-react';
 import { MissionCard } from '@/components/ui/mission-card';
 import { StatCard } from '@/components/ui/stat-card';
 import { useRouter } from '@/i18n/routing';
@@ -217,14 +217,14 @@ export default function DashboardPage() {
           onClick={() => router.push('/stock')}
           className="bg-[#f8fafc] rounded-2xl p-4 text-left hover:bg-gray-100 transition-all"
         >
-          <p className="text-[22px]">📦</p>
+          <Package className="w-6 h-6 text-[#064e3b] mb-2" />
           <p className="text-[14px] font-bold text-gray-900">Stock</p>
         </button>
         <button
           onClick={() => router.push('/salary')}
           className="bg-[#f8fafc] rounded-2xl p-4 text-left hover:bg-gray-100 transition-all"
         >
-          <p className="text-[22px]">💰</p>
+          <Wallet className="w-6 h-6 text-[#064e3b] mb-2" />
           <p className="text-[14px] font-bold text-gray-900">Salaire</p>
         </button>
       </div>

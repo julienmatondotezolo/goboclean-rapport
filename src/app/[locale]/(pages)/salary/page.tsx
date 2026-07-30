@@ -102,7 +102,7 @@ export default function SalaryPage() {
 
   return (
     <div className="min-h-screen bg-white pb-28">
-      <PageHeader title={`💰 ${L('Salaire', 'Loon', 'Salary')}`} onBack={() => router.push(`/${locale}/dashboard`)} />
+      <PageHeader title={L('Salaire', 'Loon', 'Salary')} onBack={() => router.push(`/${locale}/dashboard`)} />
 
       <div className="px-6 space-y-5 pt-4">
         {/* Sélecteur ouvrier (admin) */}
@@ -148,7 +148,7 @@ export default function SalaryPage() {
                   disabled={payMonth.isPending}
                   className="mt-1 px-3 py-2 rounded-lg text-[12px] font-bold bg-[#a3e635] text-[#064e3b]"
                 >
-                  ✅ {L('Marquer le mois payé', 'Maand betaald', 'Mark month paid')}
+                  {L('Marquer le mois payé', 'Maand betaald', 'Mark month paid')}
                 </button>
               )}
             </>
@@ -226,7 +226,7 @@ export default function SalaryPage() {
                       d.paid ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                     }`}
                   >
-                    {d.paid ? L('✓ payé', '✓ betaald', '✓ paid') : L('à payer', 'te betalen', 'unpaid')}
+                    {d.paid ? L('Payé', 'Betaald', 'Paid') : L('À payer', 'Te betalen', 'Unpaid')}
                   </button>
                 ) : (
                   <span
@@ -234,7 +234,7 @@ export default function SalaryPage() {
                       d.paid ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                     }`}
                   >
-                    {d.paid ? L('✓ payé', '✓ betaald', '✓ paid') : L('à payer', 'te betalen', 'unpaid')}
+                    {d.paid ? L('Payé', 'Betaald', 'Paid') : L('À payer', 'Te betalen', 'Unpaid')}
                   </span>
                 )}
               </div>
