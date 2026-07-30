@@ -84,20 +84,44 @@ export default function StockPage() {
     onError: (e) => handleError(e, { title: L('Erreur stock', 'Stockfout', 'Stock error') }),
   });
 
-  const tile = (item: StockItem) => (
-    <button
-      key={item.id}
-      onClick={() => setSelected(selected === item.id ? null : item.id)}
-      className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl border-2 transition-all min-h-[76px] ${
-        selected === item.id
-          ? 'bg-[#064e3b] text-white border-[#064e3b]'
-          : 'bg-white text-gray-700 border-gray-200 hover:border-[#064e3b]/40'
-      }`}
-    >
-      <ProductIcon id={item.id} className={`w-5 h-5 ${selected === item.id ? 'text-white' : ''}`} />
-      <span className="text-[12px] font-bold leading-tight text-center">{shortLabel(item)}</span>
-    </button>
-  );
+  const selectedItem = (items ?? []).find((i) => i.id === selected) ?? null;
+  const maxUnits = Number(selectedItem?.quantity ?? 0);
+
+  const tile = (item: StockItem) => {
+    const empty = Number(item.quantity) <= 0;
+    return (
+      <button
+        key={item.id}
+        disabled={empty}
+        onClick={() => {
+          setSelected(selected === item.id ? null : item.id);
+          setUnits(1);
+        }}
+        className={`flex flex-col items-center justify-center gap-1 p-3 rounded-2xl border-2 transition-all min-h-[80px] ${
+          selected === item.id
+            ? 'bg-[#064e3b] text-white border-[#064e3b]'
+            : empty
+              ? 'bg-gray-50 text-gray-300 border-gray-100'
+              : 'bg-white text-gray-700 border-gray-200 hover:border-[#064e3b]/40'
+        }`}
+      >
+        <ProductIcon
+          id={item.id}
+          className={`w-5 h-5 ${selected === item.id ? 'text-white' : empty ? 'opacity-30' : ''}`}
+        />
+        <span className="text-[12px] font-bold leading-tight text-center">{shortLabel(item)}</span>
+        <span
+          className={`text-[10px] font-medium ${
+            selected === item.id ? 'text-white/70' : empty ? 'text-gray-300' : 'text-gray-400'
+          }`}
+        >
+          {empty
+            ? L('épuisé', 'op', 'out of stock')
+            : `${Number(item.quantity)} ${L('dispo', 'besch.', 'avail.')}`}
+        </span>
+      </button>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-32">
@@ -140,8 +164,9 @@ export default function StockPage() {
                   </button>
                   <span className="text-[18px] font-bold text-gray-900 w-8 text-center">{units}</span>
                   <button
-                    onClick={() => setUnits(units + 1)}
-                    className="w-9 h-9 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center active:scale-90 transition-transform"
+                    onClick={() => setUnits(Math.min(maxUnits, units + 1))}
+                    disabled={units >= maxUnits}
+                    className="w-9 h-9 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center active:scale-90 transition-transform disabled:opacity-30"
                   >
                     <Plus className="w-4 h-4 text-gray-700" />
                   </button>

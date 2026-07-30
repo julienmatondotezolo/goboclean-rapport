@@ -4,7 +4,6 @@ import { NextIntlClientProvider } from "next-intl";
 import { ThemeProvider } from "next-themes";
 import React, { JSX, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { LanguageInitializer } from "@/components/language-initializer";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { AppErrorBoundary } from "@/components/app-error-boundary";
@@ -115,9 +114,6 @@ export default function Providers({ children, locale }: Props): JSX.Element {
             </PageLogger>
           </NextIntlClientProvider>
         </ThemeProvider>
-        {process.env.NODE_ENV === 'development' && (
-          <ReactQueryDevtools initialIsOpen={false} />
-        )}
       </QueryClientProvider>
     </AppErrorBoundary>
   );
