@@ -1,0 +1,10 @@
+#!/bin/sh
+# Règle stricte (Julien, 30/07/2026) : JAMAIS de push si le build ne passe pas
+# — sinon Vercel échoue silencieusement et la prod reste sur une vieille version.
+echo "🔒 pre-push : build de vérification (next build --webpack)..."
+npm run build || {
+  echo ""
+  echo "❌ BUILD CASSÉ — push refusé. Corrige le build avant de pusher."
+  exit 1
+}
+echo "✅ Build OK — push autorisé."
