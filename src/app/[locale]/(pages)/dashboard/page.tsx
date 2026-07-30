@@ -211,6 +211,24 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Stock & Salaire quick access (lot 4) */}
+      <div className="px-8 pb-6 grid grid-cols-2 gap-4">
+        <button
+          onClick={() => router.push('/stock')}
+          className="bg-[#f8fafc] rounded-2xl p-4 text-left hover:bg-gray-100 transition-all"
+        >
+          <p className="text-[22px]">📦</p>
+          <p className="text-[14px] font-bold text-gray-900">Stock</p>
+        </button>
+        <button
+          onClick={() => router.push('/salary')}
+          className="bg-[#f8fafc] rounded-2xl p-4 text-left hover:bg-gray-100 transition-all"
+        >
+          <p className="text-[22px]">💰</p>
+          <p className="text-[14px] font-bold text-gray-900">Salaire</p>
+        </button>
+      </div>
+
       {/* Assigned Missions Section */}
       <div className="px-8">
         <div className="flex items-center justify-between mb-5">
