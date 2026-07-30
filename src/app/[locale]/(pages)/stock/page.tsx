@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, SprayCan, Droplets, Paintbrush } from 'lucide-react';
+import { Loader2, Minus, Plus, SprayCan, Droplets, Paintbrush } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api-client';
@@ -27,12 +27,15 @@ const PAINT_COLORS: Record<string, string> = {
   peinture_rouge_sombre: '#7f1d1d',
 };
 
-function ProductIcon({ id, className = 'w-4 h-4' }: { id: string; className?: string }) {
-  if (id === 'anti_mousse') return <SprayCan className={`${className} text-[#064e3b]`} />;
-  if (id === 'hydrofuge') return <Droplets className={`${className} text-sky-600`} />;
-  const color = PAINT_COLORS[id];
-  if (color) return <Paintbrush className={className} style={{ color }} />;
-  return null;
+function ProductIcon({ id, className = 'w-5 h-5' }: { id: string; className?: string }) {
+  if (id === 'anti_mousse') return <SprayCan className={className} />;
+  if (id === 'hydrofuge') return <Droplets className={className} />;
+  return <Paintbrush className={className} style={{ color: PAINT_COLORS[id] }} />;
+}
+
+/** Libellé court pour les tuiles (les peintures gardent juste leur teinte). */
+function shortLabel(item: StockItem): string {
+  return item.label.replace('Peinture — ', '');
 }
 
 export default function StockPage() {
@@ -51,16 +54,18 @@ export default function StockPage() {
   });
 
   const [selected, setSelected] = useState<string | null>(null);
-  const [units, setUnits] = useState('1');
+  const [units, setUnits] = useState(1);
+
+  const paints = (items ?? []).filter((i) => i.category === 'peinture');
+  const products = (items ?? []).filter((i) => i.category !== 'peinture');
 
   const consume = useMutation({
-    mutationFn: () =>
-      apiClient.post('/stock/consume', { item_id: selected, units: parseFloat(units) }),
+    mutationFn: () => apiClient.post('/stock/consume', { item_id: selected, units }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['stock'] });
       showSuccess(L('Consommation enregistrée', 'Verbruik geregistreerd', 'Consumption recorded'));
       setSelected(null);
-      setUnits('1');
+      setUnits(1);
     },
     onError: (e) => handleError(e, { title: L('Erreur stock', 'Stockfout', 'Stock error') }),
   });
@@ -75,59 +80,73 @@ export default function StockPage() {
     onError: (e) => handleError(e, { title: L('Erreur stock', 'Stockfout', 'Stock error') }),
   });
 
+  const tile = (item: StockItem) => (
+    <button
+      key={item.id}
+      onClick={() => setSelected(selected === item.id ? null : item.id)}
+      className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl border-2 transition-all min-h-[76px] ${
+        selected === item.id
+          ? 'bg-[#064e3b] text-white border-[#064e3b]'
+          : 'bg-white text-gray-700 border-gray-200 hover:border-[#064e3b]/40'
+      }`}
+    >
+      <ProductIcon id={item.id} className={`w-5 h-5 ${selected === item.id ? 'text-white' : ''}`} />
+      <span className="text-[12px] font-bold leading-tight text-center">{shortLabel(item)}</span>
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-white pb-28">
+    <div className="min-h-screen bg-[#f8fafc] pb-32">
       <PageHeader title="Stock" onBack={() => router.push(`/${locale}/dashboard`)} />
 
-      <div className="px-6 space-y-5 pt-4">
+      <div className="px-6 space-y-6 pt-4">
         {/* Déclarer une consommation */}
-        <div className="bg-[#f8fafc] rounded-2xl p-4 space-y-3">
-          <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
-            {L('Indiquer un produit utilisé', 'Gebruikt product melden', 'Report product used')}
+        <div className="bg-white rounded-[24px] p-5 shadow-sm space-y-4">
+          <div>
+            <h3 className="text-[16px] font-bold text-[#1e293b]">
+              {L('Produit utilisé', 'Gebruikt product', 'Product used')}
+            </h3>
+            <p className="text-[12px] text-gray-500 mt-0.5">
+              {L(
+                'En fin de chantier, sélectionne le produit — il est déduit du stock.',
+                'Selecteer het product op het einde van de werf — het wordt afgetrokken.',
+                'At the end of the site, select the product — it is deducted from stock.',
+              )}
+            </p>
           </div>
-          <p className="text-[12px] text-gray-500">
-            {L(
-              'À chaque fin de chantier, indique les produits utilisés — ils sont déduits du stock.',
-              'Meld op het einde van elke werf de gebruikte producten — ze worden afgetrokken van de stock.',
-              'At the end of each site, report the products used — they are deducted from stock.',
-            )}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {(items ?? []).map((i) => (
-              <button
-                key={i.id}
-                onClick={() => setSelected(selected === i.id ? null : i.id)}
-                className={`px-3 py-2 rounded-lg text-[13px] font-bold border-2 transition-all ${
-                  selected === i.id
-                    ? 'bg-[#064e3b] text-white border-[#064e3b]'
-                    : 'bg-white text-gray-600 border-gray-200'
-                }`}
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <ProductIcon id={i.id} />
-                  {i.label}
-                </span>
-              </button>
-            ))}
+
+          <div className="grid grid-cols-2 gap-2">{products.map(tile)}</div>
+          <div className="text-[11px] font-bold text-gray-400 tracking-wide uppercase pt-1">
+            {L('Peintures', 'Verf', 'Paints')}
           </div>
+          <div className="grid grid-cols-2 gap-2">{paints.map(tile)}</div>
+
           {selected && (
-            <div className="flex items-center gap-3">
-              <input
-                type="number"
-                min="1"
-                inputMode="numeric"
-                value={units}
-                onChange={(e) => setUnits(e.target.value)}
-                className="w-24 p-3 rounded-xl border-2 border-gray-200 text-[14px] text-right bg-white text-gray-900"
-              />
-              <Button
-                onClick={() => consume.mutate()}
-                disabled={consume.isPending || !parseFloat(units)}
-                className="flex-1"
-              >
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between bg-[#f8fafc] rounded-2xl p-3">
+                <span className="text-[13px] font-bold text-gray-700">
+                  {L('Unités', 'Eenheden', 'Units')}
+                </span>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setUnits(Math.max(1, units - 1))}
+                    className="w-9 h-9 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center active:scale-90 transition-transform"
+                  >
+                    <Minus className="w-4 h-4 text-gray-700" />
+                  </button>
+                  <span className="text-[18px] font-bold text-gray-900 w-8 text-center">{units}</span>
+                  <button
+                    onClick={() => setUnits(units + 1)}
+                    className="w-9 h-9 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center active:scale-90 transition-transform"
+                  >
+                    <Plus className="w-4 h-4 text-gray-700" />
+                  </button>
+                </div>
+              </div>
+              <Button onClick={() => consume.mutate()} disabled={consume.isPending} className="w-full">
                 {consume.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                <span className="text-[13px] font-bold uppercase">
-                  {L('Enregistrer la consommation', 'Verbruik opslaan', 'Record consumption')}
+                <span className="text-[13px] font-bold uppercase tracking-wide">
+                  {L('Enregistrer', 'Opslaan', 'Save')}
                 </span>
               </Button>
             </div>
@@ -136,40 +155,59 @@ export default function StockPage() {
 
         {/* État du stock */}
         <div className="space-y-3">
-          <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
-            {L('État du stock actuel', 'Huidige stock', 'Current stock')}
-          </div>
-          {isLoading && <Loader2 className="w-5 h-5 animate-spin text-[#064e3b]" />}
+          <h3 className="text-[16px] font-bold text-[#1e293b] px-1">
+            {L('État du stock', 'Stockniveau', 'Stock levels')}
+          </h3>
+          {isLoading && (
+            <div className="flex justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-[#064e3b]" />
+            </div>
+          )}
           {(items ?? []).map((i) => (
-            <div
-              key={i.id}
-              className={`flex items-center justify-between p-4 rounded-2xl border-2 ${
-                i.low ? 'bg-red-50 border-red-200' : 'bg-[#f8fafc] border-transparent'
-              }`}
-            >
-              <div>
-                <p className="text-[14px] font-bold text-gray-900 flex items-center gap-1.5">
-                  <ProductIcon id={i.id} />
-                  {i.label}{' '}
-                  {i.low && (
-                    <span className="text-[10px] font-bold text-red-600 uppercase">
-                      {L('faible', 'laag', 'low')}
-                    </span>
-                  )}
-                </p>
-                <p className="text-[12px] text-gray-500">
-                  {Number(i.quantity)} {i.unit} — {L('seuil', 'drempel', 'threshold')} {Number(i.threshold)}
-                </p>
+            <div key={i.id} className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#f8fafc] flex items-center justify-center shrink-0">
+                    <ProductIcon id={i.id} className="w-5 h-5 text-[#064e3b]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[14px] font-bold text-gray-900 truncate">{i.label}</p>
+                    <p className="text-[12px] text-gray-500">
+                      {L('seuil', 'drempel', 'threshold')} {Number(i.threshold)} {i.unit}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className={`shrink-0 px-2.5 py-1 rounded-lg text-[13px] font-bold ${
+                    i.low ? 'bg-red-100 text-red-700' : 'bg-[#a3e635]/20 text-[#064e3b]'
+                  }`}
+                >
+                  {Number(i.quantity)} {i.unit}
+                </span>
+              </div>
+              {/* Jauge quantité / seuil */}
+              <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${i.low ? 'bg-red-400' : 'bg-[#a3e635]'}`}
+                  style={{
+                    width: `${Math.min(100, (Number(i.quantity) / (Number(i.threshold) * 2 || 1)) * 100)}%`,
+                  }}
+                />
               </div>
               {isAdmin && (
                 <button
                   onClick={() => {
-                    const n = parseFloat(prompt(L('Ajouter combien d’unités ?', 'Hoeveel eenheden toevoegen?', 'How many units to add?'), '15') ?? '');
+                    const n = parseFloat(
+                      prompt(
+                        L('Ajouter combien d’unités ?', 'Hoeveel eenheden toevoegen?', 'How many units to add?'),
+                        '15',
+                      ) ?? '',
+                    );
                     if (n > 0) restock.mutate({ id: i.id, n });
                   }}
-                  className="px-3 py-2 rounded-lg text-[12px] font-bold bg-[#064e3b] text-white"
+                  className="w-full py-2 rounded-xl text-[12px] font-bold bg-[#f8fafc] text-[#064e3b] border border-gray-200 hover:border-[#064e3b]/40 transition-all"
                 >
-                  + {L('Réappro', 'Aanvullen', 'Restock')}
+                  + {L('Réapprovisionner', 'Aanvullen', 'Restock')}
                 </button>
               )}
             </div>
