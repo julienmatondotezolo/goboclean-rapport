@@ -34,6 +34,11 @@ function currentMonth(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Brussels' }).slice(0, 7);
 }
 
+function daysInMonth(m: string): number {
+  const [y, mm] = m.split('-').map(Number);
+  return new Date(y, mm, 0).getDate();
+}
+
 function shiftMonth(m: string, delta: number): string {
   const [y, mm] = m.split('-').map(Number);
   const d = new Date(y, mm - 1 + delta, 1);
@@ -97,6 +102,11 @@ export default function SalaryPage() {
     onError: (e) => handleError(e, { title: L('Erreur paie', 'Loonfout', 'Salary error') }),
   });
 
+  const existingDates = new Set((data?.days ?? []).map((d) => d.work_date));
+  const todayIso = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Brussels' });
+  const weekdayShort = (iso: string) =>
+    new Date(`${iso}T12:00:00`).toLocaleDateString(locale, { weekday: 'short' }).replace('.', '');
+
   const fmtDay = (iso: string) =>
     new Date(`${iso}T12:00:00`).toLocaleDateString(locale, { weekday: 'short', day: '2-digit', month: '2-digit' });
 
@@ -127,11 +137,11 @@ export default function SalaryPage() {
         {/* Navigation mois + solde */}
         <div className="bg-[#064e3b] rounded-2xl p-5 text-white space-y-2">
           <div className="flex items-center justify-between">
-            <button onClick={() => setMonth(shiftMonth(month, -1))} className="p-1">
+            <button onClick={() => { setMonth(shiftMonth(month, -1)); setNewDate(''); }} className="p-1">
               <ChevronLeft className="w-5 h-5" />
             </button>
             <span className="text-[14px] font-bold uppercase tracking-wide">{month}</span>
-            <button onClick={() => setMonth(shiftMonth(month, 1))} className="p-1">
+            <button onClick={() => { setMonth(shiftMonth(month, 1)); setNewDate(''); }} className="p-1">
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
@@ -165,12 +175,37 @@ export default function SalaryPage() {
             <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
               + {L('Saisir une journée', 'Dag toevoegen', 'Add a day')}
             </div>
-            <input
-              type="date"
-              value={newDate}
-              onChange={(e) => setNewDate(e.target.value)}
-              className="w-full p-3 rounded-xl border-2 border-gray-200 text-[14px] bg-white text-gray-900 placeholder:text-gray-400"
-            />
+            {/* Sélecteur de jour mobile-first : bande des jours du mois affiché */}
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+              {Array.from({ length: daysInMonth(month) }, (_, i) => {
+                const day = i + 1;
+                const iso = `${month}-${String(day).padStart(2, '0')}`;
+                const taken = existingDates.has(iso);
+                const isToday = iso === todayIso;
+                const sel = newDate === iso;
+                return (
+                  <button
+                    key={iso}
+                    disabled={taken}
+                    onClick={() => setNewDate(sel ? '' : iso)}
+                    className={`shrink-0 w-12 py-2 rounded-xl border-2 flex flex-col items-center transition-all ${
+                      sel
+                        ? 'bg-[#064e3b] text-white border-[#064e3b]'
+                        : taken
+                          ? 'bg-gray-50 text-gray-300 border-gray-100'
+                          : isToday
+                            ? 'bg-white text-[#064e3b] border-[#a3e635]'
+                            : 'bg-white text-gray-700 border-gray-200'
+                    }`}
+                  >
+                    <span className={`text-[10px] font-medium ${sel ? 'text-white/70' : 'text-gray-400'}`}>
+                      {weekdayShort(iso)}
+                    </span>
+                    <span className="text-[15px] font-bold leading-tight">{day}</span>
+                  </button>
+                );
+              })}
+            </div>
             <div className="flex flex-wrap gap-2">
               {AMOUNTS.map((a) => (
                 <button
