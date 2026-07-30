@@ -55,6 +55,8 @@ export default function StockPage() {
 
   const [selected, setSelected] = useState<string | null>(null);
   const [units, setUnits] = useState(1);
+  const [restockItem, setRestockItem] = useState<string | null>(null);
+  const [restockUnits, setRestockUnits] = useState(15);
 
   const paints = (items ?? []).filter((i) => i.category === 'peinture');
   const products = (items ?? []).filter((i) => i.category !== 'peinture');
@@ -76,6 +78,8 @@ export default function StockPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['stock'] });
       showSuccess(L('Stock réapprovisionné', 'Stock aangevuld', 'Restocked'));
+      setRestockItem(null);
+      setRestockUnits(15);
     },
     onError: (e) => handleError(e, { title: L('Erreur stock', 'Stockfout', 'Stock error') }),
   });
@@ -194,21 +198,55 @@ export default function StockPage() {
                   }}
                 />
               </div>
-              {isAdmin && (
+              {isAdmin && restockItem !== i.id && (
                 <button
                   onClick={() => {
-                    const n = parseFloat(
-                      prompt(
-                        L('Ajouter combien d’unités ?', 'Hoeveel eenheden toevoegen?', 'How many units to add?'),
-                        '15',
-                      ) ?? '',
-                    );
-                    if (n > 0) restock.mutate({ id: i.id, n });
+                    setRestockItem(i.id);
+                    setRestockUnits(15);
                   }}
                   className="w-full py-2 rounded-xl text-[12px] font-bold bg-[#f8fafc] text-[#064e3b] border border-gray-200 hover:border-[#064e3b]/40 transition-all"
                 >
                   + {L('Réapprovisionner', 'Aanvullen', 'Restock')}
                 </button>
+              )}
+              {isAdmin && restockItem === i.id && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between bg-[#f8fafc] rounded-xl p-2.5">
+                    <span className="text-[12px] font-bold text-gray-700">
+                      {L('Unités à ajouter', 'Eenheden toevoegen', 'Units to add')}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setRestockUnits(Math.max(1, restockUnits - 5))}
+                        className="w-8 h-8 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center active:scale-90 transition-transform"
+                      >
+                        <Minus className="w-4 h-4 text-gray-700" />
+                      </button>
+                      <span className="text-[16px] font-bold text-gray-900 w-8 text-center">{restockUnits}</span>
+                      <button
+                        onClick={() => setRestockUnits(restockUnits + 5)}
+                        className="w-8 h-8 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center active:scale-90 transition-transform"
+                      >
+                        <Plus className="w-4 h-4 text-gray-700" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setRestockItem(null)}
+                      className="flex-1 py-2 rounded-xl text-[12px] font-bold bg-white text-gray-500 border border-gray-200"
+                    >
+                      {L('Annuler', 'Annuleren', 'Cancel')}
+                    </button>
+                    <button
+                      onClick={() => restock.mutate({ id: i.id, n: restockUnits })}
+                      disabled={restock.isPending}
+                      className="flex-1 py-2 rounded-xl text-[12px] font-bold bg-[#064e3b] text-white disabled:opacity-50"
+                    >
+                      {L('Confirmer', 'Bevestigen', 'Confirm')}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           ))}
