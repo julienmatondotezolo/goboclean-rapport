@@ -33,6 +33,9 @@ import { useMission, useStartMission, useUpdateMission, useDeleteMission, useRec
 import { useWorkersList } from '@/hooks/useWorkers';
 import { useAuth } from '@/hooks/useAuth';
 import { handleError, showSuccess } from '@/lib/error-handler';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
+import QRCode from 'qrcode';
 import { LoadingBanner } from '@/components/loading-banner';
 import type { Mission, MissionStatus, MissionFeatures, WorkerSummary } from '@/types/mission';
 
@@ -58,6 +61,39 @@ export default function MissionDetailPage() {
   const recordPayment = useRecordPayment();
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  const { data: company } = useQuery<{ company_name: string; iban: string | null }>({
+    queryKey: ['company'],
+    queryFn: () => apiClient.get('/admin/company'),
+    enabled: isAdmin,
+  });
+
+  // QR de virement SEPA (norme EPC) : scannable par les apps bancaires belges.
+  const isVirement = paymentMethod === 'virement' || paymentMethod === 'virement_instantane';
+  useEffect(() => {
+    const amount = parseFloat(paymentAmount);
+    if (!isVirement || !company?.iban || !amount || amount <= 0 || !mission) {
+      setQrDataUrl(null);
+      return;
+    }
+    const payload = [
+      'BCD',
+      '002',
+      '1',
+      'SCT',
+      '',
+      'Roof Revive - Gobo Clean',
+      company.iban.replace(/\s/g, ''),
+      `EUR${amount.toFixed(2)}`,
+      '',
+      '',
+      `Chantier ${mission.client_first_name} ${mission.client_last_name}`,
+    ].join('\n');
+    QRCode.toDataURL(payload, { width: 260, margin: 1 })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(null));
+  }, [isVirement, paymentAmount, company?.iban, mission]);
 
   const handleRecordPayment = async () => {
     if (!paymentMethod) return;
@@ -845,6 +881,32 @@ export default function MissionDetailPage() {
                   placeholder={locale === 'nl' ? 'Bedrag € (optioneel)' : 'Montant € (optionnel)'}
                   className="w-full p-3 rounded-xl border-2 border-gray-200 text-[14px] bg-white text-gray-900 placeholder:text-gray-400"
                 />
+                {isVirement && (
+                  qrDataUrl ? (
+                    <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 flex flex-col items-center gap-2">
+                      <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">
+                        {locale === 'nl'
+                          ? 'Laat de klant scannen om te betalen'
+                          : locale === 'en'
+                            ? 'Let the client scan to pay'
+                            : 'Fais scanner au client pour payer'}
+                      </p>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={qrDataUrl} alt="QR paiement SEPA" className="w-[200px] h-[200px]" />
+                      <p className="text-[12px] text-gray-500 font-medium">
+                        {company?.iban} — {parseFloat(paymentAmount).toFixed(2)} €
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-[12px] text-gray-500">
+                      {locale === 'nl'
+                        ? 'Vul het bedrag in om de betaal-QR te tonen.'
+                        : locale === 'en'
+                          ? 'Enter the amount to show the payment QR.'
+                          : 'Saisis le montant pour afficher le QR de paiement.'}
+                    </p>
+                  )
+                )}
                 <Button
                   onClick={handleRecordPayment}
                   disabled={!paymentMethod || recordPayment.isPending}
