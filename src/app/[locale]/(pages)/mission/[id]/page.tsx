@@ -20,6 +20,7 @@ import {
   Save,
   XCircle,
   UserPlus,
+  QrCode,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
@@ -878,8 +879,8 @@ export default function MissionDetailPage() {
                   inputMode="decimal"
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
-                  placeholder={locale === 'nl' ? 'Bedrag € (optioneel)' : 'Montant € (optionnel)'}
-                  className="w-full p-3 rounded-xl border-2 border-gray-200 text-[14px] bg-white text-gray-900 placeholder:text-gray-400"
+                  placeholder={locale === 'nl' ? 'Bedrag €' : 'Montant €'}
+                  className="w-full p-3.5 rounded-xl border-2 border-gray-200 text-[16px] font-bold bg-white text-gray-900 placeholder:text-gray-400 placeholder:font-medium"
                 />
                 {isVirement && (
                   qrDataUrl ? (
@@ -894,17 +895,20 @@ export default function MissionDetailPage() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={qrDataUrl} alt="QR paiement SEPA" className="w-[200px] h-[200px]" />
                       <p className="text-[12px] text-gray-500 font-medium">
-                        {company?.iban} — {parseFloat(paymentAmount).toFixed(2)} €
+                        {company?.iban?.replace(/(.{4})/g, '$1 ').trim()} — {parseFloat(paymentAmount).toFixed(2)} €
                       </p>
                     </div>
                   ) : (
-                    <p className="text-[12px] text-gray-500">
-                      {locale === 'nl'
-                        ? 'Vul het bedrag in om de betaal-QR te tonen.'
-                        : locale === 'en'
-                          ? 'Enter the amount to show the payment QR.'
-                          : 'Saisis le montant pour afficher le QR de paiement.'}
-                    </p>
+                    <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center gap-2 text-center">
+                      <QrCode className="w-10 h-10 text-gray-300" />
+                      <p className="text-[13px] font-bold text-gray-500">
+                        {locale === 'nl'
+                          ? 'Vul het bedrag hierboven in om de betaal-QR te genereren'
+                          : locale === 'en'
+                            ? 'Enter the amount above to generate the payment QR'
+                            : 'Saisis le montant ci-dessus pour générer le QR de paiement'}
+                      </p>
+                    </div>
                   )
                 )}
                 <Button
