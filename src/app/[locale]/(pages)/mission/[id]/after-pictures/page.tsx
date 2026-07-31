@@ -314,7 +314,18 @@ export default function AfterPicturesPage() {
 
   return (
     <div className="min-h-screen bg-white pb-32 font-sans">
-      <PageHeader title={t('title')} onBack={() => router.push(`/${locale}/mission/${id}`)} />
+      <PageHeader
+        title={
+          currentStep === STEPS.CLOTURE
+            ? L('Clôture du chantier', 'Afsluiting van de werf', 'Site closure')
+            : currentStep === STEPS.SIGNATURE
+              ? L('Signatures', 'Handtekeningen', 'Signatures')
+              : currentStep === STEPS.CONFIRMATION
+                ? L('Confirmation', 'Bevestiging', 'Confirmation')
+                : t('title')
+        }
+        onBack={() => router.push(`/${locale}/mission/${id}`)}
+      />
 
       {/* Progress Bar */}
       <div className="px-6 pt-4 pb-2">
