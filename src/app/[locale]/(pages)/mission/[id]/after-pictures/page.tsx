@@ -237,7 +237,11 @@ export default function AfterPicturesPage() {
   // Initialize canvas on mount
   useEffect(() => {
     if (currentStep === STEPS.SIGNATURE) {
+      // N'initialiser chaque canvas qu'UNE fois (marqueur data-init) : le
+      // redimensionnement efface le dessin — avant ce garde-fou, confirmer la
+      // 2e signature réinitialisait le 1er canvas non encore confirmé.
       const initCanvas = (canvas: HTMLCanvasElement) => {
+        if (canvas.dataset.init === '1') return;
         const rect = canvas.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
         canvas.width = rect.width * dpr;
@@ -250,6 +254,7 @@ export default function AfterPicturesPage() {
           ctx.lineCap = 'round';
           ctx.lineJoin = 'round';
         }
+        canvas.dataset.init = '1';
       };
 
       if (workerCanvasRef.current && !workerSignature) {
