@@ -771,7 +771,7 @@ export default function AfterPicturesPage() {
 
       {/* Step 4: Blocking closure — checklist + material photos + fuel state */}
       {currentStep === STEPS.CLOTURE && (
-        <div className="space-y-5">
+        <div className="px-6 py-6 space-y-5">
           <div>
             <h2 className="text-[19px] font-bold text-gray-900">
               {L('Clôture du chantier', 'Afsluiting van de werf', 'Site closure')}
