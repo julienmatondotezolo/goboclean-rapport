@@ -323,8 +323,9 @@ export default function SchedulePage() {
         message="Loading schedule..." 
       />
       
-      {/* Page Header */}
-      <div className={isLoading ? 'pt-16' : ''}>
+      {/* Page Header — wrapper sticky, sinon le sticky du header reste
+          confiné à ce div d'une seule ligne et ne colle jamais */}
+      <div className={`sticky top-0 z-20 bg-white ${isLoading ? 'pt-16' : ''}`}>
         <PageHeader title={t('title')} />
       </div>
 
