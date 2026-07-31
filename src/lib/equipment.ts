@@ -16,6 +16,7 @@ export const EQUIPMENT: Equipment[] = [
     labels: { nl: 'Verfmachine', fr: 'Machine peinture', en: 'Paint machine' },
   },
   { id: 'camionnette', labels: { nl: 'Bestelwagen', fr: 'Camionnette', en: 'Van' } },
+  { id: 'hilux', labels: { nl: 'Hilux', fr: 'Hilux', en: 'Hilux' } },
 ];
 
 export const EQUIPMENT_IDS = EQUIPMENT.map((e) => e.id);

@@ -36,7 +36,7 @@ export const FUEL_LEVELS = [
 ];
 
 /** Equipment with a fuel tank to report on (paint machine excluded). */
-export const FUEL_EQUIPMENT = ['gros_dibo', 'petit_dibo', 'camionnette'];
+export const FUEL_EQUIPMENT = ['gros_dibo', 'petit_dibo', 'camionnette', 'hilux'];
 
 export function closureLabel(labels: { nl: string; fr: string; en: string }, locale: string): string {
   const lang = (['nl', 'fr', 'en'].includes(locale) ? locale : 'en') as 'nl' | 'fr' | 'en';
