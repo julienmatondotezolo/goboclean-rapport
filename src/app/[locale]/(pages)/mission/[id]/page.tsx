@@ -436,12 +436,13 @@ export default function MissionDetailPage() {
 
   const displayTitle = `${mission.client_first_name} ${mission.client_last_name}`;
   const subtypesLabel = mission.mission_subtypes?.map((st) => subtypeLabel(st, locale)).join(', ') || '';
-  const appointmentDate = new Date(mission.appointment_time).toLocaleDateString([], {
+  const appointmentDate = new Date(mission.appointment_time).toLocaleDateString(locale, {
+    weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
-  const appointmentTime = new Date(mission.appointment_time).toLocaleTimeString([], {
+  const appointmentTime = new Date(mission.appointment_time).toLocaleTimeString(locale, {
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -529,56 +530,48 @@ export default function MissionDetailPage() {
           </span>
         </div>
 
-        {/* Appointment Date */}
+        {/* Rendez-vous : date + heure réunies, pleine largeur */}
         <div className="bg-[#f8fafc] rounded-2xl p-4">
           <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
-            {td('appointmentDate')}
+            {t('rendezvous')}
           </div>
           <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-[#a3e635]" />
+            <Calendar className="w-5 h-5 text-[#a3e635] shrink-0" />
             <span className="text-[15px] font-bold text-gray-900">{appointmentDate}</span>
           </div>
-        </div>
-
-        {/* Job Type and Time Cards */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-[#f8fafc] rounded-2xl p-4">
-            <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
-              {t('jobType')}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 text-[#a3e635]">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-                </svg>
-              </div>
-              <span className="text-[15px] font-bold text-gray-900">
-                {subtypesLabel || t('roofType')}
-              </span>
-            </div>
-          </div>
-
-          {mission.equipment && mission.equipment.length > 0 && (
-            <div className="bg-[#f8fafc] rounded-2xl p-4">
-              <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
-                {locale === 'fr' ? 'Matériel' : locale === 'nl' ? 'Materiaal' : 'Equipment'}
-              </div>
-              <span className="text-[15px] font-bold text-gray-900">
-                {mission.equipment.map((eq) => equipmentLabel(eq, locale)).join(', ')}
-              </span>
-            </div>
-          )}
-
-          <div className="bg-[#f8fafc] rounded-2xl p-4">
-            <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
-              {t('rendezvous')}
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-[#a3e635]" />
-              <span className="text-[15px] font-bold text-gray-900">{appointmentTime}</span>
-            </div>
+          <div className="flex items-center gap-2 mt-2">
+            <Clock className="w-5 h-5 text-[#a3e635] shrink-0" />
+            <span className="text-[15px] font-bold text-gray-900">{appointmentTime}</span>
           </div>
         </div>
+
+        {/* Type de travail — pleine largeur, le texte respire */}
+        <div className="bg-[#f8fafc] rounded-2xl p-4">
+          <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+            {t('jobType')}
+          </div>
+          <div className="flex items-start gap-2">
+            <div className="w-5 h-5 text-[#a3e635] shrink-0 mt-0.5">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+              </svg>
+            </div>
+            <span className="text-[15px] font-bold text-gray-900 leading-snug">
+              {subtypesLabel || t('roofType')}
+            </span>
+          </div>
+        </div>
+
+        {mission.equipment && mission.equipment.length > 0 && (
+          <div className="bg-[#f8fafc] rounded-2xl p-4">
+            <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+              {locale === 'fr' ? 'Matériel' : locale === 'nl' ? 'Materiaal' : 'Equipment'}
+            </div>
+            <span className="text-[15px] font-bold text-gray-900 leading-snug">
+              {mission.equipment.map((eq) => equipmentLabel(eq, locale)).join(', ')}
+            </span>
+          </div>
+        )}
 
         {/* Assigned Workers Section */}
         <div className="bg-[#f8fafc] rounded-2xl p-5">
