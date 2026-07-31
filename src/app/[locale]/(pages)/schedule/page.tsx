@@ -71,9 +71,12 @@ export default function SchedulePage() {
       start = startOfMonth(currentDate);
       end = endOfMonth(currentDate);
     }
+    // ISO complet avec fin de journée — 'yyyy-MM-dd' tronquait la borne de fin
+    // à minuit et excluait toutes les missions du dernier jour de la plage.
+    end.setHours(23, 59, 59, 999);
     return {
-      start: format(start, 'yyyy-MM-dd'),
-      end: format(end, 'yyyy-MM-dd'),
+      start: start.toISOString(),
+      end: end.toISOString(),
     };
   }, [currentDate, viewMode]);
 
@@ -197,7 +200,7 @@ export default function SchedulePage() {
   // Format time helper
   const fmtTime = (iso: string) => {
     const d = new Date(iso);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   };
 
   const dayLabels = [t('mon'), t('tue'), t('wed'), t('thu'), t('fri'), t('sat'), t('sun')];
