@@ -222,9 +222,8 @@ export default function ReportDetailPage() {
               </div>
               <Button
                 onClick={() => setShowPdfViewer(true)}
-                disabled={!isAdmin}
                 variant="outline"
-                className={cn('min-w-[48px] px-3', !isAdmin && 'opacity-50 cursor-not-allowed')}
+                className="min-w-[48px] px-3"
               >
                 <Eye className="w-5 h-5" />
               </Button>
