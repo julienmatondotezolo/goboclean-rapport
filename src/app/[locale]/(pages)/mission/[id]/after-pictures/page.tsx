@@ -4,13 +4,16 @@ import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { subtypeLabel } from '@/lib/services';
-import { Camera, X, ArrowRight, CheckCircle, Loader2, Fuel, AlertTriangle } from 'lucide-react';
+import { Camera, X, ArrowRight, CheckCircle, Loader2, Fuel, AlertTriangle, QrCode as QrCodeIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import { useCompleteMission, useMission } from '@/hooks/useMissions';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
+import QRCode from 'qrcode';
 import { showSuccess, handleError } from '@/lib/error-handler';
 import { useAuth } from '@/hooks/useAuth';
 import { CLOSURE_CHECKLIST, FUEL_LEVELS, FUEL_EQUIPMENT, closureLabel } from '@/lib/closure';
@@ -19,11 +22,12 @@ import { equipmentLabel } from '@/lib/equipment';
 const STEPS = {
   PHOTOS: 1,
   CONFIRMATION: 2,
-  SIGNATURE: 3,
-  CLOTURE: 4,
+  CLOTURE: 3,
+  PAIEMENT: 4,
+  SIGNATURE: 5,
 };
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 const REQUIRED_PHOTOS = 4;
 
 export default function AfterPicturesPage() {
@@ -58,6 +62,35 @@ export default function AfterPicturesPage() {
   const [fuelPhoto, setFuelPhoto] = useState<{ file: File; preview: string } | null>(null);
   const [fuelLevels, setFuelLevels] = useState<Record<string, string>>({});
   const [mileage, setMileage] = useState('');
+
+  // Étape Paiement (encaissé sur place, AVANT la signature — modèle ACC)
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const { data: company } = useQuery<{ company_name: string; iban: string | null }>({
+    queryKey: ['company'],
+    queryFn: () => apiClient.get('/company'),
+    enabled: isAuthenticated,
+  });
+  const isVirement = paymentMethod === 'virement' || paymentMethod === 'virement_instantane';
+  useEffect(() => {
+    const amount = parseFloat(paymentAmount);
+    if (!isVirement || !company?.iban || !amount || amount <= 0 || !mission) {
+      setQrDataUrl(null);
+      return;
+    }
+    const payload = [
+      'BCD', '002', '1', 'SCT', '',
+      'Roof Revive - Gobo Clean',
+      company.iban.replace(/\s/g, ''),
+      `EUR${amount.toFixed(2)}`,
+      '', '',
+      `Chantier ${mission.client_first_name} ${mission.client_last_name}`,
+    ].join('\n');
+    QRCode.toDataURL(payload, { width: 260, margin: 1 })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(null));
+  }, [isVirement, paymentAmount, company?.iban, mission]);
 
   const workerCanvasRef = useRef<HTMLCanvasElement>(null);
   const clientCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -127,7 +160,7 @@ export default function AfterPicturesPage() {
     if (currentStep === STEPS.PHOTOS && canProceed) {
       setCurrentStep(STEPS.CONFIRMATION);
     } else if (currentStep === STEPS.CONFIRMATION) {
-      setCurrentStep(STEPS.SIGNATURE);
+      setCurrentStep(STEPS.CLOTURE);
     }
   };
 
@@ -162,6 +195,12 @@ export default function AfterPicturesPage() {
     });
     if (fuelPhoto) {
       formData.append('fuel_photo', fuelPhoto.file, 'fuel.jpg');
+    }
+
+    // Paiement encaissé sur place (avant signature)
+    if (paymentMethod) {
+      formData.append('payment_method', paymentMethod);
+      if (paymentAmount.trim() !== '') formData.append('payment_amount', paymentAmount);
     }
 
     try {
@@ -319,8 +358,10 @@ export default function AfterPicturesPage() {
         title={
           currentStep === STEPS.CLOTURE
             ? L('Clôture du chantier', 'Afsluiting van de werf', 'Site closure')
-            : currentStep === STEPS.SIGNATURE
-              ? L('Signatures', 'Handtekeningen', 'Signatures')
+            : currentStep === STEPS.PAIEMENT
+              ? L('Paiement', 'Betaling', 'Payment')
+              : currentStep === STEPS.SIGNATURE
+                ? L('Signatures', 'Handtekeningen', 'Signatures')
               : currentStep === STEPS.CONFIRMATION
                 ? L('Confirmation', 'Bevestiging', 'Confirmation')
                 : t('title')
@@ -747,24 +788,42 @@ export default function AfterPicturesPage() {
             </div>
           )}
 
-          {/* Next: closure step */}
+          {/* Upload Progress */}
+          {completeMutation.isPending && (
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                <p className="text-[13px] font-bold text-blue-800">
+                  {t('uploadProgress', { percent: uploadProgress })}
+                </p>
+              </div>
+              <Progress value={uploadProgress} className="h-2 bg-blue-100" />
+            </div>
+          )}
+
+          {/* Terminer — la signature est la DERNIÈRE étape */}
           <div className="pt-4 space-y-3">
             <Button
-              onClick={() => setCurrentStep(STEPS.CLOTURE)}
-              disabled={!canComplete}
+              onClick={handleCompleteMission}
+              disabled={!canComplete || completeMutation.isPending}
               className="w-full"
             >
-              <CheckCircle className="w-5 h-5" />
+              {completeMutation.isPending ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <CheckCircle className="w-5 h-5" />
+              )}
               <span className="text-[15px] font-bold uppercase tracking-wide">
-                {L('Clôture du chantier →', 'Afsluiting van de werf →', 'Site closure →')}
+                {completeMutation.isPending ? t('uploading') : t('completeMission')}
               </span>
             </Button>
 
             <button
-              onClick={() => setCurrentStep(STEPS.CONFIRMATION)}
+              onClick={() => setCurrentStep(STEPS.PAIEMENT)}
+              disabled={completeMutation.isPending}
               className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors disabled:opacity-50"
             >
-              {t('backToConfirmation')}
+              ← {L('Retour au paiement', 'Terug naar betaling', 'Back to payment')}
             </button>
           </div>
         </div>
@@ -958,42 +1017,137 @@ export default function AfterPicturesPage() {
             </p>
           )}
 
-          {/* Upload Progress */}
-          {completeMutation.isPending && (
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                <p className="text-[13px] font-bold text-blue-800">
-                  {t('uploadProgress', { percent: uploadProgress })}
-                </p>
-              </div>
-              <Progress value={uploadProgress} className="h-2 bg-blue-100" />
-            </div>
-          )}
-
-          {/* Complete Button */}
+          {/* Suivant : Paiement */}
           <div className="pt-2 space-y-3">
             <Button
-              onClick={handleCompleteMission}
-              disabled={!canClose || !canComplete || completeMutation.isPending}
+              onClick={() => setCurrentStep(STEPS.PAIEMENT)}
+              disabled={!canClose}
               className="w-full"
             >
-              {completeMutation.isPending ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <CheckCircle className="w-5 h-5" />
-              )}
+              <ArrowRight className="w-5 h-5" />
               <span className="text-[15px] font-bold uppercase tracking-wide">
-                {completeMutation.isPending ? t('uploading') : t('completeMission')}
+                {L('Paiement', 'Betaling', 'Payment')} →
               </span>
             </Button>
 
             <button
-              onClick={() => setCurrentStep(STEPS.SIGNATURE)}
-              disabled={completeMutation.isPending}
-              className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors disabled:opacity-50"
+              onClick={() => setCurrentStep(STEPS.CONFIRMATION)}
+              className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors"
             >
-              ← {L('Retour aux signatures', 'Terug naar handtekeningen', 'Back to signatures')}
+              {t('backToConfirmation')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Étape 4 : Paiement — encaissé sur place AVANT la signature */}
+      {currentStep === STEPS.PAIEMENT && (
+        <div className="px-6 py-6 space-y-5">
+          <div>
+            <h2 className="text-[19px] font-bold text-gray-900">
+              {L('Paiement', 'Betaling', 'Payment')}
+            </h2>
+            <p className="text-[13px] text-gray-500">
+              {L(
+                'Le client paie maintenant — puis il signe pour valider.',
+                'De klant betaalt nu — daarna tekent hij ter validatie.',
+                'The client pays now — then signs to validate.',
+              )}
+            </p>
+          </div>
+
+          <div className="bg-[#f8fafc] rounded-2xl p-4 space-y-3">
+            <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
+              {L('Mode de paiement', 'Betaalwijze', 'Payment method')} *
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'cash', label: 'Cash' },
+                { id: 'virement', label: L('Virement', 'Overschrijving', 'Transfer') },
+                { id: 'virement_instantane', label: L('Virement instantané', 'Instant overschrijving', 'Instant transfer') },
+                { id: 'autre', label: L('Autre', 'Andere', 'Other') },
+                { id: 'differe', label: L('Paiement différé', 'Uitgestelde betaling', 'Deferred payment') },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setPaymentMethod(m.id)}
+                  className={`px-3 py-2 rounded-lg text-[13px] font-bold border-2 transition-all ${
+                    paymentMethod === m.id
+                      ? 'bg-[#064e3b] text-white border-[#064e3b]'
+                      : 'bg-white text-gray-600 border-gray-200'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            {paymentMethod && paymentMethod !== 'differe' && (
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(e.target.value)}
+                placeholder={L('Montant €', 'Bedrag €', 'Amount €')}
+                className="w-full p-3.5 rounded-xl border-2 border-gray-200 text-[16px] font-bold bg-white text-gray-900 placeholder:text-gray-400 placeholder:font-medium"
+              />
+            )}
+
+            {isVirement && (
+              qrDataUrl ? (
+                <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 flex flex-col items-center gap-2">
+                  <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">
+                    {L('Fais scanner au client pour payer', 'Laat de klant scannen om te betalen', 'Let the client scan to pay')}
+                  </p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={qrDataUrl} alt="QR paiement SEPA" className="w-[200px] h-[200px]" />
+                  <p className="text-[12px] text-gray-500 font-medium">
+                    {company?.iban?.replace(/(.{4})/g, '$1 ').trim()} — {parseFloat(paymentAmount || '0').toFixed(2)} €
+                  </p>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-2xl p-5 flex flex-col items-center gap-2 text-center">
+                  <QrCodeIcon className="w-8 h-8 text-gray-300" />
+                  <p className="text-[13px] font-bold text-gray-500">
+                    {L(
+                      'Saisis le montant pour générer le QR de paiement',
+                      'Vul het bedrag in om de betaal-QR te genereren',
+                      'Enter the amount to generate the payment QR',
+                    )}
+                  </p>
+                </div>
+              )
+            )}
+
+            {paymentMethod === 'differe' && (
+              <p className="text-[12px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                {L(
+                  'Aucun paiement sur place — le bon sera envoyé au client quand le paiement sera enregistré par l’admin.',
+                  'Geen betaling ter plaatse — de bon wordt verzonden zodra de betaling door de admin wordt geregistreerd.',
+                  'No on-site payment — the bon will be sent once the admin records the payment.',
+                )}
+              </p>
+            )}
+          </div>
+
+          <div className="pt-2 space-y-3">
+            <Button
+              onClick={() => setCurrentStep(STEPS.SIGNATURE)}
+              disabled={!paymentMethod}
+              className="w-full"
+            >
+              <ArrowRight className="w-5 h-5" />
+              <span className="text-[15px] font-bold uppercase tracking-wide">
+                {L('Signatures', 'Handtekeningen', 'Signatures')} →
+              </span>
+            </Button>
+            <button
+              onClick={() => setCurrentStep(STEPS.CLOTURE)}
+              className="w-full text-[13px] font-bold text-gray-500 hover:text-[#064e3b] transition-colors"
+            >
+              ← {L('Retour à la clôture', 'Terug naar afsluiting', 'Back to closure')}
             </button>
           </div>
         </div>
