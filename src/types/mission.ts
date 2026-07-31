@@ -48,8 +48,11 @@ export interface Mission {
   // Property Features
   features?: MissionFeatures;
 
-  // Equipment (gros_dibo, petit_dibo, machine_peinture, camionnette)
+  // Equipment (gros_dibo, petit_dibo, machine_peinture, camionnette, hilux)
   equipment?: string[];
+
+  // Langue du client (fr/nl/en)
+  client_language?: string;
 
   // Lot 2/3 closure & payment
   closure_checklist?: Record<string, boolean>;
@@ -102,6 +105,7 @@ export interface CreateMissionPayload {
   features?: MissionFeatures;
   assigned_workers: string[];
   equipment?: string[];
+  client_language?: string;
 }
 
 export interface RescheduleMissionPayload {

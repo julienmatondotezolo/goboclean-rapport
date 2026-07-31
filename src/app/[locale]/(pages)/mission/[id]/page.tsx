@@ -545,6 +545,17 @@ export default function MissionDetailPage() {
           </div>
         </div>
 
+        {mission.client_language && (
+          <div className="bg-[#f8fafc] rounded-2xl p-4">
+            <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">
+              {locale === 'fr' ? 'Langue du client' : locale === 'nl' ? 'Taal van de klant' : 'Client language'}
+            </div>
+            <span className="text-[15px] font-bold text-gray-900">
+              {{ fr: 'Français', nl: 'Nederlands', en: 'English' }[mission.client_language] ?? mission.client_language}
+            </span>
+          </div>
+        )}
+
         {/* Type de travail — pleine largeur, le texte respire */}
         <div className="bg-[#f8fafc] rounded-2xl p-4">
           <div className="text-[11px] font-bold text-gray-500 mb-2 tracking-wide uppercase">

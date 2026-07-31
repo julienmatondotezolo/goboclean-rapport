@@ -32,6 +32,7 @@ interface ClientInfo {
 interface MissionDetails {
   missionType: 'roof' | 'industrial';
   additionalInformation: string;
+  clientLanguage: string;
   subTypes: Record<string, boolean>;
   equipment: Record<string, boolean>;
   surfaceArea: string;
@@ -75,6 +76,7 @@ export default function MissionCreatePage() {
   const [missionDetails, setMissionDetails] = useState<MissionDetails>({
     missionType: 'roof',
     additionalInformation: '',
+    clientLanguage: 'fr',
     subTypes: Object.fromEntries(SERVICE_IDS.map((id) => [id, false])),
     equipment: Object.fromEntries(EQUIPMENT_IDS.map((id) => [id, false])),
     surfaceArea: '',
@@ -254,6 +256,7 @@ export default function MissionCreatePage() {
       features: missionDetails.features,
       assigned_workers: selectedWorkers,
       equipment,
+      client_language: missionDetails.clientLanguage,
     };
 
     try {
@@ -508,6 +511,33 @@ export default function MissionCreatePage() {
               {errors.subTypes && (
                 <p className="text-red-500 text-xs mt-2">{errors.subTypes}</p>
               )}
+            </div>
+
+            {/* Langue du client */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+                {locale === 'fr' ? 'Langue du client' : locale === 'nl' ? 'Taal van de klant' : 'Client language'}
+              </label>
+              <div className="flex gap-2">
+                {[
+                  { id: 'fr', label: 'Français' },
+                  { id: 'nl', label: 'Nederlands' },
+                  { id: 'en', label: 'English' },
+                ].map((lg) => (
+                  <button
+                    key={lg.id}
+                    type="button"
+                    onClick={() => setMissionDetails({ ...missionDetails, clientLanguage: lg.id })}
+                    className={`px-4 py-2.5 rounded-xl text-[13px] font-bold border-2 transition-all ${
+                      missionDetails.clientLanguage === lg.id
+                        ? 'bg-[#064e3b] text-white border-[#064e3b]'
+                        : 'bg-white text-gray-600 border-gray-200'
+                    }`}
+                  >
+                    {lg.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Equipment */}
