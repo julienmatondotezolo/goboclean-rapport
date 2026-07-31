@@ -820,6 +820,28 @@ export default function MissionDetailPage() {
           </div>
         </div>
 
+        {/* Rapport PDF — aperçu tel que le client le reçoit */}
+        {mission.status === 'completed' && mission.report_id && (
+          <button
+            onClick={() => router.push(`/${locale}/reports/${mission.report_id}`)}
+            className="w-full bg-[#f8fafc] rounded-2xl p-4 flex items-center gap-3 hover:bg-gray-100 transition-all"
+          >
+            <FileText className="w-5 h-5 text-[#064e3b] shrink-0" />
+            <div className="flex-1 text-left">
+              <p className="text-[14px] font-bold text-gray-900">
+                {locale === 'nl' ? 'Verslag bekijken' : locale === 'en' ? 'View report' : 'Voir le rapport'}
+              </p>
+              <p className="text-[12px] text-gray-500">
+                {locale === 'nl'
+                  ? 'PDF zoals de klant het ontvangt'
+                  : locale === 'en'
+                    ? 'PDF as the client receives it'
+                    : 'PDF tel que le client le reçoit'}
+              </p>
+            </div>
+          </button>
+        )}
+
         {/* Payment / bon d'exécution (lot 3 — admin, mission terminée) */}
         {isAdmin && mission.status === 'completed' && (
           <div className="bg-[#f8fafc] rounded-2xl p-4 space-y-3">

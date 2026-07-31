@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Image as ImageIcon,
   X,
+  Eye,
 } from 'lucide-react';
 import Image from 'next/image';
 import { PageHeader } from '@/components/ui/page-header';
@@ -205,7 +206,7 @@ export default function ReportDetailPage() {
         {/* Download Button - Admin Only */}
         {report.pdf_url && (
           <div className="bg-[#f8fafc] rounded-2xl p-5 border-2 border-dashed border-gray-200">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-brand-emerald rounded-xl flex items-center justify-center">
                   <FileText className="w-6 h-6 text-brand-green-light" />
@@ -217,6 +218,14 @@ export default function ReportDetailPage() {
                   </p>
                 </div>
               </div>
+              <Button
+                onClick={() => window.open(report.pdf_url!, '_blank')}
+                disabled={!isAdmin}
+                variant="outline"
+                className={cn('min-w-[48px] px-3', !isAdmin && 'opacity-50 cursor-not-allowed')}
+              >
+                <Eye className="w-5 h-5" />
+              </Button>
               <Button
                 onClick={handleDownloadPDF}
                 disabled={isDownloading || !isAdmin}
