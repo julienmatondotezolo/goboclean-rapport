@@ -54,8 +54,8 @@ export default function AfterPicturesPage() {
   const [closureChecklist, setClosureChecklist] = useState<Record<string, boolean>>(
     Object.fromEntries(CLOSURE_CHECKLIST.map((c) => [c.id, false])),
   );
-  const [materialPhotos, setMaterialPhotos] = useState<File[]>([]);
-  const [fuelPhoto, setFuelPhoto] = useState<File | null>(null);
+  const [materialPhotos, setMaterialPhotos] = useState<{ file: File; preview: string }[]>([]);
+  const [fuelPhoto, setFuelPhoto] = useState<{ file: File; preview: string } | null>(null);
   const [fuelLevels, setFuelLevels] = useState<Record<string, string>>({});
   const [mileage, setMileage] = useState('');
 
@@ -157,11 +157,11 @@ export default function AfterPicturesPage() {
       'fuel_state',
       JSON.stringify({ levels: fuelLevels, mileage_km: parseInt(mileage, 10) || 0 }),
     );
-    materialPhotos.forEach((file, index) => {
-      formData.append('material_photos', file, `material-${index + 1}.jpg`);
+    materialPhotos.forEach((p, index) => {
+      formData.append('material_photos', p.file, `material-${index + 1}.jpg`);
     });
     if (fuelPhoto) {
-      formData.append('fuel_photo', fuelPhoto, 'fuel.jpg');
+      formData.append('fuel_photo', fuelPhoto.file, 'fuel.jpg');
     }
 
     try {
@@ -822,23 +822,44 @@ export default function AfterPicturesPage() {
               className="hidden"
               onChange={(e) => {
                 const files = Array.from(e.target.files || []);
-                if (files.length) setMaterialPhotos((prev) => [...prev, ...files]);
+                if (files.length)
+                  setMaterialPhotos((prev) => [
+                    ...prev,
+                    ...files.map((file) => ({ file, preview: URL.createObjectURL(file) })),
+                  ]);
                 e.target.value = '';
               }}
             />
-            <button
-              onClick={() => document.getElementById('material-photos-input')?.click()}
-              className="w-full p-3 rounded-xl border-2 border-dashed border-gray-300 text-[13px] font-bold text-gray-600 hover:border-[#064e3b]"
-            >
-              <Camera className="w-4 h-4 inline mr-1.5 -mt-0.5" />
-              {materialPhotos.length > 0
-                ? L(
-                    `${materialPhotos.length} photo(s) — en ajouter`,
-                    `${materialPhotos.length} foto('s) — toevoegen`,
-                    `${materialPhotos.length} photo(s) — add more`,
-                  )
-                : L('Prendre une photo', 'Foto nemen', 'Take a photo')}
-            </button>
+            <div className="grid grid-cols-3 gap-2">
+              {materialPhotos.map((p, index) => (
+                <div key={p.preview} className="relative aspect-square">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={p.preview}
+                    alt=""
+                    className="w-full h-full object-cover rounded-xl border border-gray-200"
+                  />
+                  <button
+                    onClick={() => {
+                      URL.revokeObjectURL(p.preview);
+                      setMaterialPhotos((prev) => prev.filter((_, i) => i !== index));
+                    }}
+                    className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => document.getElementById('material-photos-input')?.click()}
+                className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-500 hover:border-[#064e3b] hover:text-[#064e3b] transition-all"
+              >
+                <Camera className="w-5 h-5" />
+                <span className="text-[10px] font-bold uppercase">
+                  {L('Ajouter', 'Toevoegen', 'Add')}
+                </span>
+              </button>
+            </div>
           </div>
 
           {/* Fuel state */}
@@ -888,20 +909,40 @@ export default function AfterPicturesPage() {
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) setFuelPhoto(file);
+                if (file) {
+                  if (fuelPhoto) URL.revokeObjectURL(fuelPhoto.preview);
+                  setFuelPhoto({ file, preview: URL.createObjectURL(file) });
+                }
                 e.target.value = '';
               }}
             />
-            <button
-              onClick={() => document.getElementById('fuel-photo-input')?.click()}
-              className="w-full p-3 rounded-xl border-2 border-dashed border-gray-300 text-[13px] font-bold text-gray-600 hover:border-[#064e3b]"
-            >
-              <Fuel className="w-4 h-4 inline mr-1.5 -mt-0.5" />
-              {fuelPhoto
-                ? L('Photo essence/compteur prise', 'Foto brandstof/teller genomen', 'Fuel/odometer photo taken')
-                : L('Photo essence + compteur', 'Foto brandstof + teller', 'Fuel + odometer photo')}{' '}
-              *
-            </button>
+            {fuelPhoto ? (
+              <div className="relative w-28">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={fuelPhoto.preview}
+                  alt=""
+                  className="w-28 h-28 object-cover rounded-xl border border-gray-200"
+                />
+                <button
+                  onClick={() => {
+                    URL.revokeObjectURL(fuelPhoto.preview);
+                    setFuelPhoto(null);
+                  }}
+                  className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => document.getElementById('fuel-photo-input')?.click()}
+                className="w-full p-3 rounded-xl border-2 border-dashed border-gray-300 text-[13px] font-bold text-gray-600 hover:border-[#064e3b]"
+              >
+                <Fuel className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+                {L('Photo essence + compteur', 'Foto brandstof + teller', 'Fuel + odometer photo')} *
+              </button>
+            )}
           </div>
 
           {!canClose && (
