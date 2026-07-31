@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { PageHeader } from '@/components/ui/page-header';
+import { PdfViewerModal } from '@/components/pdf-viewer-modal';
 import { Button } from '@/components/ui/button';
 import { useReport } from '@/hooks/useReports';
 import { useAuth } from '@/hooks/useAuth';
@@ -42,6 +43,7 @@ export default function ReportDetailPage() {
   });
 
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownloadPDF = async () => {
@@ -219,7 +221,7 @@ export default function ReportDetailPage() {
                 </div>
               </div>
               <Button
-                onClick={() => window.open(report.pdf_url!, '_blank')}
+                onClick={() => setShowPdfViewer(true)}
                 disabled={!isAdmin}
                 variant="outline"
                 className={cn('min-w-[48px] px-3', !isAdmin && 'opacity-50 cursor-not-allowed')}
@@ -463,6 +465,14 @@ export default function ReportDetailPage() {
             />
           </div>
         </div>
+      )}
+      {showPdfViewer && report?.pdf_url && (
+        <PdfViewerModal
+          url={report.pdf_url}
+          title={`Rapport N° ${report.id.slice(0, 8).toUpperCase()}`}
+          onClose={() => setShowPdfViewer(false)}
+          canDownload={isAdmin}
+        />
       )}
     </div>
   );
