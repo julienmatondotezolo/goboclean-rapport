@@ -1049,16 +1049,16 @@ export default function AfterPicturesPage() {
             </h2>
             <p className="text-[13px] text-gray-500">
               {L(
-                'Le client paie maintenant — puis il signe pour valider.',
-                'De klant betaalt nu — daarna tekent hij ter validatie.',
-                'The client pays now — then signs to validate.',
+                'Si le client paie sur place, le paiement sera inscrit sur le rapport. Sinon, passe cette étape.',
+                'Betaalt de klant ter plaatse, dan komt dit op het verslag. Zo niet, sla deze stap over.',
+                'If the client pays on site, it is recorded on the report. Otherwise skip this step.',
               )}
             </p>
           </div>
 
           <div className="bg-[#f8fafc] rounded-2xl p-4 space-y-3">
             <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
-              {L('Mode de paiement', 'Betaalwijze', 'Payment method')} *
+              {L('Mode de paiement', 'Betaalwijze', 'Payment method')}
             </div>
             <div className="flex flex-wrap gap-2">
               {[
@@ -1070,7 +1070,7 @@ export default function AfterPicturesPage() {
               ].map((m) => (
                 <button
                   key={m.id}
-                  onClick={() => setPaymentMethod(m.id)}
+                  onClick={() => setPaymentMethod(paymentMethod === m.id ? null : m.id)}
                   className={`px-3 py-2 rounded-lg text-[13px] font-bold border-2 transition-all ${
                     paymentMethod === m.id
                       ? 'bg-[#064e3b] text-white border-[#064e3b]'
@@ -1133,14 +1133,12 @@ export default function AfterPicturesPage() {
           </div>
 
           <div className="pt-2 space-y-3">
-            <Button
-              onClick={() => setCurrentStep(STEPS.SIGNATURE)}
-              disabled={!paymentMethod}
-              className="w-full"
-            >
+            <Button onClick={() => setCurrentStep(STEPS.SIGNATURE)} className="w-full">
               <ArrowRight className="w-5 h-5" />
               <span className="text-[15px] font-bold uppercase tracking-wide">
-                {L('Signatures', 'Handtekeningen', 'Signatures')} →
+                {paymentMethod && paymentMethod !== 'differe'
+                  ? `${L('Signatures', 'Handtekeningen', 'Signatures')} →`
+                  : `${L('Continuer sans paiement', 'Doorgaan zonder betaling', 'Continue without payment')} →`}
               </span>
             </Button>
             <button
