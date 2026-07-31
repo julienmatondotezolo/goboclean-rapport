@@ -228,43 +228,53 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stock & Salaire — même langage visuel que les StatCards */}
-      <div className="px-8 pb-8 grid grid-cols-2 gap-4">
+      {/* Stock & Salaire — rangées d'action pleine largeur */}
+      <div className="px-8 pb-8 space-y-3">
         <button
           onClick={() => router.push('/stock')}
-          className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100/50 text-left flex flex-col hover:shadow-md transition-all active:scale-[0.98]"
+          className="w-full bg-white rounded-[24px] p-4 shadow-sm border border-gray-100/50 flex items-center gap-4 hover:shadow-md transition-all active:scale-[0.99]"
         >
-          <div className="flex items-center justify-between mb-4">
-            <Package className="w-6 h-6 text-[#a3e635]" strokeWidth={2} />
-            <span className="text-[10px] font-bold tracking-widest text-[#94a3b8] uppercase">Stock</span>
+          <div className="w-12 h-12 rounded-2xl bg-[#064e3b] flex items-center justify-center shrink-0">
+            <Package className="w-6 h-6 text-[#a3e635]" />
           </div>
-          <div
-            className={`text-[28px] font-bold leading-none mb-1 ${
-              lowStockCount > 0 ? 'text-red-500' : 'text-[#1e293b]'
-            }`}
-          >
-            {lowStockCount}
+          <div className="flex-1 text-left min-w-0">
+            <p className="text-[15px] font-bold text-[#1e293b]">Stock</p>
+            <p className="text-[12px] text-[#94a3b8] font-medium truncate">
+              {lowStockCount > 0
+                ? L(
+                    `${lowStockCount} produit(s) en alerte`,
+                    `${lowStockCount} product(en) in alarm`,
+                    `${lowStockCount} product(s) low`,
+                  )
+                : L('Inventaire produits', 'Productvoorraad', 'Product inventory')}
+            </p>
           </div>
-          <div className="text-[12px] text-[#94a3b8] font-medium italic flex items-center gap-1">
-            {L('produits en alerte', 'producten in alarm', 'products low')}
-            <ChevronRight className="w-3.5 h-3.5" />
-          </div>
+          {lowStockCount > 0 && (
+            <span className="w-6 h-6 bg-red-500 text-white text-[11px] font-bold rounded-full flex items-center justify-center shrink-0">
+              {lowStockCount}
+            </span>
+          )}
+          <ChevronRight className="w-5 h-5 text-gray-300 shrink-0" />
         </button>
+
         <button
           onClick={() => router.push('/salary')}
-          className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100/50 text-left flex flex-col hover:shadow-md transition-all active:scale-[0.98]"
+          className="w-full bg-white rounded-[24px] p-4 shadow-sm border border-gray-100/50 flex items-center gap-4 hover:shadow-md transition-all active:scale-[0.99]"
         >
-          <div className="flex items-center justify-between mb-4">
-            <Wallet className="w-6 h-6 text-[#064e3b]" strokeWidth={2} />
-            <span className="text-[10px] font-bold tracking-widest text-[#94a3b8] uppercase">Salaire</span>
+          <div className="w-12 h-12 rounded-2xl bg-[#a3e635] flex items-center justify-center shrink-0">
+            <Wallet className="w-6 h-6 text-[#064e3b]" />
           </div>
-          <div className="text-[28px] font-bold text-[#1e293b] leading-none mb-1">
-            {isAdmin ? '€' : `${Number(mySalary?.total ?? 0).toFixed(0)} €`}
+          <div className="flex-1 text-left min-w-0">
+            <p className="text-[15px] font-bold text-[#1e293b]">
+              {L('Salaire', 'Loon', 'Salary')}
+            </p>
+            <p className="text-[12px] text-[#94a3b8] font-medium truncate">
+              {isAdmin
+                ? L('Gérer la paie des ouvriers', 'Loon van de arbeiders beheren', 'Manage workers pay')
+                : `${Number(mySalary?.total ?? 0).toFixed(0)} € ${L('ce mois-ci', 'deze maand', 'this month')}`}
+            </p>
           </div>
-          <div className="text-[12px] text-[#94a3b8] font-medium italic flex items-center gap-1">
-            {isAdmin ? L('gérer la paie', 'loon beheren', 'manage pay') : L('ce mois-ci', 'deze maand', 'this month')}
-            <ChevronRight className="w-3.5 h-3.5" />
-          </div>
+          <ChevronRight className="w-5 h-5 text-gray-300 shrink-0" />
         </button>
       </div>
 
