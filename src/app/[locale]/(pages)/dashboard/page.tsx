@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 // Backend auth is handled via useAuth hook
-import { Clock, ClipboardCheck, Bell, Loader2, AlertCircle, Package, Wallet } from 'lucide-react';
+import { Clock, ClipboardCheck, Bell, Loader2, AlertCircle, Package, Wallet, ChevronRight } from 'lucide-react';
 import { MissionCard } from '@/components/ui/mission-card';
 import { StatCard } from '@/components/ui/stat-card';
 import { useRouter } from '@/i18n/routing';
@@ -12,12 +12,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { useMyMissions, useAllMissions } from '@/hooks/useMissions';
 import { useAdminStats } from '@/hooks/useAdminStats';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
 import { OfflineStatusBadge } from '@/components/offline-indicator';
 import { LoadingBanner } from '@/components/loading-banner';
 import type { Mission } from '@/types/mission';
 
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
+  const locale = useLocale();
+  const L = (fr: string, nlS: string, en: string) => (locale === 'fr' ? fr : locale === 'nl' ? nlS : en);
   const router = useRouter();
   const { user, isAdmin, isLoading: authLoading } = useAuth();
 
@@ -42,6 +46,19 @@ export default function DashboardPage() {
   // Notification count
   const { data: notifData } = useNotifications({ enabled: !!user });
   const unreadCount = notifData?.unreadCount ?? 0;
+
+  // Cartes Stock & Salaire (lot 4)
+  const { data: stockItems } = useQuery<{ low: boolean }[]>({
+    queryKey: ['stock'],
+    queryFn: () => apiClient.get('/stock'),
+    enabled: !!user,
+  });
+  const lowStockCount = (stockItems ?? []).filter((i) => i.low).length;
+  const { data: mySalary } = useQuery<{ total: number }>({
+    queryKey: ['salary', 'me-dashboard'],
+    queryFn: () => apiClient.get('/salary/me'),
+    enabled: !!user && !isAdmin,
+  });
 
   // Derive today's missions sorted by appointment time
   const todayMissions = useMemo(() => {
@@ -211,21 +228,43 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stock & Salaire quick access (lot 4) */}
-      <div className="px-8 pb-6 grid grid-cols-2 gap-4">
+      {/* Stock & Salaire — même langage visuel que les StatCards */}
+      <div className="px-8 pb-8 grid grid-cols-2 gap-4">
         <button
           onClick={() => router.push('/stock')}
-          className="bg-[#f8fafc] rounded-2xl p-4 text-left hover:bg-gray-100 transition-all"
+          className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100/50 text-left flex flex-col hover:shadow-md transition-all active:scale-[0.98]"
         >
-          <Package className="w-6 h-6 text-[#064e3b] mb-2" />
-          <p className="text-[14px] font-bold text-gray-900">Stock</p>
+          <div className="flex items-center justify-between mb-4">
+            <Package className="w-6 h-6 text-[#a3e635]" strokeWidth={2} />
+            <span className="text-[10px] font-bold tracking-widest text-[#94a3b8] uppercase">Stock</span>
+          </div>
+          <div
+            className={`text-[28px] font-bold leading-none mb-1 ${
+              lowStockCount > 0 ? 'text-red-500' : 'text-[#1e293b]'
+            }`}
+          >
+            {lowStockCount}
+          </div>
+          <div className="text-[12px] text-[#94a3b8] font-medium italic flex items-center gap-1">
+            {L('produits en alerte', 'producten in alarm', 'products low')}
+            <ChevronRight className="w-3.5 h-3.5" />
+          </div>
         </button>
         <button
           onClick={() => router.push('/salary')}
-          className="bg-[#f8fafc] rounded-2xl p-4 text-left hover:bg-gray-100 transition-all"
+          className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100/50 text-left flex flex-col hover:shadow-md transition-all active:scale-[0.98]"
         >
-          <Wallet className="w-6 h-6 text-[#064e3b] mb-2" />
-          <p className="text-[14px] font-bold text-gray-900">Salaire</p>
+          <div className="flex items-center justify-between mb-4">
+            <Wallet className="w-6 h-6 text-[#064e3b]" strokeWidth={2} />
+            <span className="text-[10px] font-bold tracking-widest text-[#94a3b8] uppercase">Salaire</span>
+          </div>
+          <div className="text-[28px] font-bold text-[#1e293b] leading-none mb-1">
+            {isAdmin ? '€' : `${Number(mySalary?.total ?? 0).toFixed(0)} €`}
+          </div>
+          <div className="text-[12px] text-[#94a3b8] font-medium italic flex items-center gap-1">
+            {isAdmin ? L('gérer la paie', 'loon beheren', 'manage pay') : L('ce mois-ci', 'deze maand', 'this month')}
+            <ChevronRight className="w-3.5 h-3.5" />
+          </div>
         </button>
       </div>
 
