@@ -8,6 +8,7 @@ import { Camera, X, ArrowRight, CheckCircle, Loader2, Fuel, AlertTriangle } from
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import { useCompleteMission, useMission } from '@/hooks/useMissions';
 import { showSuccess, handleError } from '@/lib/error-handler';
@@ -792,12 +793,11 @@ export default function AfterPicturesPage() {
             </div>
             {CLOSURE_CHECKLIST.map((item) => (
               <label key={item.id} className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-5 h-5 accent-[#064e3b]"
+                <Checkbox
+                  className="bg-white"
                   checked={closureChecklist[item.id] ?? false}
-                  onChange={(e) =>
-                    setClosureChecklist({ ...closureChecklist, [item.id]: e.target.checked })
+                  onCheckedChange={(checked) =>
+                    setClosureChecklist({ ...closureChecklist, [item.id]: checked as boolean })
                   }
                 />
                 <span className="text-[14px] font-medium text-gray-900">
