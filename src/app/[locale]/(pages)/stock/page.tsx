@@ -25,6 +25,7 @@ const PAINT_COLORS: Record<string, string> = {
   peinture_noir: '#111827',
   peinture_rouge: '#dc2626',
   peinture_rouge_sombre: '#7f1d1d',
+  peinture_rouge_sienne: '#a0402a',
 };
 
 function ProductIcon({ id, className = 'w-5 h-5' }: { id: string; className?: string }) {

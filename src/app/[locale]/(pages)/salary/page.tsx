@@ -29,6 +29,7 @@ interface SalaryMonth {
 }
 
 const AMOUNTS = [100, 150, 200, 250, 300];
+const DEFAULT_AMOUNT = 150;
 
 function currentMonth(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Brussels' }).slice(0, 7);
@@ -70,7 +71,8 @@ export default function SalaryPage() {
   });
 
   const [newDate, setNewDate] = useState('');
-  const [newAmount, setNewAmount] = useState<number | null>(null);
+  // Montant par défaut : 150 €/jour (Ali), ajustable selon la journée
+  const [newAmount, setNewAmount] = useState<number | null>(DEFAULT_AMOUNT);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['salary'] });
 
@@ -81,7 +83,7 @@ export default function SalaryPage() {
       invalidate();
       showSuccess(L('Journée enregistrée', 'Dag geregistreerd', 'Day recorded'));
       setNewDate('');
-      setNewAmount(null);
+      setNewAmount(DEFAULT_AMOUNT);
     },
     onError: (e) => handleError(e, { title: L('Erreur paie', 'Loonfout', 'Salary error') }),
   });
