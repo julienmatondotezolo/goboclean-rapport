@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api-client';
@@ -91,6 +91,36 @@ export default function SalaryPage() {
       apiClient.patch(`/salary/${id}`, { paid }),
     onSuccess: invalidate,
     onError: (e) => handleError(e, { title: L('Erreur paie', 'Loonfout', 'Salary error') }),
+  });
+
+  // Suppression (admin) : 1er tap = demande de confirmation, 2e tap = suppression.
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmClearPaid, setConfirmClearPaid] = useState(false);
+
+  const deleteDay = useMutation({
+    mutationFn: (id: string) => apiClient.delete(`/salary/${id}`),
+    onSuccess: () => {
+      invalidate();
+      setConfirmDeleteId(null);
+      showSuccess(L('Journée supprimée', 'Dag verwijderd', 'Day deleted'));
+    },
+    onError: (e) => handleError(e, { title: L('Erreur paie', 'Loonfout', 'Salary error') }),
+  });
+
+  const clearPaid = useMutation({
+    mutationFn: async () => {
+      const paidIds = (data?.days ?? []).filter((d) => d.paid).map((d) => d.id);
+      for (const id of paidIds) await apiClient.delete(`/salary/${id}`);
+    },
+    onSuccess: () => {
+      invalidate();
+      setConfirmClearPaid(false);
+      showSuccess(L('Journées payées effacées', 'Betaalde dagen gewist', 'Paid days cleared'));
+    },
+    onError: (e) => {
+      invalidate();
+      handleError(e, { title: L('Erreur paie', 'Loonfout', 'Salary error') });
+    },
   });
 
   const payMonth = useMutation({
@@ -186,6 +216,24 @@ export default function SalaryPage() {
                   className="mt-1 px-3 py-2 rounded-lg text-[12px] font-bold bg-[#a3e635] text-[#064e3b]"
                 >
                   {L('Marquer le mois payé', 'Maand betaald', 'Mark month paid')}
+                </button>
+              )}
+              {isAdmin && (data?.days ?? []).some((d) => d.paid) && (
+                <button
+                  onClick={() => (confirmClearPaid ? clearPaid.mutate() : setConfirmClearPaid(true))}
+                  onBlur={() => setConfirmClearPaid(false)}
+                  disabled={clearPaid.isPending}
+                  className={`mt-1 ml-2 px-3 py-2 rounded-lg text-[12px] font-bold ${
+                    confirmClearPaid ? 'bg-red-600 text-white' : 'bg-white/15 text-white'
+                  }`}
+                >
+                  {clearPaid.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin inline" />
+                  ) : confirmClearPaid ? (
+                    L('Confirmer ?', 'Bevestigen?', 'Confirm?')
+                  ) : (
+                    L('Effacer les journées payées', 'Betaalde dagen wissen', 'Clear paid days')
+                  )}
                 </button>
               )}
             </>
@@ -313,7 +361,21 @@ export default function SalaryPage() {
                   >
                     {d.paid ? L('Payé', 'Betaald', 'Paid') : L('À payer', 'Te betalen', 'Unpaid')}
                   </button>
-                ) : (
+                ) : null}
+                {isAdmin && (
+                  <button
+                    onClick={() => (confirmDeleteId === d.id ? deleteDay.mutate(d.id) : setConfirmDeleteId(d.id))}
+                    onBlur={() => setConfirmDeleteId((cur) => (cur === d.id ? null : cur))}
+                    disabled={deleteDay.isPending}
+                    aria-label={L('Supprimer', 'Verwijderen', 'Delete')}
+                    className={`rounded-md text-[11px] font-bold ${
+                      confirmDeleteId === d.id ? 'px-2 py-1 bg-red-600 text-white' : 'p-1 text-gray-400 hover:text-red-600'
+                    }`}
+                  >
+                    {confirmDeleteId === d.id ? L('Supprimer ?', 'Verwijderen?', 'Delete?') : <Trash2 className="w-4 h-4" />}
+                  </button>
+                )}
+                {!isAdmin && (
                   <span
                     className={`px-2 py-1 rounded-md text-[11px] font-bold ${
                       d.paid ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
