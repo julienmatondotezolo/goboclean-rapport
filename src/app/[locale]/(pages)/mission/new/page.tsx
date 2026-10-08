@@ -33,6 +33,7 @@ interface MissionDetails {
   missionType: 'roof' | 'industrial';
   additionalInformation: string;
   clientLanguage: string;
+  price: string;
   subTypes: Record<string, boolean>;
   equipment: Record<string, boolean>;
   surfaceArea: string;
@@ -77,6 +78,7 @@ export default function MissionCreatePage() {
     missionType: 'roof',
     additionalInformation: '',
     clientLanguage: 'fr',
+    price: '',
     subTypes: Object.fromEntries(SERVICE_IDS.map((id) => [id, false])),
     equipment: Object.fromEntries(EQUIPMENT_IDS.map((id) => [id, false])),
     surfaceArea: '',
@@ -257,6 +259,7 @@ export default function MissionCreatePage() {
       assigned_workers: selectedWorkers,
       equipment,
       client_language: missionDetails.clientLanguage,
+      price: missionDetails.price.trim() !== '' ? parseFloat(missionDetails.price) : undefined,
     };
 
     try {
@@ -538,6 +541,35 @@ export default function MissionCreatePage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Prix (devis) — l'ouvrier ne pourra pas le modifier */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 mb-3 tracking-wide uppercase">
+                {locale === 'fr' ? 'Prix' : locale === 'nl' ? 'Prijs' : 'Price'}
+              </label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  value={missionDetails.price}
+                  onChange={(e) => setMissionDetails({ ...missionDetails, price: e.target.value })}
+                  placeholder="0.00"
+                  className="pr-12"
+                />
+                <span className="absolute right-5 top-1/2 transform -translate-y-1/2 text-sm font-medium text-gray-500">
+                  €
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-500 mt-2">
+                {locale === 'fr'
+                  ? "Montant du devis. Affiché à l'ouvrier, il ne peut pas le modifier."
+                  : locale === 'nl'
+                    ? 'Bedrag van de offerte. Zichtbaar voor de arbeider, niet aanpasbaar.'
+                    : 'Quote amount. Shown to the worker, who cannot change it.'}
+              </p>
             </div>
 
             {/* Equipment */}

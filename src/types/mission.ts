@@ -54,6 +54,9 @@ export interface Mission {
   // Langue du client (fr/nl/en)
   client_language?: string;
 
+  // Prix de la mission (EUR) — fixé par l'admin/Abou, imposé au paiement
+  price?: number | null;
+
   // Lot 2/3 closure & payment
   closure_checklist?: Record<string, boolean>;
   fuel_state?: { levels: Record<string, string>; mileage_km: number };
@@ -106,6 +109,7 @@ export interface CreateMissionPayload {
   assigned_workers: string[];
   equipment?: string[];
   client_language?: string;
+  price?: number | null;
 }
 
 export interface RescheduleMissionPayload {

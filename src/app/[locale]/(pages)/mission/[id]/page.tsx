@@ -21,6 +21,8 @@ import {
   XCircle,
   UserPlus,
   QrCode,
+  Pencil,
+  Lock,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
@@ -63,6 +65,27 @@ export default function MissionDetailPage() {
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  // Prix de la mission : modifiable par l'admin uniquement
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [priceDraft, setPriceDraft] = useState('');
+
+  useEffect(() => {
+    if (mission?.price != null && paymentAmount === '') setPaymentAmount(String(mission.price));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mission?.price]);
+
+  const handleSavePrice = async () => {
+    const value = priceDraft.trim() === '' ? null : parseFloat(priceDraft);
+    if (value !== null && (!Number.isFinite(value) || value < 0)) return;
+    try {
+      await updateMission.mutateAsync({ id, data: { price: value } });
+      setEditingPrice(false);
+      showSuccess(locale === 'nl' ? 'Prijs opgeslagen' : locale === 'fr' ? 'Prix enregistré' : 'Price saved');
+    } catch (error) {
+      handleError(error, { title: locale === 'nl' ? 'Prijs niet opgeslagen' : 'Prix non enregistré' });
+    }
+  };
 
   const { data: company } = useQuery<{ company_name: string; iban: string | null }>({
     queryKey: ['company'],
@@ -581,6 +604,62 @@ export default function MissionDetailPage() {
             <span className="text-[15px] font-bold text-gray-900 leading-snug">
               {mission.equipment.map((eq) => equipmentLabel(eq, locale)).join(', ')}
             </span>
+          </div>
+        )}
+
+        {(isAdmin || mission.price != null) && (
+          <div className="bg-[#f8fafc] rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[11px] font-bold text-gray-500 tracking-wide uppercase">
+                {locale === 'fr' ? 'Prix' : locale === 'nl' ? 'Prijs' : 'Price'}
+              </div>
+              {isAdmin && !editingPrice && (
+                <button
+                  onClick={() => {
+                    setPriceDraft(mission.price != null ? String(mission.price) : '');
+                    setEditingPrice(true);
+                  }}
+                  className="p-1 text-gray-400 hover:text-gray-700"
+                  aria-label={locale === 'nl' ? 'Prijs wijzigen' : 'Modifier le prix'}
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
+              {!isAdmin && <Lock className="w-4 h-4 text-gray-400" />}
+            </div>
+            {editingPrice ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputMode="decimal"
+                  autoFocus
+                  value={priceDraft}
+                  onChange={(e) => setPriceDraft(e.target.value)}
+                  placeholder="0.00"
+                  className="flex-1 min-w-0 p-3 rounded-xl border-2 border-gray-200 text-[16px] font-bold bg-white text-gray-900"
+                />
+                <button
+                  onClick={handleSavePrice}
+                  disabled={updateMission.isPending}
+                  className="px-3 py-3 rounded-xl bg-[#064e3b] text-white text-[12px] font-bold uppercase"
+                >
+                  {updateMission.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'OK'}
+                </button>
+                <button onClick={() => setEditingPrice(false)} className="p-2 text-gray-400">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <span className="text-[15px] font-bold text-gray-900">
+                {mission.price != null
+                  ? `${Number(mission.price).toFixed(2)} €`
+                  : locale === 'nl'
+                    ? 'Nog geen prijs'
+                    : 'Pas encore de prix'}
+              </span>
+            )}
           </div>
         )}
 

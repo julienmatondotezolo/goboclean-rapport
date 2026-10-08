@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { subtypeLabel } from '@/lib/services';
-import { Camera, X, ArrowRight, CheckCircle, Loader2, Fuel, AlertTriangle, QrCode as QrCodeIcon } from 'lucide-react';
+import { Camera, X, ArrowRight, CheckCircle, Loader2, Fuel, AlertTriangle, QrCode as QrCodeIcon, Lock } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -66,6 +66,11 @@ export default function AfterPicturesPage() {
   // Étape Paiement (encaissé sur place, AVANT la signature — modèle ACC)
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
+  // Prix fixé sur la mission → montant imposé, non modifiable par l'ouvrier
+  const priceLocked = mission?.price != null;
+  useEffect(() => {
+    if (mission?.price != null) setPaymentAmount(String(mission.price));
+  }, [mission?.price]);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const { data: company } = useQuery<{ company_name: string; iban: string | null }>({
     queryKey: ['company'],
@@ -1095,9 +1100,18 @@ export default function AfterPicturesPage() {
                 inputMode="decimal"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
+                readOnly={priceLocked}
                 placeholder={L('Montant €', 'Bedrag €', 'Amount €')}
-                className="w-full p-3.5 rounded-xl border-2 border-gray-200 text-[16px] font-bold bg-white text-gray-900 placeholder:text-gray-400 placeholder:font-medium"
+                className={`w-full p-3.5 rounded-xl border-2 border-gray-200 text-[16px] font-bold text-gray-900 placeholder:text-gray-400 placeholder:font-medium ${
+                  priceLocked ? 'bg-gray-100' : 'bg-white'
+                }`}
               />
+            )}
+            {paymentMethod && paymentMethod !== 'differe' && priceLocked && (
+              <p className="flex items-center gap-1.5 text-[12px] text-gray-500">
+                <Lock className="w-3.5 h-3.5" />
+                {L('Prix fixé par le patron', 'Prijs vastgelegd door de baas', 'Price set by the manager')}
+              </p>
             )}
 
             {isVirement && (
