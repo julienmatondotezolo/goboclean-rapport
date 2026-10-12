@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { subtypeLabel } from '@/lib/services';
 import {
@@ -52,6 +52,13 @@ export default function SchedulePage() {
 
   const rescheduleMutation = useRescheduleMission();
 
+  // Calendrier réservé aux admins : un ouvrier qui arrive ici (lien direct)
+  // est renvoyé vers son dashboard.
+  const isForbidden = !authLoading && isAuthenticated && !isAdmin;
+  useEffect(() => {
+    if (isForbidden) router.replace('/dashboard');
+  }, [isForbidden, router]);
+
   // Pick the correct date-fns locale
   const dateFnsLocale = locale === 'nl' ? nl : locale === 'fr' ? fr : enUS;
 
@@ -85,7 +92,7 @@ export default function SchedulePage() {
     isLoading,
     isError,
     refetch,
-  } = useCalendarMissions(dateRange, { enabled: isAuthenticated });
+  } = useCalendarMissions(dateRange, { enabled: isAuthenticated && isAdmin });
 
   // Change 5: Worker sees only own missions
   const missions = useMemo(() => {
@@ -314,6 +321,8 @@ export default function SchedulePage() {
 
   // ─── Loading / Error states ────────────────────────────────
   // Loading handled by banner instead of full page block
+
+  if (isForbidden) return null;
 
   return (
     <div className="min-h-screen bg-white pb-32 font-sans">

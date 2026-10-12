@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NavItem {
   icon: React.ElementType;
@@ -22,9 +23,12 @@ export function BottomNav({ items, className }: BottomNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations('Navigation');
+  const { isAdmin } = useAuth();
 
-  // Use provided items or default items
-  const navItems = items || getDefaultNavItems(t);
+  // Use provided items or default items — le calendrier est réservé aux admins
+  const navItems = (items || getDefaultNavItems(t)).filter(
+    (item) => isAdmin || item.href !== '/schedule'
+  );
 
   const handleNavigation = (href: string) => {
     router.push(href);

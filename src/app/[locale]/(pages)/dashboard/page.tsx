@@ -284,12 +284,14 @@ export default function DashboardPage() {
           <h3 className="text-[20px] font-bold text-[#1e293b]">
             {t('assignedMissions')}
           </h3>
-          <button
-            onClick={() => router.push('/schedule')}
-            className="text-[14px] font-bold text-[#064e3b] hover:opacity-70 transition-opacity"
-          >
-            {t('viewAll')}
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => router.push('/schedule')}
+              className="text-[14px] font-bold text-[#064e3b] hover:opacity-70 transition-opacity"
+            >
+              {t('viewAll')}
+            </button>
+          )}
         </div>
 
         {/* Loading State */}
